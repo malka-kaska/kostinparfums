@@ -18,6 +18,21 @@
   gap: 20px;
 }
 
+.footer-logo {
+  height: 36px;
+  width: auto;
+  margin-bottom: 12px;
+}
+
+.footer-tagline {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 16px;
+}
+
 .footer-title {
   font-size: 20px;
   font-weight: 400;

@@ -9,6 +9,15 @@
   text-align: center;
 }
 
+.hero-tagline {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
 .hero-actions {
   display: flex;
   gap: 24px;

@@ -47,8 +47,8 @@ const Header = () => {
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <Link to="/" className="logo">
-            Luxe Cosmetics
+          <Link to="/" className="logo-link">
+            <img src="/logo.svg" alt="KOSTIN" className="logo-image" />
           </Link>
 
           <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>

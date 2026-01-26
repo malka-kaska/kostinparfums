@@ -8,7 +8,8 @@ const Hero = () => {
     <section className="hero">
       <div className="container">
         <div className="hero-content">
-          <h1 className="hero-large fade-in">
+          <p className="hero-tagline fade-in">CURATED BEAUTY ESSENTIALS</p>
+          <h1 className="hero-large fade-in" style={{ animationDelay: '0.1s' }}>
             Discover Luxury
             <br />
             in Every Detail

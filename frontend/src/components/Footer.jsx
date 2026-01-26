@@ -9,14 +9,15 @@ const Footer = () => {
       <div className="container">
         <div className="footer-content">
           <div className="footer-section">
-            <h3 className="footer-title">Luxe Cosmetics</h3>
+            <img src="/logo.svg" alt="KOSTIN" className="footer-logo" />
+            <p className="footer-tagline">Curated beauty essentials</p>
             <p className="footer-description">
               Your destination for authentic luxury cosmetics and fragrances from the world's most prestigious brands.
             </p>
             <div className="footer-contact">
               <div className="contact-item">
                 <Mail size={16} />
-                <span>contact@luxecosmetics.com</span>
+                <span>contact@kostin.com</span>
               </div>
               <div className="contact-item">
                 <Phone size={16} />
@@ -62,7 +63,7 @@ const Footer = () => {
         
         <div className="footer-bottom">
           <p className="copyright">
-            &copy; {new Date().getFullYear()} Luxe Cosmetics. All rights reserved.
+            &copy; {new Date().getFullYear()} KOSTIN. All rights reserved.
           </p>
           <div className="footer-legal">
             <Link to="/privacy">Privacy Policy</Link>

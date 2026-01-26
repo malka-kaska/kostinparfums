@@ -138,10 +138,10 @@ const Auth = () => {
           <div className="auth-image">
             <div className="auth-image-overlay">
               <h2 className="hero-medium" style={{ color: 'white' }}>
-                Discover Luxury
+                KOSTIN
               </h2>
-              <p className="body-large" style={{ color: 'rgba(255,255,255,0.9)', marginTop: '16px' }}>
-                Shop the world's finest cosmetics and fragrances
+              <p className="body-large" style={{ color: 'rgba(255,255,255,0.9)', marginTop: '16px', textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '14px' }}>
+                Curated beauty essentials
               </p>
             </div>
           </div>

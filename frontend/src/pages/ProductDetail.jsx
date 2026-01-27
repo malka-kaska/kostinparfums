@@ -56,7 +56,7 @@ const ProductDetail = () => {
           <div className="product-detail-info">
             <p className="product-detail-brand">{product.brand}</p>
             <h1 className="heading-1 mt-2">{product.name}</h1>
-            <p className="product-detail-price">${product.price.toFixed(2)}</p>
+            <p className="product-detail-price">€{product.price.toFixed(2)}</p>
             
             <div className="product-detail-stock">
               {product.stock > 20 ? (

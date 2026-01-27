@@ -9,7 +9,7 @@ const Footer = () => {
       <div className="container">
         <div className="footer-content">
           <div className="footer-section">
-            <img src="/logo.svg" alt="KOSTIN" className="footer-logo" />
+            <img src="/logo.png" alt="KOSTIN" className="footer-logo" />
             <p className="footer-tagline">Curated beauty essentials</p>
             <p className="footer-description">
               Your destination for authentic luxury cosmetics and fragrances from the world's most prestigious brands.

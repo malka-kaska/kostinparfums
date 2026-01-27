@@ -90,7 +90,7 @@ const Cart = () => {
                     <p className="cart-item-brand">{item.brand}</p>
                     <h3>{item.name}</h3>
                   </Link>
-                  <p className="cart-item-price">${item.price.toFixed(2)}</p>
+                  <p className="cart-item-price">€{item.price.toFixed(2)}</p>
                 </div>
 
                 <div className="cart-item-actions">

@@ -12,18 +12,22 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 0;
-  gap: 32px;
+  gap: 40px;
 }
 
 .logo-link {
   display: flex;
   align-items: center;
   text-decoration: none;
+  order: 3;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .logo-image {
-  height: 120px;
+  height: 150px;
   width: auto;
+  max-width: 100%;
   transition: opacity 0.2s ease;
 }
 
@@ -38,8 +42,8 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  order: 1;
   flex: 1;
-  justify-content: center;
 }
 
 .nav-link {

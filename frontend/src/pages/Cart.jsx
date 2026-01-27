@@ -133,7 +133,7 @@ const Cart = () => {
             
             <div className="summary-row">
               <span>Subtotal ({cart.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-              <span>${total.toFixed(2)}</span>
+              <span>€{total.toFixed(2)}</span>
             </div>
             
             <div className="summary-row">
@@ -143,14 +143,14 @@ const Cart = () => {
             
             <div className="summary-row">
               <span>Tax</span>
-              <span>${(total * 0.1).toFixed(2)}</span>
+              <span>€{(total * 0.1).toFixed(2)}</span>
             </div>
             
             <div className="summary-divider"></div>
             
             <div className="summary-row summary-total">
               <span>Total</span>
-              <span>${(total * 1.1).toFixed(2)}</span>
+              <span>€{(total * 1.1).toFixed(2)}</span>
             </div>
 
             <button className="btn-primary" onClick={handleCheckout} style={{ width: '100%', marginTop: '24px' }}>

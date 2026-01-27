@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 0;
+  padding: 12px 0;
   gap: 40px;
 }
 
@@ -23,7 +23,7 @@
 }
 
 .logo-image {
-  height: 180px;
+  height: 120px;
   width: auto;
   max-width: 100%;
   transition: opacity 0.2s ease;

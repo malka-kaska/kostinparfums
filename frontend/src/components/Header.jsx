@@ -47,7 +47,7 @@ const Header = () => {
       {/* Announcement Bar */}
       <div className="announcement-bar">
         <div className="container">
-          <p>FREE SHIPPING ON ORDERS OVER $100 | AUTHENTIC LUXURY COSMETICS</p>
+          <p>FREE SHIPPING ON ORDERS OVER €100 | AUTHENTIC LUXURY COSMETICS</p>
         </div>
       </div>
       

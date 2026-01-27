@@ -12,7 +12,7 @@ const FAQ = () => {
     },
     {
       question: "How long does shipping take?",
-      answer: "Orders are typically processed within 1-2 business days. Standard shipping takes 3-5 business days, while express shipping takes 1-2 business days. Free shipping is available on orders over $100."
+      answer: "Orders are typically processed within 1-2 business days. Standard shipping takes 3-5 business days, while express shipping takes 1-2 business days. Free shipping is available on orders over €100."
     },
     {
       question: "What is your return policy?",
@@ -20,7 +20,7 @@ const FAQ = () => {
     },
     {
       question: "Do you ship internationally?",
-      answer: "Currently, we only ship within the United States. We are working on expanding our international shipping options in the near future."
+      answer: "Currently, we ship within Europe only. We are working on expanding our shipping options to other regions in the near future."
     },
     {
       question: "How can I track my order?",
@@ -28,19 +28,11 @@ const FAQ = () => {
     },
     {
       question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, and Apple Pay. All transactions are secured with industry-standard encryption."
+      answer: "We accept all major credit cards (Visa, Mastercard, American Express), PayPal, and Apple Pay. All transactions are secured with industry-standard encryption."
     },
     {
       question: "Can I cancel or modify my order?",
       answer: "Orders can be cancelled or modified within 24 hours of placement. Please contact us immediately at contact@kostin.com if you need to make changes to your order."
-    },
-    {
-      question: "Do you offer gift wrapping?",
-      answer: "Yes, we offer complimentary gift wrapping for all orders. Simply select the gift wrap option at checkout and include your personalized message."
-    },
-    {
-      question: "How do I know which fragrance is right for me?",
-      answer: "We offer sample sizes for many of our fragrances so you can try before committing to a full bottle. Check out our Samples section to explore different scents."
     },
     {
       question: "What if I receive a damaged or defective product?",

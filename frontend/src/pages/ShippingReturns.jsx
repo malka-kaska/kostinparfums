@@ -30,27 +30,27 @@ const ShippingReturns = () => {
                 <Clock size={20} />
                 <div>
                   <h4>Standard Shipping</h4>
-                  <p>3-5 business days - $6.99</p>
+                  <p>3-5 business days - €6.99</p>
                 </div>
               </div>
               <div className="option-card">
                 <Package size={20} />
                 <div>
                   <h4>Express Shipping</h4>
-                  <p>1-2 business days - $14.99</p>
+                  <p>1-2 business days - €14.99</p>
                 </div>
               </div>
               <div className="option-card">
                 <Shield size={20} />
                 <div>
                   <h4>Free Shipping</h4>
-                  <p>On orders over $100</p>
+                  <p>On orders over €100</p>
                 </div>
               </div>
             </div>
             
-            <h3 className="info-subtitle">International Shipping</h3>
-            <p>Currently, we only ship within the United States. We are working on expanding our international shipping options.</p>
+            <h3 className="info-subtitle">European Shipping</h3>
+            <p>We currently ship to all countries within Europe. Delivery times may vary depending on your location. All prices are in Euros (€) and include VAT where applicable.</p>
             
             <h3 className="info-subtitle">Tracking Your Order</h3>
             <p>Once your order ships, you will receive a tracking number via email. You can track your package using this number on the carrier's website.</p>
@@ -100,7 +100,7 @@ const ShippingReturns = () => {
         <div className="contact-section">
           <h2 className="heading-3">Need Help?</h2>
           <p className="body-regular mt-2">
-            Our customer service team is available Monday-Friday, 9AM-6PM EST.
+            Our customer service team is available Monday-Friday, 9AM-6PM CET.
             <br />
             Email: <a href="mailto:contact@kostin.com">contact@kostin.com</a>
             <br />

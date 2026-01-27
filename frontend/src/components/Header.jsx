@@ -47,6 +47,10 @@ const Header = () => {
     <header className="header">
       <div className="container">
         <div className="header-content">
+          <Link to="/" className="logo-link">
+            <img src="/logo.png" alt="KOSTIN" className="logo-image" />
+          </Link>
+
           <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
             <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               Home
@@ -67,10 +71,6 @@ const Header = () => {
               Haircare
             </Link>
           </nav>
-
-          <Link to="/" className="logo-link">
-            <img src="/logo.png" alt="KOSTIN" className="logo-image" />
-          </Link>
 
           <div className="header-utilities">
             <button 

@@ -9,6 +9,8 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import FAQ from "./pages/FAQ";
+import ShippingReturns from "./pages/ShippingReturns";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/shipping" element={<ShippingReturns />} />
         </Routes>
         <Footer />
       </BrowserRouter>

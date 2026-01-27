@@ -14,6 +14,14 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // Listen to URL parameter changes
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category') || 'all';
+    const searchFromUrl = searchParams.get('search') || '';
+    setSelectedCategory(categoryFromUrl);
+    setSearchQuery(searchFromUrl);
+  }, [searchParams]);
+
   useEffect(() => {
     let filtered = [...products];
 

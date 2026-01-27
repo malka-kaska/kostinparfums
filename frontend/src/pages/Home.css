@@ -1,1 +1,127 @@
-/* Venba-Inspired Home Page */\n\n.home-page {\n  min-height: 100vh;\n  background: var(--bg-primary);\n}\n\n/* Section Titles */\n.section-title {\n  font-size: 24px;\n  font-weight: 600;\n  color: var(--text-primary);\n  text-align: center;\n  letter-spacing: 0.08em;\n  margin-bottom: 50px;\n}\n\n.section-cta {\n  display: flex;\n  justify-content: center;\n  margin-top: 50px;\n}\n\n/* Best Sellers Section */\n.best-sellers-section {\n  background: var(--bg-secondary);\n}\n\n/* Categories Grid */\n.categories-section {\n  background: var(--bg-primary);\n}\n\n.categories-grid {\n  display: grid;\n  grid-template-columns: repeat(4, 1fr);\n  gap: 20px;\n}\n\n.category-card {\n  background: var(--bg-secondary);\n  padding: 60px 30px;\n  text-align: center;\n  text-decoration: none;\n  color: inherit;\n  border: 1px solid var(--border-light);\n  transition: all 0.3s ease;\n}\n\n.category-card:hover {\n  background: var(--bg-primary);\n  border-color: var(--text-primary);\n  transform: translateY(-4px);\n}\n\n.category-name {\n  font-size: 18px;\n  font-weight: 600;\n  color: var(--text-primary);\n  margin-bottom: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n}\n\n.category-count {\n  font-size: 13px;\n  color: var(--text-secondary);\n}\n\n/* Trust Section */\n.trust-section {\n  background: var(--bg-secondary);\n  padding: 60px 0;\n  border-top: 1px solid var(--border-light);\n  border-bottom: 1px solid var(--border-light);\n}\n\n.trust-grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 60px;\n}\n\n.trust-item {\n  text-align: center;\n}\n\n.trust-item h3 {\n  font-size: 14px;\n  font-weight: 600;\n  color: var(--text-primary);\n  margin-bottom: 10px;\n  letter-spacing: 0.08em;\n}\n\n.trust-item p {\n  font-size: 13px;\n  color: var(--text-secondary);\n  line-height: 1.6;\n}\n\n/* Responsive */\n@media (max-width: 1024px) {\n  .categories-grid {\n    grid-template-columns: repeat(2, 1fr);\n  }\n  \n  .trust-grid {\n    grid-template-columns: 1fr;\n    gap: 40px;\n  }\n}\n\n@media (max-width: 640px) {\n  .categories-grid {\n    grid-template-columns: 1fr;\n  }\n  \n  .category-card {\n    padding: 40px 20px;\n  }\n  \n  .section-title {\n    font-size: 20px;\n    margin-bottom: 30px;\n  }\n}\n
+/* Venba-Inspired Home Page */
+
+.home-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  letter-spacing: 0.08em;
+  margin-bottom: 50px;
+}
+
+.section-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+/* Best Sellers Section */
+.best-sellers-section {
+  background: var(--bg-secondary);
+}
+
+/* Categories Grid */
+.categories-section {
+  background: var(--bg-primary);
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.category-card {
+  background: var(--bg-secondary);
+  padding: 60px 30px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.category-card:hover {
+  background: var(--bg-primary);
+  border-color: var(--text-primary);
+  transform: translateY(-4px);
+}
+
+.category-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.category-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Trust Section */
+.trust-section {
+  background: var(--bg-secondary);
+  padding: 60px 0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 60px;
+}
+
+.trust-item {
+  text-align: center;
+}
+
+.trust-item h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+}
+
+.trust-item p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .trust-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 640px) {
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .category-card {
+    padding: 40px 20px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+    margin-bottom: 30px;
+  }
+}

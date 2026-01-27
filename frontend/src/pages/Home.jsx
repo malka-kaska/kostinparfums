@@ -3,71 +3,82 @@ import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import { products, categories } from '../mock';
-import { Sparkles, Heart, Scissors } from 'lucide-react';
 import './Home.css';
 
 const Home = () => {
-  const featuredProducts = products.slice(0, 8);
+  const newArrivals = products.slice(0, 8);
+  const bestSellers = products.slice(8, 16);
 
   return (
     <div className="home-page">
       <Hero />
 
-      {/* Categories Section */}
+      {/* New Arrivals Section */}
       <section className="section-padding-small">
         <div className="container">
-          <h2 className="heading-1 text-center mb-5">Shop by Category</h2>
-          <div className="categories-grid">
-            {categories.map(category => {
-              const IconComponent = category.icon === 'Sparkles' ? Sparkles : 
-                                   category.icon === 'Heart' ? Heart : Scissors;
-              return (
-                <Link 
-                  key={category.id} 
-                  to={`/products?category=${category.id}`}
-                  className="category-card hover-lift"
-                >
-                  <div className="category-icon">
-                    <IconComponent size={32} />
-                  </div>
-                  <h3 className="category-name">{category.name}</h3>
-                  <p className="category-count">
-                    {products.filter(p => p.category === category.id).length} Products
-                  </p>
-                </Link>
-              );
-            })}
+          <h2 className="section-title">NEW ARRIVALS</h2>
+          <div className="grid-product-showcase">
+            {newArrivals.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+          <div className="section-cta">
+            <Link to="/products" className="btn-secondary">
+              VIEW ALL PRODUCTS
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="section-padding">
+      {/* Best Sellers Section */}
+      <section className="section-padding-small best-sellers-section">
         <div className="container">
-          <div className="section-header">
-            <h2 className="heading-1">Featured Products</h2>
-            <Link to="/products" className="btn-secondary">
-              View All Products
-            </Link>
-          </div>
+          <h2 className="section-title">BEST SELLERS</h2>
           <div className="grid-product-showcase">
-            {featuredProducts.map(product => (
+            {bestSellers.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Brands Section */}
-      <section className="brands-section">
+      {/* Categories Section */}
+      <section className="section-padding categories-section">
         <div className="container">
-          <h2 className="heading-1 text-center mb-5">Luxury Brands We Carry</h2>
-          <div className="brands-grid">
-            {['Givenchy', 'Guerlain', 'Lancome', 'Yves Saint Laurent', 'Giorgio Armani', 'Estee Lauder', 'Clinique', 'Shiseido', 'Kerastase', 'MAC', 'Jo Malone', 'Maison Francis Kurkdjian'].map(brand => (
-              <div key={brand} className="brand-item">
-                {brand}
-              </div>
+          <h2 className="section-title">SHOP BY CATEGORY</h2>
+          <div className="categories-grid">
+            {categories.map(category => (
+              <Link 
+                key={category.id} 
+                to={`/products?category=${category.id}`}
+                className="category-card"
+              >
+                <h3 className="category-name">{category.name}</h3>
+                <p className="category-count">
+                  {products.filter(p => p.category === category.id).length} Products
+                </p>
+              </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Section */}
+      <section className="trust-section">
+        <div className="container">
+          <div className="trust-grid">
+            <div className="trust-item">
+              <h3>100% AUTHENTIC</h3>
+              <p>All products sourced from trusted suppliers</p>
+            </div>
+            <div className="trust-item">
+              <h3>FAST SHIPPING</h3>
+              <p>Orders shipped within 1-2 business days</p>
+            </div>
+            <div className="trust-item">
+              <h3>SECURE PAYMENTS</h3>
+              <p>Industry-standard encryption</p>
+            </div>
           </div>
         </div>
       </section>

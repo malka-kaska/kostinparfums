@@ -8,30 +8,30 @@ const Footer = () => {
     <footer className="footer">
       <div className="container">
         <div className="footer-content">
-          <div className="footer-section">
+          <div className="footer-section footer-brand">
             <img src="/logo.svg" alt="KOSTIN" className="footer-logo" />
-            <p className="footer-tagline">Curated beauty essentials</p>
+            <p className="footer-tagline">CURATED BEAUTY ESSENTIALS</p>
             <p className="footer-description">
               Your destination for authentic luxury cosmetics and fragrances from the world's most prestigious brands.
             </p>
             <div className="footer-contact">
               <div className="contact-item">
-                <Mail size={16} />
+                <Mail size={14} />
                 <span>contact@kostin.com</span>
               </div>
               <div className="contact-item">
-                <Phone size={16} />
+                <Phone size={14} />
                 <span>+1 (555) 123-4567</span>
               </div>
               <div className="contact-item">
-                <MapPin size={16} />
+                <MapPin size={14} />
                 <span>123 Luxury Ave, New York, NY 10001</span>
               </div>
             </div>
           </div>
           
           <div className="footer-section">
-            <h4 className="footer-subtitle">Shop</h4>
+            <h4 className="footer-subtitle">SHOP</h4>
             <ul className="footer-links">
               <li><Link to="/products?category=perfumes">Perfumes</Link></li>
               <li><Link to="/products?category=makeup">Makeup</Link></li>
@@ -41,7 +41,7 @@ const Footer = () => {
           </div>
           
           <div className="footer-section">
-            <h4 className="footer-subtitle">Information</h4>
+            <h4 className="footer-subtitle">INFORMATION</h4>
             <ul className="footer-links">
               <li><Link to="/about">About Us</Link></li>
               <li><Link to="/shipping">Shipping & Returns</Link></li>
@@ -51,7 +51,7 @@ const Footer = () => {
           </div>
           
           <div className="footer-section">
-            <h4 className="footer-subtitle">Account</h4>
+            <h4 className="footer-subtitle">ACCOUNT</h4>
             <ul className="footer-links">
               <li><Link to="/auth">Sign In</Link></li>
               <li><Link to="/cart">Shopping Cart</Link></li>

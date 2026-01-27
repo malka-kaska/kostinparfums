@@ -113,7 +113,7 @@ const Cart = () => {
                   </div>
 
                   <p className="cart-item-subtotal">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    €{(item.price * item.quantity).toFixed(2)}
                   </p>
 
                   <button 

@@ -1,49 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
 import './Hero.css';
 
 const Hero = () => {
   return (
     <section className="hero">
-      <div className="container">
-        <div className="hero-content">
-          <p className="hero-tagline fade-in">CURATED BEAUTY ESSENTIALS</p>
-          <h1 className="hero-large fade-in" style={{ animationDelay: '0.1s' }}>
-            Discover Luxury
-            <br />
-            in Every Detail
-          </h1>
-          <p className="body-large mt-4 fade-in" style={{ animationDelay: '0.2s' }}>
-            Curated collection of the world's finest cosmetics and fragrances.
-            <br />
-            From iconic brands to exclusive discoveries.
-          </p>
-          <div className="hero-actions mt-5 fade-in" style={{ animationDelay: '0.4s' }}>
-            <Link to="/products" className="btn-primary">
-              Explore Collection
-            </Link>
-            <Link to="/products?category=perfumes" className="btn-secondary">
-              Shop Fragrances
-              <ArrowRight size={16} style={{ marginLeft: '8px' }} />
-            </Link>
-          </div>
-        </div>
-        
-        <div className="hero-stats fade-in" style={{ animationDelay: '0.6s' }}>
-          <div className="stat-item">
-            <div className="stat-number">200+</div>
-            <div className="stat-label">Luxury Products</div>
-          </div>
-          <div className="stat-divider"></div>
-          <div className="stat-item">
-            <div className="stat-number">40+</div>
-            <div className="stat-label">Premium Brands</div>
-          </div>
-          <div className="stat-divider"></div>
-          <div className="stat-item">
-            <div className="stat-number">100%</div>
-            <div className="stat-label">Authentic Guarantee</div>
+      <div className="hero-image-bg">
+        <div className="hero-overlay">
+          <div className="container">
+            <div className="hero-content">
+              <h1 className="hero-title">THE LUXURY COSMETICS DESTINATION</h1>
+              <p className="hero-subtitle">Curated beauty essentials from the world's finest brands</p>
+              <Link to="/products" className="hero-button">
+                EXPLORE OUR COLLECTION
+              </Link>
+            </div>
           </div>
         </div>
       </div>

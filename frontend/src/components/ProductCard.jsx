@@ -51,7 +51,7 @@ const ProductCard = ({ product, onAddToCart }) => {
           <span className="review-count">({reviewCount})</span>
         </div>
         <p className="product-price">
-          ${product.price.toFixed(2)}
+          €{product.price.toFixed(2)}
         </p>
         {product.stock < 20 && product.stock > 0 && (
           <p className="product-stock-low">Only {product.stock} left!</p>

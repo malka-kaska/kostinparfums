@@ -54,8 +54,8 @@ const Header = () => {
       {/* Main Header */}
       <header className="header">
         <div className="container">
-          {/* Icons Row - Top Right */}
-          <div className="header-icons-row">
+          {/* Logo and Icons Row */}
+          <div className="header-top">
             <button 
               className="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -63,7 +63,14 @@ const Header = () => {
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            
+
+            {/* Logo - Centered */}
+            <Link to="/" className="logo-text-link">
+              <h1 className="logo-text">KOSTIN</h1>
+              <p className="logo-tagline">CURATED BEAUTY ESSENTIALS</p>
+            </Link>
+
+            {/* Header Icons */}
             <div className="header-icons">
               <button 
                 className="icon-button"
@@ -99,13 +106,7 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Logo - Centered */}
-          <Link to="/" className="logo-text-link">
-            <h1 className="logo-text">KOSTIN</h1>
-            <p className="logo-tagline">CURATED BEAUTY ESSENTIALS</p>
-          </Link>
-
-          {/* Navigation - Below Logo */}
+          {/* Navigation */}
           <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
             <Link to="/products" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               SHOP ALL

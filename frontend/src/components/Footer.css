@@ -169,7 +169,7 @@
     text-align: center;
   }
   
-  .footer-logo {
-    height: 70px;
+  .footer-logo-text h2 {
+    font-size: 28px;
   }
 }

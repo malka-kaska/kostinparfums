@@ -1,4 +1,4 @@
-/* Venba-Inspired Header */
+/* L'Oréal-Inspired Header with Readable Text Logo */
 
 /* Announcement Bar */
 .announcement-bar {
@@ -24,79 +24,51 @@
   z-index: 100;
 }
 
-.header-content {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+/* Top Header with Logo and Icons */
+.header-top {
+  display: flex;
   align-items: center;
-  padding: 16px 0;
-  gap: 40px;
+  justify-content: space-between;
+  padding: 24px 0 16px;
 }
 
-/* Logo */
-.logo-link {
+/* Text-Based Logo for Maximum Readability */
+.logo-text-link {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   text-decoration: none;
-}
-
-.logo-image {
-  height: 100px;
-  width: auto;
+  flex: 1;
   transition: opacity 0.3s ease;
 }
 
-.logo-image:hover {
+.logo-text-link:hover {
   opacity: 0.8;
 }
 
-/* Navigation */
-.nav-menu {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 28px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.nav-link {
+.logo-text {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   color: var(--text-primary);
-  text-decoration: none;
-  font-size: 12px;
+  margin: 0;
+  line-height: 1;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.logo-tagline {
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  padding: 8px 0;
-  position: relative;
-  transition: color 0.3s ease;
-}
-
-.nav-link:after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 1px;
-  background: var(--text-primary);
-  transition: width 0.3s ease;
-}
-
-.nav-link:hover {
-  color: var(--accent-gold);
-}
-
-.nav-link:hover:after {
-  width: 100%;
-  background: var(--accent-gold);
+  letter-spacing: 0.2em;
+  color: var(--text-secondary);
+  margin: 8px 0 0 0;
+  text-transform: uppercase;
 }
 
 /* Header Icons */
 .header-icons {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 20px;
 }
 
@@ -184,6 +156,47 @@
   color: var(--text-primary);
 }
 
+/* Navigation */
+.nav-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.nav-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 8px 0;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--text-primary);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--accent-gold);
+}
+
+.nav-link:hover:after {
+  width: 100%;
+  background: var(--accent-gold);
+}
+
 /* Mobile Menu Toggle */
 .mobile-menu-toggle {
   display: none;
@@ -196,7 +209,7 @@
 
 /* Search Bar */
 .search-bar {
-  padding: 16px 0 24px;
+  padding: 0 0 16px;
 }
 
 .search-input {
@@ -221,21 +234,8 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .header-content {
-    grid-template-columns: auto 1fr auto;
-  }
-  
   .mobile-menu-toggle {
     display: block;
-    order: 1;
-  }
-  
-  .logo-link {
-    order: 2;
-  }
-  
-  .header-icons {
-    order: 3;
   }
   
   .nav-menu {
@@ -249,7 +249,7 @@
     flex-direction: column;
     gap: 0;
     padding: 20px 40px;
-    order: 4;
+    border-top: none;
   }
   
   .nav-menu.open {
@@ -262,22 +262,39 @@
     border-bottom: 1px solid var(--border-light);
   }
   
-  .logo-image {
-    height: 80px;
+  .logo-text {
+    font-size: 36px;
+  }
+  
+  .logo-tagline {
+    font-size: 9px;
   }
 }
 
 @media (max-width: 640px) {
-  .logo-image {
-    height: 70px;
-  }
-  
   .announcement-bar {
     font-size: 10px;
     padding: 8px 0;
   }
   
+  .header-top {
+    padding: 16px 0 12px;
+  }
+  
+  .logo-text {
+    font-size: 28px;
+  }
+  
+  .logo-tagline {
+    font-size: 8px;
+    margin-top: 6px;
+  }
+  
   .header-icons {
     gap: 12px;
+  }
+  
+  .icon-button {
+    padding: 6px;
   }
 }

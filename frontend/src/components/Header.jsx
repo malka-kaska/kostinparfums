@@ -54,7 +54,8 @@ const Header = () => {
       {/* Main Header */}
       <header className="header">
         <div className="container">
-          <div className="header-content">
+          {/* Top Header with Logo and Icons */}
+          <div className="header-top">
             {/* Mobile Menu Toggle */}
             <button 
               className="mobile-menu-toggle"
@@ -64,29 +65,11 @@ const Header = () => {
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
 
-            {/* Logo */}
-            <Link to="/" className="logo-link">
-              <img src="/logo.png" alt="KOSTIN" className="logo-image" />
+            {/* Logo - Text Based for Readability */}
+            <Link to="/" className="logo-text-link">
+              <h1 className="logo-text">KOSTIN</h1>
+              <p className="logo-tagline">CURATED BEAUTY ESSENTIALS</p>
             </Link>
-
-            {/* Navigation */}
-            <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
-              <Link to="/products" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                SHOP ALL
-              </Link>
-              <Link to="/products?category=perfumes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                PERFUMES
-              </Link>
-              <Link to="/products?category=makeup" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                MAKEUP
-              </Link>
-              <Link to="/products?category=skincare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                SKINCARE
-              </Link>
-              <Link to="/products?category=haircare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                HAIRCARE
-              </Link>
-            </nav>
 
             {/* Header Icons */}
             <div className="header-icons">
@@ -95,13 +78,13 @@ const Header = () => {
                 onClick={() => setSearchOpen(!searchOpen)}
                 aria-label="Search"
               >
-                <Search size={20} />
+                <Search size={22} />
               </button>
               
               {currentUser ? (
                 <div className="user-menu">
                   <button className="icon-button" aria-label="User menu">
-                    <User size={20} />
+                    <User size={22} />
                   </button>
                   <div className="user-dropdown">
                     <p className="user-name">{currentUser.name}</p>
@@ -113,16 +96,35 @@ const Header = () => {
                 </div>
               ) : (
                 <Link to="/auth" className="icon-button">
-                  <User size={20} />
+                  <User size={22} />
                 </Link>
               )}
               
               <Link to="/cart" className="icon-button cart-button">
-                <ShoppingCart size={20} />
+                <ShoppingCart size={22} />
                 {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
               </Link>
             </div>
           </div>
+
+          {/* Navigation */}
+          <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
+            <Link to="/products" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              SHOP ALL
+            </Link>
+            <Link to="/products?category=perfumes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              PERFUMES
+            </Link>
+            <Link to="/products?category=makeup" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              MAKEUP
+            </Link>
+            <Link to="/products?category=skincare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              SKINCARE
+            </Link>
+            <Link to="/products?category=haircare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              HAIRCARE
+            </Link>
+          </nav>
           
           {/* Search Bar */}
           {searchOpen && (

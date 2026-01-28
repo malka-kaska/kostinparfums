@@ -80,7 +80,7 @@ export const products = [
 
   // Haircare
   { id: 61, name: 'product name', brand: 'brand 33', category: 'haircare', price: 62.00, description: 'product description', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 88 },
-  { id: 62, name: 'product name', brand: 'brand 34'oreal Professionnel', category: 'haircare', price: 28.00, description: 'product description', image: 'https://images.unsplash.com/photo-1556228852-80c3f73e84c1?w=400', stock: 156 },
+  { id: 62, name: 'product name', brand: 'brand 34', category: 'haircare', price: 28.00, description: 'product description', image: 'https://images.unsplash.com/photo-1556228852-80c3f73e84c1?w=400', stock: 156 },
   { id: 63, name: 'product name', brand: 'brand 35', category: 'haircare', price: 35.00, description: 'product description', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 94 },
   { id: 64, name: 'product name', brand: 'brand 36', category: 'haircare', price: 32.00, description: 'product description', image: 'https://images.unsplash.com/photo-1526045478516-99145907023c?w=400', stock: 218 },
   { id: 65, name: 'product name', brand: 'brand 37', category: 'haircare', price: 24.00, description: 'product description', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 132 },

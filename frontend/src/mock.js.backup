@@ -1,0 +1,197 @@
+// Mock data for luxury cosmetics e-commerce
+
+export const categories = [
+  { id: 'perfumes', name: 'Perfumes', icon: 'Sparkles' },
+  { id: 'makeup', name: 'Makeup', icon: 'Palette' },
+  { id: 'skincare', name: 'Skincare', icon: 'Heart' },
+  { id: 'haircare', name: 'Haircare', icon: 'Scissors' }
+];
+
+export const brands = [
+  'Givenchy', 'Guerlain', 'Lancome', 'Calvin Klein', 'Bvlgari', 'Cartier', 'Paco Rabanne',
+  'Hermes', 'Carolina Herrera', 'Issey Miyake', 'Jean Paul Gaultier', 'Giorgio Armani',
+  'Narciso Rodriguez', 'Valentino', 'Yves Saint Laurent', 'Elie Saab', 'Estee Lauder',
+  'Clinique', 'Bioderma', 'Clarins', 'MAC', 'Max Factor', 'Collistar', 'Elizabeth Arden',
+  'Nuxe', 'Shiseido', 'Maison Francis Kurkdjian', 'Jo Malone', 'Amouage', 'By Kilian',
+  'L\'oreal Professionnel', 'Kerastase', 'Schwarzkopf', 'Aveda', 'Redken', 'Olaplex'
+];
+
+export const products = [
+  // Perfumes
+  { id: 1, name: 'La Vie Est Belle', brand: 'Lancome', category: 'perfumes', price: 125.00, description: 'A sweet and floral fragrance with notes of iris, patchouli, and gourmand accords.', image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=400', stock: 45 },
+  { id: 2, name: 'CK One', brand: 'Calvin Klein', category: 'perfumes', price: 65.00, description: 'A clean, fresh unisex fragrance with citrus and green notes.', image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400', stock: 62 },
+  { id: 3, name: 'Omnia Crystalline', brand: 'Bvlgari', category: 'perfumes', price: 98.00, description: 'A delicate floral fragrance with bamboo and lotus flower.', image: 'https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=400', stock: 38 },
+  { id: 4, name: 'La Panthère', brand: 'Cartier', category: 'perfumes', price: 145.00, description: 'A sophisticated chypre floral with gardenia and oakmoss.', image: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59260?w=400', stock: 28 },
+  { id: 5, name: 'Invictus', brand: 'Paco Rabanne', category: 'perfumes', price: 89.00, description: 'A powerful woody aquatic fragrance for men.', image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400', stock: 55 },
+  { id: 6, name: 'Terre d\'Hermès', brand: 'Hermes', category: 'perfumes', price: 135.00, description: 'An earthy, woody fragrance with orange and flint notes.', image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=400', stock: 42 },
+  { id: 7, name: 'Good Girl', brand: 'Carolina Herrera', category: 'perfumes', price: 118.00, description: 'A bold floral oriental with tuberose, jasmine, and tonka bean.', image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=400', stock: 51 },
+  { id: 8, name: 'L\'Eau d\'Issey', brand: 'Issey Miyake', category: 'perfumes', price: 92.00, description: 'A fresh aquatic floral with lotus and freesia.', image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400', stock: 67 },
+  { id: 9, name: 'Le Male', brand: 'Jean Paul Gaultier', category: 'perfumes', price: 85.00, description: 'A classic masculine fragrance with lavender and vanilla.', image: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400', stock: 73 },
+  { id: 10, name: 'Acqua di Gio', brand: 'Giorgio Armani', category: 'perfumes', price: 105.00, description: 'A fresh marine fragrance with citrus and aquatic notes.', image: 'https://images.unsplash.com/photo-1595425970154-c18b9e4d4a7b?w=400', stock: 81 },
+  { id: 11, name: 'For Her', brand: 'Narciso Rodriguez', category: 'perfumes', price: 112.00, description: 'A sensual musky floral with rose and amber.', image: 'https://images.unsplash.com/photo-1592542420271-e9ef3ab77cee?w=400', stock: 39 },
+  { id: 12, name: 'Valentino Donna', brand: 'Valentino', category: 'perfumes', price: 125.00, description: 'An elegant floral with iris, rose, and leather.', image: 'https://images.unsplash.com/photo-1547887538-047f814bfb64?w=400', stock: 44 },
+  { id: 13, name: 'Black Opium', brand: 'Yves Saint Laurent', category: 'perfumes', price: 128.00, description: 'A seductive gourmand with coffee, vanilla, and white flowers.', image: 'https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=400', stock: 88 },
+  { id: 14, name: 'Le Parfum', brand: 'Elie Saab', category: 'perfumes', price: 115.00, description: 'A radiant floral with orange blossom and honey.', image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=400', stock: 52 },
+  { id: 15, name: 'Beautiful', brand: 'Estee Lauder', category: 'perfumes', price: 95.00, description: 'A romantic floral bouquet with rose and lily.', image: 'https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=400', stock: 61 },
+  { id: 16, name: 'Baccarat Rouge 540', brand: 'Maison Francis Kurkdjian', category: 'perfumes', price: 325.00, description: 'A luminous woody floral with saffron, ambergris, and cedar.', image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400', stock: 22 },
+  { id: 17, name: 'English Pear & Freesia', brand: 'Jo Malone', category: 'perfumes', price: 145.00, description: 'A fresh fruity fragrance with pear and white freesia.', image: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59260?w=400', stock: 35 },
+  { id: 18, name: 'Interlude Man', brand: 'Amouage', category: 'perfumes', price: 285.00, description: 'A complex spicy oriental with oregano, amber, and incense.', image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400', stock: 18 },
+  { id: 19, name: 'Love Don\'t Be Shy', brand: 'By Kilian', category: 'perfumes', price: 265.00, description: 'A sweet gourmand with neroli, orange blossom, and marshmallow.', image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=400', stock: 27 },
+  { id: 20, name: 'Mon Guerlain', brand: 'Guerlain', category: 'perfumes', price: 135.00, description: 'A sensual oriental with lavender, jasmine, and vanilla.', image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=400', stock: 46 },
+
+  // Makeup
+  { id: 21, name: 'Double Wear Foundation', brand: 'Estee Lauder', category: 'makeup', price: 52.00, description: '24-hour flawless coverage foundation with SPF 10.', image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400', stock: 95 },
+  { id: 22, name: 'Teint Idole Ultra Wear', brand: 'Lancome', category: 'makeup', price: 54.00, description: 'Long-wearing full coverage foundation with a matte finish.', image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400', stock: 87 },
+  { id: 23, name: 'Studio Fix Fluid', brand: 'MAC', category: 'makeup', price: 33.00, description: 'Medium to full coverage foundation with 24-hour wear.', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400', stock: 112 },
+  { id: 24, name: 'Masterpiece Mascara', brand: 'Max Factor', category: 'makeup', price: 16.00, description: 'Volumizing and lengthening mascara with IFX brush.', image: 'https://images.unsplash.com/photo-1631214524020-7e18db7f7db1?w=400', stock: 158 },
+  { id: 25, name: 'Rouge G Lipstick', brand: 'Guerlain', category: 'makeup', price: 58.00, description: 'Luxurious customizable lipstick with mirror case.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400', stock: 72 },
+  { id: 26, name: 'Designer Shaping Palette', brand: 'Givenchy', category: 'makeup', price: 68.00, description: 'Face contouring palette with highlighter, bronzer, and blush.', image: 'https://images.unsplash.com/photo-1620032427372-e8e36243a629?w=400', stock: 54 },
+  { id: 27, name: 'Prisma Libre Setting Powder', brand: 'Givenchy', category: 'makeup', price: 55.00, description: 'Loose color-correcting powder for a radiant finish.', image: 'https://images.unsplash.com/photo-1583241800698-9c2c2e5d5a8b?w=400', stock: 68 },
+  { id: 28, name: 'Hypnôse Drama Mascara', brand: 'Lancome', category: 'makeup', price: 32.00, description: 'Instant volume and full lash fringe effect mascara.', image: 'https://images.unsplash.com/photo-1631214524020-7e18db7f7db1?w=400', stock: 142 },
+  { id: 29, name: 'Even Better Foundation', brand: 'Clinique', category: 'makeup', price: 39.00, description: 'Makeup and skincare hybrid foundation with SPF 15.', image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400', stock: 91 },
+  { id: 30, name: 'Cheeky Bronze', brand: 'Clinique', category: 'makeup', price: 33.00, description: 'Pressed powder bronzer for a sun-kissed glow.', image: 'https://images.unsplash.com/photo-1620032427372-e8e36243a629?w=400', stock: 76 },
+  { id: 31, name: 'Velvet Matte Lip Pencil', brand: 'MAC', category: 'makeup', price: 29.00, description: 'Creamy matte lip pencil with precise application.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400', stock: 134 },
+  { id: 32, name: 'Multi-Sculpting Palette', brand: 'Clarins', category: 'makeup', price: 62.00, description: 'Face and eye palette with bronzer, blush, and eyeshadows.', image: 'https://images.unsplash.com/photo-1620032427372-e8e36243a629?w=400', stock: 48 },
+  { id: 33, name: 'Eyeshadow Palette', brand: 'Collistar', category: 'makeup', price: 38.00, description: 'Highly pigmented eyeshadow palette with 12 shades.', image: 'https://images.unsplash.com/photo-1583241800698-9c2c2e5d5a8b?w=400', stock: 63 },
+  { id: 34, name: 'Eight Hour Cream Lip Balm', brand: 'Elizabeth Arden', category: 'makeup', price: 22.00, description: 'Nourishing tinted lip balm with SPF 20.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400', stock: 118 },
+  { id: 35, name: 'Prodigieux Le Teint', brand: 'Nuxe', category: 'makeup', price: 34.00, description: 'Natural radiance tinted cream with skincare benefits.', image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400', stock: 82 },
+  { id: 36, name: 'Rouge Unlimited Lipstick', brand: 'Shiseido', category: 'makeup', price: 32.00, description: 'Satin-finish lipstick with rich, long-lasting color.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400', stock: 97 },
+  { id: 37, name: 'Synchro Skin Foundation', brand: 'Shiseido', category: 'makeup', price: 50.00, description: 'Self-refreshing foundation with 24-hour hydration.', image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400', stock: 74 },
+  { id: 38, name: 'Joli Rouge Lipstick', brand: 'Clarins', category: 'makeup', price: 35.00, description: 'Moisturizing lipstick with vibrant color and shine.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400', stock: 105 },
+  { id: 39, name: 'Pure Color Envy Lipstick', brand: 'Estee Lauder', category: 'makeup', price: 36.00, description: 'Sculpted lipstick with high-impact color and moisture.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400', stock: 89 },
+  { id: 40, name: 'Powder Kiss Lipstick', brand: 'MAC', category: 'makeup', price: 26.00, description: 'Soft-matte lipstick with powder-light feel.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400', stock: 126 },
+
+  // Skincare
+  { id: 41, name: 'Advanced Night Repair', brand: 'Estee Lauder', category: 'skincare', price: 98.00, description: 'Intensive recovery serum for smoother, radiant skin.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 67 },
+  { id: 42, name: 'Génifique Serum', brand: 'Lancome', category: 'skincare', price: 105.00, description: 'Youth activating concentrate for radiant skin.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400', stock: 84 },
+  { id: 43, name: 'Orchidée Impériale Cream', brand: 'Guerlain', category: 'skincare', price: 485.00, description: 'Complete anti-aging care with orchid extract.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 18 },
+  { id: 44, name: 'Sensibio H2O', brand: 'Bioderma', category: 'skincare', price: 18.00, description: 'Micellar water for sensitive skin cleansing.', image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400', stock: 215 },
+  { id: 45, name: 'Double Serum', brand: 'Clarins', category: 'skincare', price: 95.00, description: 'Complete age control concentrate with 21 plant extracts.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400', stock: 73 },
+  { id: 46, name: 'Dramatically Different Moisturizer', brand: 'Clinique', category: 'skincare', price: 32.00, description: 'Dermatologist-developed moisturizing lotion.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 142 },
+  { id: 47, name: 'Moisture Surge', brand: 'Clinique', category: 'skincare', price: 45.00, description: 'Intense 72-hour hydration gel-cream.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 98 },
+  { id: 48, name: 'Ultimune Power Infusing', brand: 'Shiseido', category: 'skincare', price: 88.00, description: 'Strengthening concentrate for resilient skin.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400', stock: 62 },
+  { id: 49, name: 'Hydrance Aqua-Gel', brand: 'Avene', category: 'skincare', price: 28.00, description: 'Lightweight hydrating gel for dehydrated skin.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 108 },
+  { id: 50, name: 'Super Aqua-Serum', brand: 'Guerlain', category: 'skincare', price: 145.00, description: 'Intense hydration serum with Aquacomplex.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400', stock: 51 },
+  { id: 51, name: 'Renergie Multi-Lift', brand: 'Lancome', category: 'skincare', price: 125.00, description: 'Lifting firming anti-wrinkle cream with SPF 15.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 64 },
+  { id: 52, name: 'Abeille Royale Serum', brand: 'Guerlain', category: 'skincare', price: 165.00, description: 'Firming lift serum with honey and royal jelly.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400', stock: 43 },
+  { id: 53, name: 'Optim-Eyes Lotion', brand: 'Clarins', category: 'skincare', price: 38.00, description: 'De-puffing eye lotion for tired eyes.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 87 },
+  { id: 54, name: 'Thermal Water Spray', brand: 'Avene', category: 'skincare', price: 15.00, description: 'Soothing thermal spring water spray.', image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400', stock: 176 },
+  { id: 55, name: 'Time Filler', brand: 'Filorga', category: 'skincare', price: 78.00, description: 'Multi-correction wrinkle cream.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 56 },
+  { id: 56, name: 'Glycolic Fix Night Pads', brand: 'Nuxe', category: 'skincare', price: 32.00, description: 'Exfoliating treatment pads with glycolic acid.', image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400', stock: 92 },
+  { id: 57, name: 'Huile Prodigieuse', brand: 'Nuxe', category: 'skincare', price: 36.00, description: 'Multi-purpose dry oil for face, body, and hair.', image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400', stock: 124 },
+  { id: 58, name: 'Bio-Performance', brand: 'Shiseido', category: 'skincare', price: 115.00, description: 'Advanced super revitalizing cream.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 47 },
+  { id: 59, name: 'Lift-Affine Visage', brand: 'Clarins', category: 'skincare', price: 65.00, description: 'Visibly lifted and firming facial serum.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400', stock: 69 },
+  { id: 60, name: 'All About Eyes', brand: 'Clinique', category: 'skincare', price: 42.00, description: 'De-puffing eye cream for all skin types.', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400', stock: 103 },
+
+  // Haircare
+  { id: 61, name: 'Kérastase Elixir Ultime', brand: 'Kerastase', category: 'haircare', price: 62.00, description: 'Beautifying oil for all hair types with argan oil.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 88 },
+  { id: 62, name: 'Mythic Oil Shampoo', brand: 'L\'oreal Professionnel', category: 'haircare', price: 28.00, description: 'Nourishing shampoo with argan and cottonseed oils.', image: 'https://images.unsplash.com/photo-1556228852-80c3f73e84c1?w=400', stock: 156 },
+  { id: 63, name: 'Redken All Soft Mega', brand: 'Redken', category: 'haircare', price: 35.00, description: 'Deep treatment for severely dry hair.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 94 },
+  { id: 64, name: 'Olaplex No.3', brand: 'Olaplex', category: 'haircare', price: 32.00, description: 'Hair perfector for stronger, healthier hair.', image: 'https://images.unsplash.com/photo-1526045478516-99145907023c?w=400', stock: 218 },
+  { id: 65, name: 'Schwarzkopf BC Bonacure', brand: 'Schwarzkopf', category: 'haircare', price: 24.00, description: 'Peptide repair rescue treatment.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 132 },
+  { id: 66, name: 'Aveda Smooth Infusion', brand: 'Aveda', category: 'haircare', price: 38.00, description: 'Anti-frizz smoothing treatment.', image: 'https://images.unsplash.com/photo-1526045478516-99145907023c?w=400', stock: 76 },
+  { id: 67, name: 'Kerastase Nutritive Masque', brand: 'Kerastase', category: 'haircare', price: 55.00, description: 'Intense nourishing treatment for dry hair.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 84 },
+  { id: 68, name: 'GHD Heat Protect Spray', brand: 'GHD', category: 'haircare', price: 18.00, description: 'Thermal protection spray for styling.', image: 'https://images.unsplash.com/photo-1571875257727-256c39da42af?w=400', stock: 147 },
+  { id: 69, name: 'Davines Oi Oil', brand: 'Davines', category: 'haircare', price: 42.00, description: 'Absolute beautifying hair oil with roucou oil.', image: 'https://images.unsplash.com/photo-1526045478516-99145907023c?w=400', stock: 102 },
+  { id: 70, name: 'Philip Kingsley Elasticizer', brand: 'Philip Kingsley', category: 'haircare', price: 48.00, description: 'Pre-shampoo treatment for stronger hair.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 67 },
+  { id: 71, name: 'Joico K-PAK Reconstruct', brand: 'Joico', category: 'haircare', price: 36.00, description: 'Damage repair shampoo with keratin.', image: 'https://images.unsplash.com/photo-1556228852-80c3f73e84c1?w=400', stock: 114 },
+  { id: 72, name: 'American Crew Fiber', brand: 'American Crew', category: 'haircare', price: 19.00, description: 'High hold, low shine styling cream for men.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 185 },
+  { id: 73, name: 'Wella SP Luxe Oil', brand: 'Wella', category: 'haircare', price: 34.00, description: 'Keratin protect reconstructive elixir.', image: 'https://images.unsplash.com/photo-1526045478516-99145907023c?w=400', stock: 92 },
+  { id: 74, name: 'Redken Frizz Dismiss', brand: 'Redken', category: 'haircare', price: 29.00, description: 'Rebel tamer leave-in smoothing control.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 126 },
+  { id: 75, name: 'Olaplex No.6 Bond Smoother', brand: 'Olaplex', category: 'haircare', price: 30.00, description: 'Leave-in styling treatment for smooth hair.', image: 'https://images.unsplash.com/photo-1526045478516-99145907023c?w=400', stock: 164 },
+  { id: 76, name: 'Kerastase Blond Absolu', brand: 'Kerastase', category: 'haircare', price: 48.00, description: 'Lightening and nourishing mask for blonde hair.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 73 },
+  { id: 77, name: 'L\'Oreal Professionnel Serie Expert', brand: 'L\'oreal Professionnel', category: 'haircare', price: 32.00, description: 'Absolut repair gold quinoa protein treatment.', image: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=400', stock: 118 },
+  { id: 78, name: 'Aveda Nutriplenish', brand: 'Aveda', category: 'haircare', price: 44.00, description: 'Deep moisture conditioner for dry hair.', image: 'https://images.unsplash.com/photo-1556228852-80c3f73e84c1?w=400', stock: 87 },
+  { id: 79, name: 'Schwarzkopf Blondme', brand: 'Schwarzkopf', category: 'haircare', price: 26.00, description: 'Blonde toning spray conditioner.', image: 'https://images.unsplash.com/photo-1571875257727-256c39da42af?w=400', stock: 105 },
+  { id: 80, name: 'Redken Color Extend', brand: 'Redken', category: 'haircare', price: 31.00, description: 'Magnetics sulfate-free shampoo for color-treated hair.', image: 'https://images.unsplash.com/photo-1556228852-80c3f73e84c1?w=400', stock: 143 }
+];
+
+// Cart stored in localStorage
+export const getCart = () => {
+  const cart = localStorage.getItem('cart');
+  return cart ? JSON.parse(cart) : [];
+};
+
+export const addToCart = (product, quantity = 1) => {
+  const cart = getCart();
+  const existingItem = cart.find(item => item.id === product.id);
+  
+  if (existingItem) {
+    existingItem.quantity += quantity;
+  } else {
+    cart.push({ ...product, quantity });
+  }
+  
+  localStorage.setItem('cart', JSON.stringify(cart));
+  return cart;
+};
+
+export const updateCartItem = (productId, quantity) => {
+  const cart = getCart();
+  const item = cart.find(item => item.id === productId);
+  
+  if (item) {
+    item.quantity = quantity;
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }
+  
+  return cart;
+};
+
+export const removeFromCart = (productId) => {
+  let cart = getCart();
+  cart = cart.filter(item => item.id !== productId);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  return cart;
+};
+
+export const clearCart = () => {
+  localStorage.removeItem('cart');
+  return [];
+};
+
+export const getCartTotal = () => {
+  const cart = getCart();
+  return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+};
+
+// User authentication (mock)
+export const mockUsers = [
+  { id: 1, email: 'admin@cosmetics.com', password: 'admin123', role: 'admin', name: 'Admin User' },
+  { id: 2, email: 'user@example.com', password: 'user123', role: 'customer', name: 'John Doe' }
+];
+
+export const getCurrentUser = () => {
+  const user = localStorage.getItem('currentUser');
+  return user ? JSON.parse(user) : null;
+};
+
+export const login = (email, password) => {
+  const user = mockUsers.find(u => u.email === email && u.password === password);
+  if (user) {
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+    localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+    return userWithoutPassword;
+  }
+  return null;
+};
+
+export const logout = () => {
+  localStorage.removeItem('currentUser');
+};
+
+export const register = (email, password, name) => {
+  const newUser = {
+    id: mockUsers.length + 1,
+    email,
+    password,
+    role: 'customer',
+    name
+  };
+  mockUsers.push(newUser);
+  const userWithoutPassword = { ...newUser };
+  delete userWithoutPassword.password;
+  localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+  return userWithoutPassword;
+};

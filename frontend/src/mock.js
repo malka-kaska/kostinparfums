@@ -36,7 +36,7 @@ export const products = [
   { id: 16, name: 'product name', brand: 'Maison Francis Kurkdjian', category: 'perfumes', price: 325.00, description: 'A luminous woody floral with saffron, ambergris, and cedar.', image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400', stock: 22 },
   { id: 17, name: 'product name', brand: 'Jo Malone', category: 'perfumes', price: 145.00, description: 'A fresh fruity fragrance with pear and white freesia.', image: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59260?w=400', stock: 35 },
   { id: 18, name: 'product name', brand: 'Amouage', category: 'perfumes', price: 285.00, description: 'A complex spicy oriental with oregano, amber, and incense.', image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400', stock: 18 },
-  { id: 19, name: 'Love Don\'t Be Shy', brand: 'By Kilian', category: 'perfumes', price: 265.00, description: 'A sweet gourmand with neroli, orange blossom, and marshmallow.', image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=400', stock: 27 },
+  { id: 19, name: 'product name', brand: 'By Kilian', category: 'perfumes', price: 265.00, description: "product description", image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=400', stock: 27 },
   { id: 20, name: 'product name', brand: 'Guerlain', category: 'perfumes', price: 135.00, description: 'A sensual oriental with lavender, jasmine, and vanilla.', image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=400', stock: 46 },
 
   // Makeup

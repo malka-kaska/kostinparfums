@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import FAQ from "./pages/FAQ";
 import ShippingReturns from "./pages/ShippingReturns";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/shipping" element={<ShippingReturns />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
         <Footer />
       </BrowserRouter>

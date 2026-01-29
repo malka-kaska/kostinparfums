@@ -80,6 +80,7 @@ const Header = () => {
                   </button>
                   <div className="user-dropdown">
                     <p className="user-name">{currentUser.name}</p>
+                    <Link to="/profile" className="dropdown-link" data-testid="my-profile-link">My Profile</Link>
                     {currentUser.role === 'admin' && (
                       <Link to="/admin" className="dropdown-link">Admin Panel</Link>
                     )}

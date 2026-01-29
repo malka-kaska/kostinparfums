@@ -28,7 +28,7 @@
 .header-icons-row {
   display: flex;
   justify-content: flex-end;
-  padding: 6px 0 0;
+  padding: 4px 0 0;
 }
 
 .header-icons {
@@ -127,7 +127,7 @@
   flex-direction: column;
   align-items: center;
   text-decoration: none;
-  padding: 4px 0 4px;
+  padding: 2px 0 2px;
   transition: opacity 0.3s ease;
 }
 
@@ -136,21 +136,21 @@
 }
 
 .logo-text {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--text-primary);
   margin: 0;
-  line-height: 1;
+  line-height: 0.9;
   font-family: 'Montserrat', sans-serif;
 }
 
 .logo-tagline {
-  font-size: 7px;
+  font-size: 6px;
   font-weight: 500;
   letter-spacing: 0.2em;
   color: var(--text-secondary);
-  margin: 3px 0 0 0;
+  margin: 2px 0 0 0;
   text-transform: uppercase;
 }
 
@@ -160,7 +160,7 @@
   align-items: center;
   justify-content: center;
   gap: 40px;
-  padding: 0 0 10px;
+  padding: 0 0 8px;
 }
 
 .nav-link {
@@ -169,7 +169,7 @@
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.08em;
-  padding: 8px 0;
+  padding: 6px 0;
   position: relative;
   transition: color 0.3s ease;
 }

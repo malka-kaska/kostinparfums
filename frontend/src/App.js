@@ -12,6 +12,8 @@ import Admin from "./pages/Admin";
 import FAQ from "./pages/FAQ";
 import ShippingReturns from "./pages/ShippingReturns";
 import Profile from "./pages/Profile";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
           <Route path="/faq" element={<FAQ />} />
           <Route path="/shipping" element={<ShippingReturns />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
         </Routes>
         <Footer />
       </BrowserRouter>

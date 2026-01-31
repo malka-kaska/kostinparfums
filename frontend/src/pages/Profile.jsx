@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X } from 'lucide-react';
 import { getCurrentUser, logout } from '../mock';
 import './Profile.css';
 
@@ -214,10 +214,6 @@ const Profile = () => {
                 </div>
 
                 <div className="profile-actions">
-                  <button className="btn-secondary">
-                    <Edit2 size={16} />
-                    Edit Profile
-                  </button>
                   <button className="action-button-logout" onClick={handleLogout}>
                     <LogOut size={16} />
                     <span>Logout</span>

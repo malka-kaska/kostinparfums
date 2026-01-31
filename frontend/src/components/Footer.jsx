@@ -45,10 +45,10 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-subtitle">INFORMATION</h4>
             <ul className="footer-links">
-              <li><Link to="/about">About Us</Link></li>
               <li><Link to="/shipping">Shipping & Returns</Link></li>
               <li><Link to="/faq">FAQ</Link></li>
-              <li><Link to="/contact">Contact</Link></li>
+              <li><Link to="/privacy">Privacy Policy</Link></li>
+              <li><Link to="/terms">Terms of Service</Link></li>
             </ul>
           </div>
           
@@ -57,8 +57,7 @@ const Footer = () => {
             <ul className="footer-links">
               <li><Link to="/auth">Sign In</Link></li>
               <li><Link to="/cart">Shopping Cart</Link></li>
-              <li><Link to="/wishlist">Wishlist</Link></li>
-              <li><Link to="/orders">Order History</Link></li>
+              <li><Link to="/profile">My Profile</Link></li>
             </ul>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login, register } from '../mock';
 import './Auth.css';
 
@@ -8,6 +8,8 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [subscribeNewsletter, setSubscribeNewsletter] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -28,8 +30,16 @@ const Auth = () => {
         setError('Please fill in all fields');
         return;
       }
+      if (!agreeTerms) {
+        setError('Please agree to the Privacy Policy and Terms of Service');
+        return;
+      }
       const user = register(email, password, name);
       if (user) {
+        // Store newsletter preference
+        if (subscribeNewsletter) {
+          localStorage.setItem('newsletterSubscribed', 'true');
+        }
         window.dispatchEvent(new Event('cartUpdated'));
         navigate('/');
       } else {
@@ -98,6 +108,34 @@ const Auth = () => {
                 />
               </div>
 
+              {!isLogin && (
+                <div className="auth-checkboxes">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      className="checkbox-input"
+                    />
+                    <span className="checkbox-text">
+                      I agree to the <Link to="/privacy" target="_blank">Privacy Policy</Link> and <Link to="/terms" target="_blank">Terms of Service</Link> *
+                    </span>
+                  </label>
+
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={subscribeNewsletter}
+                      onChange={(e) => setSubscribeNewsletter(e.target.checked)}
+                      className="checkbox-input"
+                    />
+                    <span className="checkbox-text">
+                      I want to receive news, offers and promotions via email
+                    </span>
+                  </label>
+                </div>
+              )}
+
               <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '24px' }}>
                 {isLogin ? 'Sign In' : 'Create Account'}
               </button>
@@ -112,6 +150,8 @@ const Auth = () => {
                   onClick={() => {
                     setIsLogin(!isLogin);
                     setError('');
+                    setAgreeTerms(false);
+                    setSubscribeNewsletter(false);
                   }}
                   className="auth-toggle-button"
                 >

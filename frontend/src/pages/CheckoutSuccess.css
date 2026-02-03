@@ -1,0 +1,120 @@
+.checkout-success-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+}
+
+.success-container {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.status-content {
+  padding: 60px 40px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+}
+
+.status-icon {
+  margin-bottom: 24px;
+  color: var(--text-secondary);
+}
+
+.status-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.success-icon {
+  color: #4caf50;
+}
+
+.error-icon {
+  color: var(--status-error);
+}
+
+.status-content h1 {
+  margin-bottom: 16px;
+}
+
+.status-message {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.payment-details {
+  padding: 20px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  margin-bottom: 32px;
+}
+
+.payment-details .amount {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.payment-details .amount strong {
+  font-size: 24px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-buttons .btn-primary,
+.action-buttons .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.action-buttons .btn-primary {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+}
+
+.action-buttons .btn-primary:hover {
+  opacity: 0.9;
+}
+
+.action-buttons .btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+.action-buttons .btn-secondary:hover {
+  border-color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .status-content {
+    padding: 40px 24px;
+  }
+}

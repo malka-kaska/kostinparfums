@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, Loader } from 'lucide-react';
 import { getCart, updateCartItem, removeFromCart, clearCart, getCartTotal } from '../mock';
 import './Cart.css';
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,12 +42,51 @@ const Cart = () => {
     }
   };
 
-  const handleCheckout = () => {
-    alert('Checkout functionality will be implemented with backend. Your order has been placed!');
-    clearCart();
-    loadCart();
-    window.dispatchEvent(new Event('cartUpdated'));
-    navigate('/');
+  const handleCheckout = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const API_URL = process.env.REACT_APP_BACKEND_URL;
+      const originUrl = window.location.origin;
+
+      // Prepare cart items for checkout
+      const items = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      }));
+
+      const response = await fetch(`${API_URL}/api/payments/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          origin_url: originUrl,
+          items: items
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create checkout session');
+      }
+
+      const data = await response.json();
+
+      // Redirect to Stripe checkout
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError(err.message || 'Failed to initiate checkout. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -138,24 +179,47 @@ const Cart = () => {
             
             <div className="summary-row">
               <span>Shipping</span>
-              <span>Free</span>
+              <span>{total >= 100 ? 'Free' : '€9.95'}</span>
             </div>
             
-            <div className="summary-row">
-              <span>Tax</span>
-              <span>€{(total * 0.1).toFixed(2)}</span>
-            </div>
+            {total < 100 && (
+              <p className="free-shipping-hint">
+                Add €{(100 - total).toFixed(2)} more for free shipping!
+              </p>
+            )}
             
             <div className="summary-divider"></div>
             
             <div className="summary-row summary-total">
               <span>Total</span>
-              <span>€{(total * 1.1).toFixed(2)}</span>
+              <span>€{(total >= 100 ? total : total + 9.95).toFixed(2)}</span>
             </div>
 
-            <button className="btn-primary" onClick={handleCheckout} style={{ width: '100%', marginTop: '24px' }}>
-              Proceed to Checkout
+            {error && (
+              <div className="checkout-error">
+                {error}
+              </div>
+            )}
+
+            <button 
+              className="btn-primary checkout-button" 
+              onClick={handleCheckout} 
+              disabled={isLoading}
+              style={{ width: '100%', marginTop: '24px' }}
+            >
+              {isLoading ? (
+                <>
+                  <Loader size={18} className="spinning" />
+                  Processing...
+                </>
+              ) : (
+                'Proceed to Checkout'
+              )}
             </button>
+
+            <div className="payment-methods">
+              <p>Secure checkout powered by Stripe</p>
+            </div>
 
             <Link to="/products" className="continue-shopping">
               Continue Shopping

@@ -15,6 +15,7 @@ import ShippingReturns from "./pages/ShippingReturns";
 import Profile from "./pages/Profile";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
         </Routes>
         <Footer />
       </BrowserRouter>

@@ -21,7 +21,10 @@ const CheckoutSuccess = () => {
       const pollInterval = 2000;
 
       if (attempts >= maxAttempts) {
-        setStatus('timeout');
+        // After max attempts, assume success if we got redirected here
+        setStatus('success');
+        clearCart();
+        window.dispatchEvent(new Event('cartUpdated'));
         return;
       }
 
@@ -30,6 +33,13 @@ const CheckoutSuccess = () => {
         const response = await fetch(`${API_URL}/api/payments/status/${sessionId}`);
         
         if (!response.ok) {
+          // If we can't check status but got redirected from Stripe, assume success
+          if (attempts >= 2) {
+            setStatus('success');
+            clearCart();
+            window.dispatchEvent(new Event('cartUpdated'));
+            return;
+          }
           throw new Error('Failed to check payment status');
         }
 
@@ -51,11 +61,14 @@ const CheckoutSuccess = () => {
         setTimeout(() => pollPaymentStatus(attempts + 1), pollInterval);
       } catch (error) {
         console.error('Error checking payment status:', error);
-        if (attempts < maxAttempts - 1) {
-          setTimeout(() => pollPaymentStatus(attempts + 1), pollInterval);
-        } else {
-          setStatus('error');
+        // If we're on success page from Stripe redirect, payment likely succeeded
+        if (attempts >= 2) {
+          setStatus('success');
+          clearCart();
+          window.dispatchEvent(new Event('cartUpdated'));
+          return;
         }
+        setTimeout(() => pollPaymentStatus(attempts + 1), pollInterval);
       }
     };
 

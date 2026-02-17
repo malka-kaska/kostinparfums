@@ -19,9 +19,9 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Stripe configuration
-stripe_api_key = os.environ.get('STRIPE_API_KEY') or 'sk_test_51SwiQ5FpRa6Npqhog97ndRUUmW56qywwKgFpYGgCEDJakO1hN6mXN7iLGi82kP8mvV9KXMHboqTWiWMm35tpEF5E00nOEpWd9C'
-stripe_publishable_key = os.environ.get('STRIPE_PUBLISHABLE_KEY') or 'pk_test_51SwiQ5FpRa6Npqhocxb7nTePg0W4l57JpmUQDRG9K2o4WNm29bmPqrk2C5ZwWfwoi9mzHjG1L9PPTzP1BK9IprVb00IGjfQ8pB'
+# Stripe configuration - hardcoded for deployment
+stripe_api_key = 'sk_test_51SwiQ5FpRa6Npqhog97ndRUUmW56qywwKgFpYGgCEDJakO1hN6mXN7iLGi82kP8mvV9KXMHboqTWiWMm35tpEF5E00nOEpWd9C'
+stripe_publishable_key = 'pk_test_51SwiQ5FpRa6Npqhocxb7nTePg0W4l57JpmUQDRG9K2o4WNm29bmPqrk2C5ZwWfwoi9mzHjG1L9PPTzP1BK9IprVb00IGjfQ8pB'
 
 # Create the main app without a prefix
 app = FastAPI()

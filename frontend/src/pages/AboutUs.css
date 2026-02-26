@@ -1,0 +1,268 @@
+.about-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* Hero Section */
+.about-hero {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  padding: 100px 0;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 48px;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  margin-bottom: 20px;
+}
+
+.about-subtitle {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.8;
+}
+
+/* Introduction */
+.about-intro {
+  max-width: 800px;
+  margin: 0 auto 80px;
+  text-align: center;
+}
+
+.intro-text {
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.intro-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Values */
+.about-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  margin-bottom: 80px;
+}
+
+.value-card {
+  text-align: center;
+  padding: 48px 32px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.value-card:hover {
+  border-color: var(--text-primary);
+}
+
+.value-icon {
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
+.value-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.value-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Sections */
+.about-section {
+  max-width: 800px;
+  margin: 0 auto 80px;
+}
+
+.section-heading {
+  font-size: 24px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 32px;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.section-text {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.section-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Features List */
+.features-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+}
+
+.feature-item svg {
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.feature-item span {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+/* Philosophy */
+.about-philosophy {
+  background: var(--bg-secondary);
+  padding: 80px;
+  margin-bottom: 80px;
+  border: 1px solid var(--border-light);
+}
+
+.philosophy-content {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Mission */
+.about-mission {
+  margin-bottom: 80px;
+}
+
+.mission-box {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 60px 40px;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mission-text {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.7;
+}
+
+.mission-text.highlight {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.mission-tagline {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-primary);
+  margin-top: 32px;
+  font-weight: 600;
+}
+
+/* CTA */
+.about-cta {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.about-cta h2 {
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.about-cta p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.about-cta .btn-primary {
+  display: inline-block;
+  padding: 16px 48px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.3s ease;
+}
+
+.about-cta .btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .about-values {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .about-hero {
+    padding: 60px 0;
+  }
+
+  .about-title {
+    font-size: 32px;
+  }
+
+  .about-philosophy {
+    padding: 40px 24px;
+  }
+
+  .features-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-title {
+    font-size: 28px;
+    letter-spacing: 0.1em;
+  }
+
+  .section-heading {
+    font-size: 20px;
+  }
+
+  .mission-box {
+    padding: 40px 20px;
+  }
+
+  .mission-text {
+    font-size: 16px;
+  }
+}

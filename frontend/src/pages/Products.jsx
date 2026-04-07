@@ -2,17 +2,57 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { products, categories, brands } from '../mock';
+import { products as mockProducts, categories as mockCategories, brands as mockBrands } from '../mock';
 import './Products.css';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [selectedBrand, setSelectedBrand] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [usingMock, setUsingMock] = useState(false);
+
+  // Fetch categories and brands on mount
+  useEffect(() => {
+    const fetchMeta = async () => {
+      try {
+        const [catRes, brandRes] = await Promise.all([
+          fetch(`${API_URL}/api/products/categories`),
+          fetch(`${API_URL}/api/products/brands`),
+        ]);
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          if (catData.length > 0) {
+            setCategories(catData.map(c => ({ id: c.id, name: c.name })));
+          } else {
+            setCategories(mockCategories);
+            setUsingMock(true);
+          }
+        }
+        if (brandRes.ok) {
+          const brandData = await brandRes.json();
+          if (brandData.length > 0) {
+            setBrands(brandData.map(b => b.name));
+          } else {
+            setBrands(mockBrands);
+          }
+        }
+      } catch {
+        setCategories(mockCategories);
+        setBrands(mockBrands);
+        setUsingMock(true);
+      }
+    };
+    fetchMeta();
+  }, []);
 
   // Listen to URL parameter changes
   useEffect(() => {
@@ -22,43 +62,66 @@ const Products = () => {
     setSearchQuery(searchFromUrl);
   }, [searchParams]);
 
+  // Fetch products when filters change
   useEffect(() => {
-    let filtered = [...products];
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (selectedCategory !== 'all') params.set('category', selectedCategory);
+        if (selectedBrand !== 'all') params.set('brand', selectedBrand);
+        if (searchQuery) params.set('search', searchQuery);
+        if (sortBy) params.set('sort', sortBy);
+        params.set('limit', '200');
 
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
-    }
-
-    // Filter by brand
-    if (selectedBrand !== 'all') {
-      filtered = filtered.filter(p => p.brand === selectedBrand);
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Sort products
-    filtered.sort((a, b) => {
-      switch(sortBy) {
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'name':
-        default:
-          return a.name.localeCompare(b.name);
+        const res = await fetch(`${API_URL}/api/products?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.products.length > 0 || !usingMock) {
+            setProducts(data.products);
+            setUsingMock(false);
+          } else {
+            // Fallback to mock
+            applyMockFilters();
+          }
+        } else {
+          applyMockFilters();
+        }
+      } catch {
+        applyMockFilters();
+      } finally {
+        setLoading(false);
       }
-    });
+    };
 
-    setFilteredProducts(filtered);
-  }, [selectedCategory, selectedBrand, sortBy, searchQuery]);
+    const applyMockFilters = () => {
+      setUsingMock(true);
+      let filtered = [...mockProducts];
+      if (selectedCategory !== 'all') {
+        filtered = filtered.filter(p => p.category === selectedCategory);
+      }
+      if (selectedBrand !== 'all') {
+        filtered = filtered.filter(p => p.brand === selectedBrand);
+      }
+      if (searchQuery) {
+        filtered = filtered.filter(p =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      filtered.sort((a, b) => {
+        switch (sortBy) {
+          case 'price-low': return a.price - b.price;
+          case 'price-high': return b.price - a.price;
+          default: return a.name.localeCompare(b.name);
+        }
+      });
+      setProducts(filtered);
+    };
+
+    fetchProducts();
+  }, [selectedCategory, selectedBrand, sortBy, searchQuery, usingMock]);
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
@@ -79,33 +142,27 @@ const Products = () => {
   return (
     <div className="products-page">
       <div className="container">
-        {/* Page Header */}
         <div className="page-header section-padding-small">
-          <h1 className="hero-medium">All Products</h1>
+          <h1 className="hero-medium" data-testid="products-heading">All Products</h1>
           <p className="body-large mt-3" style={{ color: 'var(--text-secondary)' }}>
-            Discover our curated collection of {filteredProducts.length} luxury products
+            Discover our curated collection of {products.length} luxury products
           </p>
         </div>
 
         <div className="products-layout">
-          {/* Filters Sidebar */}
-          <aside className={`filters-sidebar ${filtersOpen ? 'open' : ''}`}>
+          <aside className={`filters-sidebar ${filtersOpen ? 'open' : ''}`} data-testid="filters-sidebar">
             <div className="filters-header">
               <h3 className="heading-3">Filters</h3>
-              <button 
-                className="close-filters"
-                onClick={() => setFiltersOpen(false)}
-              >
+              <button className="close-filters" onClick={() => setFiltersOpen(false)}>
                 <X size={20} />
               </button>
             </div>
 
-            {/* Category Filter */}
             <div className="filter-group">
               <h4 className="filter-title">Category</h4>
               <div className="filter-options">
                 <label className="filter-option">
-                  <input 
+                  <input
                     type="radio"
                     name="category"
                     checked={selectedCategory === 'all'}
@@ -115,7 +172,7 @@ const Products = () => {
                 </label>
                 {categories.map(category => (
                   <label key={category.id} className="filter-option">
-                    <input 
+                    <input
                       type="radio"
                       name="category"
                       checked={selectedCategory === category.id}
@@ -127,12 +184,11 @@ const Products = () => {
               </div>
             </div>
 
-            {/* Brand Filter */}
             <div className="filter-group">
               <h4 className="filter-title">Brand</h4>
               <div className="filter-options scrollable">
                 <label className="filter-option">
-                  <input 
+                  <input
                     type="radio"
                     name="brand"
                     checked={selectedBrand === 'all'}
@@ -142,7 +198,7 @@ const Products = () => {
                 </label>
                 {brands.map(brand => (
                   <label key={brand} className="filter-option">
-                    <input 
+                    <input
                       type="radio"
                       name="brand"
                       checked={selectedBrand === brand}
@@ -154,17 +210,17 @@ const Products = () => {
               </div>
             </div>
 
-            <button className="btn-primary" onClick={clearFilters}>
+            <button className="btn-primary" onClick={clearFilters} data-testid="clear-filters-btn">
               Clear All Filters
             </button>
           </aside>
 
-          {/* Products Grid */}
           <div className="products-main">
             <div className="products-controls">
-              <button 
+              <button
                 className="filters-toggle"
                 onClick={() => setFiltersOpen(!filtersOpen)}
+                data-testid="filters-toggle"
               >
                 <SlidersHorizontal size={20} />
                 <span>Filters</span>
@@ -172,11 +228,12 @@ const Products = () => {
 
               <div className="sort-controls">
                 <label htmlFor="sort">Sort by:</label>
-                <select 
+                <select
                   id="sort"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="sort-select"
+                  data-testid="sort-select"
                 >
                   <option value="name">Name</option>
                   <option value="price-low">Price: Low to High</option>
@@ -185,18 +242,22 @@ const Products = () => {
               </div>
             </div>
 
-            {filteredProducts.length > 0 ? (
-              <div className="grid-product-showcase">
-                {filteredProducts.map(product => (
+            {products.length > 0 ? (
+              <div className="grid-product-showcase" data-testid="products-grid">
+                {products.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
-              <div className="no-products">
-                <p className="body-large">No products found matching your filters.</p>
-                <button className="btn-primary mt-4" onClick={clearFilters}>
-                  Clear Filters
-                </button>
+              <div className="no-products" data-testid="no-products">
+                <p className="body-large">
+                  {loading ? 'Loading products...' : 'No products found matching your filters.'}
+                </p>
+                {!loading && (
+                  <button className="btn-primary mt-4" onClick={clearFilters}>
+                    Clear Filters
+                  </button>
+                )}
               </div>
             )}
           </div>

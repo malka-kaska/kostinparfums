@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X } from 'lucide-react';
-import { getCurrentUser, logout } from '../mock';
+import { useAuth } from '../context/AuthContext';
 import './Profile.css';
 
 const Profile = () => {
-  const [user, setUser] = useState(null);
+  const { user, logout, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [addresses, setAddresses] = useState([]);
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -20,11 +20,8 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
+    if (!loading && !user) {
       navigate('/auth');
-    } else {
-      setUser(currentUser);
     }
 
     // Load addresses from localStorage
@@ -32,7 +29,6 @@ const Profile = () => {
     if (savedAddresses) {
       setAddresses(JSON.parse(savedAddresses));
     } else {
-      // Default sample address
       const defaultAddresses = [
         {
           id: 1,
@@ -47,12 +43,11 @@ const Profile = () => {
       setAddresses(defaultAddresses);
       localStorage.setItem('userAddresses', JSON.stringify(defaultAddresses));
     }
-  }, [navigate]);
+  }, [navigate, user, loading]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
-    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const handleAddAddress = () => {

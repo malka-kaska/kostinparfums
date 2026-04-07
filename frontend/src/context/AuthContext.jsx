@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentUser, login as mockLogin, logout as mockLogout, register as mockRegister } from '../mock';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AuthContext = createContext(null);
 
@@ -11,48 +12,89 @@ export const useAuth = () => {
   return context;
 };
 
+function formatApiErrorDetail(detail) {
+  if (detail == null) return "Something went wrong. Please try again.";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail))
+    return detail.map((e) => (e && typeof e.msg === "string" ? e.msg : JSON.stringify(e))).filter(Boolean).join(" ");
+  if (detail && typeof detail.msg === "string") return detail.msg;
+  return String(detail);
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing user on mount
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
+    checkAuth();
   }, []);
 
-  const login = (email, password) => {
-    const loggedInUser = mockLogin(email, password);
-    if (loggedInUser) {
-      setUser(loggedInUser);
-      window.dispatchEvent(new Event('cartUpdated'));
-      return loggedInUser;
+  const checkAuth = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    return null;
   };
 
-  const register = (email, password, name) => {
-    const newUser = mockRegister(email, password, name);
-    if (newUser) {
-      setUser(newUser);
-      window.dispatchEvent(new Event('cartUpdated'));
-      return newUser;
+  const login = async (email, password) => {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(formatApiErrorDetail(err.detail));
     }
-    return null;
+    const data = await res.json();
+    setUser(data);
+    window.dispatchEvent(new Event('cartUpdated'));
+    return data;
   };
 
-  const logout = () => {
-    mockLogout();
+  const register = async (email, password, name) => {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password, name }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(formatApiErrorDetail(err.detail));
+    }
+    const data = await res.json();
+    setUser(data);
+    window.dispatchEvent(new Event('cartUpdated'));
+    return data;
+  };
+
+  const logout = async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch { /* ignore */ }
     setUser(null);
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const updateUser = (updatedData) => {
     if (user) {
-      const updatedUser = { ...user, ...updatedData };
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      setUser(updatedUser);
+      setUser(prev => ({ ...prev, ...updatedData }));
     }
   };
 
@@ -63,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
   };
 
   return (

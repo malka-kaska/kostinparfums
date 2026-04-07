@@ -1,31 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
-import { getCart, getCurrentUser, logout } from '../mock';
+import { getCart } from '../mock';
+import { useAuth } from '../context/AuthContext';
 import './Header.css';
 
 const Header = () => {
   const [cartCount, setCartCount] = useState(0);
-  const [currentUser, setCurrentUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     updateCartCount();
-    setCurrentUser(getCurrentUser());
     
-    const handleStorageChange = () => {
+    const handleCartUpdate = () => {
       updateCartCount();
-      setCurrentUser(getCurrentUser());
     };
     
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('cartUpdated', handleStorageChange);
+    window.addEventListener('storage', handleCartUpdate);
+    window.addEventListener('cartUpdated', handleCartUpdate);
     
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('cartUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleCartUpdate);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
     };
   }, []);
 
@@ -35,9 +34,8 @@ const Header = () => {
     setCartCount(count);
   };
 
-  const handleLogout = () => {
-    logout();
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
     setMobileMenuOpen(false);
   };
@@ -52,7 +50,7 @@ const Header = () => {
       </div>
       
       {/* Main Header */}
-      <header className="header">
+      <header className="header" data-testid="main-header">
         <div className="container">
           {/* Icons Row */}
           <div className="header-icons-row">
@@ -60,6 +58,7 @@ const Header = () => {
               className="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Menu"
+              data-testid="mobile-menu-toggle"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -69,45 +68,46 @@ const Header = () => {
                 className="icon-button"
                 onClick={() => setSearchOpen(!searchOpen)}
                 aria-label="Search"
+                data-testid="search-toggle"
               >
                 <Search size={22} />
               </button>
               
-              {currentUser ? (
+              {user ? (
                 <div className="user-menu">
-                  <button className="icon-button" aria-label="User menu">
+                  <button className="icon-button" aria-label="User menu" data-testid="user-menu-button">
                     <User size={22} />
                   </button>
-                  <div className="user-dropdown">
-                    <p className="user-name">{currentUser.name}</p>
+                  <div className="user-dropdown" data-testid="user-dropdown">
+                    <p className="user-name">{user.name}</p>
                     <Link to="/profile" className="dropdown-link" data-testid="my-profile-link">My Profile</Link>
-                    {currentUser.role === 'admin' && (
-                      <Link to="/admin" className="dropdown-link">Admin Panel</Link>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="dropdown-link" data-testid="admin-panel-link">Admin Panel</Link>
                     )}
-                    <button onClick={handleLogout} className="dropdown-link">Logout</button>
+                    <button onClick={handleLogout} className="dropdown-link" data-testid="logout-button">Logout</button>
                   </div>
                 </div>
               ) : (
-                <Link to="/auth" className="icon-button">
+                <Link to="/auth" className="icon-button" data-testid="login-link">
                   <User size={22} />
                 </Link>
               )}
               
-              <Link to="/cart" className="icon-button cart-button">
+              <Link to="/cart" className="icon-button cart-button" data-testid="cart-link">
                 <ShoppingCart size={22} />
-                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                {cartCount > 0 && <span className="cart-badge" data-testid="cart-badge">{cartCount}</span>}
               </Link>
             </div>
           </div>
 
           {/* Logo - Centered Above Navigation */}
-          <Link to="/" className="logo-text-link">
+          <Link to="/" className="logo-text-link" data-testid="logo-link">
             <h1 className="logo-text">KOSTIN</h1>
             <p className="logo-tagline">CURATED BEAUTY ESSENTIALS</p>
           </Link>
 
           {/* Navigation */}
-          <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
+          <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} data-testid="nav-menu">
             <Link to="/products" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               SHOP ALL
             </Link>
@@ -132,6 +132,7 @@ const Header = () => {
                 type="text" 
                 placeholder="Search products, brands..."
                 className="search-input"
+                data-testid="search-input"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.target.value) {
                     navigate(`/products?search=${e.target.value}`);

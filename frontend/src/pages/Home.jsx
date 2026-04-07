@@ -1,11 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
-import { products, categories } from '../mock';
+import { products as mockProducts, categories as mockCategories } from '../mock';
 import './Home.css';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
 const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          fetch(`${API_URL}/api/products?limit=20`),
+          fetch(`${API_URL}/api/products/categories`),
+        ]);
+        if (prodRes.ok) {
+          const prodData = await prodRes.json();
+          if (prodData.products.length > 0) {
+            setProducts(prodData.products);
+          } else {
+            setProducts(mockProducts);
+          }
+        } else {
+          setProducts(mockProducts);
+        }
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          if (catData.length > 0) {
+            setCategories(catData);
+          } else {
+            setCategories(mockCategories.map(c => ({
+              ...c,
+              product_count: mockProducts.filter(p => p.category === c.id).length,
+            })));
+          }
+        }
+      } catch {
+        setProducts(mockProducts);
+        setCategories(mockCategories.map(c => ({
+          ...c,
+          product_count: mockProducts.filter(p => p.category === c.id).length,
+        })));
+      }
+    };
+    fetchData();
+  }, []);
+
   const newArrivals = products.slice(0, 8);
   const bestSellers = products.slice(8, 16);
 
@@ -13,11 +57,10 @@ const Home = () => {
     <div className="home-page">
       <Hero />
 
-      {/* New Arrivals Section */}
       <section className="section-padding-small">
         <div className="container">
           <h2 className="section-title">NEW ARRIVALS</h2>
-          <div className="grid-product-showcase">
+          <div className="grid-product-showcase" data-testid="new-arrivals-grid">
             {newArrivals.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -30,32 +73,32 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Best Sellers Section */}
-      <section className="section-padding-small best-sellers-section">
-        <div className="container">
-          <h2 className="section-title">BEST SELLERS</h2>
-          <div className="grid-product-showcase">
-            {bestSellers.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+      {bestSellers.length > 0 && (
+        <section className="section-padding-small best-sellers-section">
+          <div className="container">
+            <h2 className="section-title">BEST SELLERS</h2>
+            <div className="grid-product-showcase" data-testid="best-sellers-grid">
+              {bestSellers.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Categories Section */}
       <section className="section-padding categories-section">
         <div className="container">
           <h2 className="section-title">SHOP BY CATEGORY</h2>
-          <div className="categories-grid">
+          <div className="categories-grid" data-testid="categories-grid">
             {categories.map(category => (
-              <Link 
-                key={category.id} 
+              <Link
+                key={category.id}
                 to={`/products?category=${category.id}`}
                 className="category-card"
               >
                 <h3 className="category-name">{category.name}</h3>
                 <p className="category-count">
-                  {products.filter(p => p.category === category.id).length} Products
+                  {category.product_count} Products
                 </p>
               </Link>
             ))}
@@ -63,7 +106,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Trust Section */}
       <section className="trust-section">
         <div className="container">
           <div className="trust-grid">

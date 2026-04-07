@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
@@ -22,6 +23,7 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
+        <AuthProvider>
         <ScrollToTop />
         <Header />
         <Routes>
@@ -40,6 +42,7 @@ function App() {
           <Route path="/about" element={<AboutUs />} />
         </Routes>
         <Footer />
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );

@@ -1,51 +1,23 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 import './FAQ.css';
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
+  const { t } = useLanguage();
 
   const faqs = [
-    {
-      question: "Are all your products authentic?",
-      answer: "Yes, 100% of our products are authentic and sourced directly from authorized distributors and trusted suppliers. We guarantee the authenticity of every item we sell."
-    },
-    {
-      question: "How long does shipping take?",
-      answer: "Orders are typically processed within 1-2 business days. Standard shipping takes 3-5 business days, while express shipping takes 1-2 business days. Free shipping is available on orders over €100."
-    },
-    {
-      question: "What is your return policy?",
-      answer: "We accept returns within 30 days of delivery for unopened products in their original packaging. The item must be unused and in the same condition that you received it. Please see our Shipping & Returns page for complete details."
-    },
-    {
-      question: "Do you ship internationally?",
-      answer: "Currently, we ship within Europe only. We are working on expanding our shipping options to other regions in the near future."
-    },
-    {
-      question: "How can I track my order?",
-      answer: "Once your order ships, you will receive a confirmation email with a tracking number. You can use this number to track your package on the carrier's website."
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards (Visa, Mastercard, American Express), PayPal, and Apple Pay. All transactions are secured with industry-standard encryption."
-    },
-    {
-      question: "Can I cancel or modify my order?",
-      answer: "Orders can be cancelled or modified within 24 hours of placement. Please contact us immediately at contact@kostin.com if you need to make changes to your order."
-    },
-    {
-      question: "What if I receive a damaged or defective product?",
-      answer: "If you receive a damaged or defective product, please contact us within 7 days of delivery with photos of the item. We will provide a full refund or replacement immediately."
-    },
-    {
-      question: "Do you have a loyalty program?",
-      answer: "Yes! Our loyalty program rewards customers with points on every purchase. Points can be redeemed for discounts on future orders. Sign up for an account to start earning rewards."
-    },
-    {
-      question: "How should I store my cosmetics and fragrances?",
-      answer: "Store your products in a cool, dry place away from direct sunlight. Fragrances should be kept in their original packaging to preserve their quality. Avoid storing products in bathrooms where humidity can affect their integrity."
-    }
+    { question: t('faqQ1'), answer: t('faqA1') },
+    { question: t('faqQ2'), answer: t('faqA2') },
+    { question: t('faqQ3'), answer: t('faqA3') },
+    { question: t('faqQ4'), answer: t('faqA4') },
+    { question: t('faqQ5'), answer: t('faqA5') },
+    { question: t('faqQ6'), answer: t('faqA6') },
+    { question: t('faqQ7'), answer: t('faqA7') },
+    { question: t('faqQ8'), answer: t('faqA8') },
+    { question: t('faqQ9'), answer: t('faqA9') },
+    { question: t('faqQ10'), answer: t('faqA10') },
   ];
 
   const toggleFAQ = (index) => {
@@ -56,10 +28,8 @@ const FAQ = () => {
     <div className="faq-page">
       <div className="container section-padding-small">
         <div className="page-header">
-          <h1 className="section-title">FREQUENTLY ASKED QUESTIONS</h1>
-          <p className="page-subtitle">
-            Find answers to common questions about our products, shipping, and policies.
-          </p>
+          <h1 className="section-title">{t('faqTitle')}</h1>
+          <p className="page-subtitle">{t('faqSubtitle')}</p>
         </div>
 
         <div className="faq-list">
@@ -88,11 +58,10 @@ const FAQ = () => {
         </div>
 
         <div className="faq-contact">
-          <h2 className="heading-3">Still have questions?</h2>
+          <h2 className="heading-3">{t('faqStillQuestions')}</h2>
           <p className="body-regular mt-2">
-            Our customer service team is here to help. Contact us at{' '}
-            <a href="mailto:contact@kostin.com">contact@kostin.com</a> or call{' '}
-            <a href="tel:+15551234567">+1 (555) 123-4567</a>
+            {t('faqContact')}{' '}
+            <a href="mailto:contact@kostin.com">contact@kostin.com</a>
           </p>
         </div>
       </div>

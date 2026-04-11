@@ -1,18 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import './Hero.css';
 
 const Hero = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="hero">
       <div className="hero-image-bg">
         <div className="hero-overlay">
           <div className="container">
             <div className="hero-content">
-              <h1 className="hero-title">THE LUXURY COSMETICS DESTINATION</h1>
-              <p className="hero-subtitle">Curated beauty essentials from the world's finest brands</p>
+              <h1 className="hero-title">{t('heroTitle')}</h1>
+              <p className="hero-subtitle">{t('heroSubtitle')}</p>
               <Link to="/products" className="hero-button">
-                EXPLORE OUR COLLECTION
+                {t('heroButton')}
               </Link>
             </div>
           </div>

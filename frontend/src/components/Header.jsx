@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Globe } from 'lucide-react';
 import { getCart } from '../mock';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './Header.css';
 
 const Header = () => {
@@ -11,6 +12,7 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { lang, t, toggleLanguage } = useLanguage();
 
   useEffect(() => {
     updateCartCount();
@@ -45,7 +47,7 @@ const Header = () => {
       {/* Announcement Bar */}
       <div className="announcement-bar">
         <div className="container">
-          <p>FREE SHIPPING ON ORDERS OVER €100 | AUTHENTIC LUXURY COSMETICS</p>
+          <p>{t('announcement')}</p>
         </div>
       </div>
       
@@ -64,6 +66,17 @@ const Header = () => {
             </button>
 
             <div className="header-icons">
+              <button
+                className="icon-button lang-toggle"
+                onClick={toggleLanguage}
+                aria-label="Toggle language"
+                data-testid="language-toggle"
+                title={lang === 'en' ? 'Switch to Bulgarian' : 'Превключи на английски'}
+              >
+                <Globe size={18} />
+                <span className="lang-label">{lang === 'en' ? 'BG' : 'EN'}</span>
+              </button>
+
               <button 
                 className="icon-button"
                 onClick={() => setSearchOpen(!searchOpen)}
@@ -80,11 +93,11 @@ const Header = () => {
                   </button>
                   <div className="user-dropdown" data-testid="user-dropdown">
                     <p className="user-name">{user.name}</p>
-                    <Link to="/profile" className="dropdown-link" data-testid="my-profile-link">My Profile</Link>
+                    <Link to="/profile" className="dropdown-link" data-testid="my-profile-link">{t('myProfile')}</Link>
                     {user.role === 'admin' && (
-                      <Link to="/admin" className="dropdown-link" data-testid="admin-panel-link">Admin Panel</Link>
+                      <Link to="/admin" className="dropdown-link" data-testid="admin-panel-link">{t('adminPanel')}</Link>
                     )}
-                    <button onClick={handleLogout} className="dropdown-link" data-testid="logout-button">Logout</button>
+                    <button onClick={handleLogout} className="dropdown-link" data-testid="logout-button">{t('logout')}</button>
                   </div>
                 </div>
               ) : (
@@ -103,31 +116,31 @@ const Header = () => {
           {/* Logo - Centered Above Navigation */}
           <Link to="/" className="logo-text-link" data-testid="logo-link">
             <h1 className="logo-text">KOSTIN</h1>
-            <p className="logo-tagline">CURATED BEAUTY ESSENTIALS</p>
+            <p className="logo-tagline">{t('curatedBeautyEssentials')}</p>
           </Link>
 
           {/* Navigation */}
           <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} data-testid="nav-menu">
             <Link to="/products" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              SHOP ALL
+              {t('shopAll')}
             </Link>
             <Link to="/products?category=perfumes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              PERFUMES
+              {t('perfumes')}
             </Link>
             <Link to="/products?category=makeup" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              MAKEUP
+              {t('makeup')}
             </Link>
             <Link to="/products?category=skincare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              SKINCARE
+              {t('skincare')}
             </Link>
             <Link to="/products?category=haircare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              HAIRCARE
+              {t('haircare')}
             </Link>
             <Link to="/products?category=bodycare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              BODY CARE
+              {t('bodyCare')}
             </Link>
             <Link to="/products?category=menscare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              MEN'S CARE
+              {t('mensCare')}
             </Link>
           </nav>
           
@@ -136,7 +149,7 @@ const Header = () => {
             <div className="search-bar fade-in">
               <input 
                 type="text" 
-                placeholder="Search products, brands..."
+                placeholder={t('searchPlaceholder')}
                 className="search-input"
                 data-testid="search-input"
                 onKeyDown={(e) => {

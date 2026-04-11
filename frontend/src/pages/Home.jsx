@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import { products as mockProducts, categories as mockCategories } from '../mock';
+import { useLanguage } from '../context/LanguageContext';
 import './Home.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -10,6 +11,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +52,15 @@ const Home = () => {
     fetchData();
   }, []);
 
+  const categoryNames = {
+    perfumes: t('perfumes'),
+    makeup: t('makeup'),
+    skincare: t('skincare'),
+    haircare: t('haircare'),
+    bodycare: t('bodyCare'),
+    menscare: t('mensCare'),
+  };
+
   const newArrivals = products.slice(0, 8);
   const bestSellers = products.slice(8, 16);
 
@@ -59,7 +70,7 @@ const Home = () => {
 
       <section className="section-padding-small">
         <div className="container">
-          <h2 className="section-title">NEW ARRIVALS</h2>
+          <h2 className="section-title">{t('newArrivals')}</h2>
           <div className="grid-product-showcase" data-testid="new-arrivals-grid">
             {newArrivals.map(product => (
               <ProductCard key={product.id} product={product} />
@@ -67,7 +78,7 @@ const Home = () => {
           </div>
           <div className="section-cta">
             <Link to="/products" className="btn-secondary">
-              VIEW ALL PRODUCTS
+              {t('viewAllProducts')}
             </Link>
           </div>
         </div>
@@ -76,7 +87,7 @@ const Home = () => {
       {bestSellers.length > 0 && (
         <section className="section-padding-small best-sellers-section">
           <div className="container">
-            <h2 className="section-title">BEST SELLERS</h2>
+            <h2 className="section-title">{t('bestSellers')}</h2>
             <div className="grid-product-showcase" data-testid="best-sellers-grid">
               {bestSellers.map(product => (
                 <ProductCard key={product.id} product={product} />
@@ -88,7 +99,7 @@ const Home = () => {
 
       <section className="section-padding categories-section">
         <div className="container">
-          <h2 className="section-title">SHOP BY CATEGORY</h2>
+          <h2 className="section-title">{t('shopByCategory')}</h2>
           <div className="categories-grid" data-testid="categories-grid">
             {categories.map(category => (
               <Link
@@ -96,9 +107,9 @@ const Home = () => {
                 to={`/products?category=${category.id}`}
                 className="category-card"
               >
-                <h3 className="category-name">{category.name}</h3>
+                <h3 className="category-name">{categoryNames[category.id] || category.name}</h3>
                 <p className="category-count">
-                  {category.product_count} Products
+                  {category.product_count} {t('productsCount')}
                 </p>
               </Link>
             ))}
@@ -110,16 +121,16 @@ const Home = () => {
         <div className="container">
           <div className="trust-grid">
             <div className="trust-item">
-              <h3>100% AUTHENTIC</h3>
-              <p>All products sourced from trusted suppliers</p>
+              <h3>{t('trustAuthentic')}</h3>
+              <p>{t('trustAuthenticDesc')}</p>
             </div>
             <div className="trust-item">
-              <h3>FAST SHIPPING</h3>
-              <p>Orders shipped within 1-2 business days</p>
+              <h3>{t('trustShipping')}</h3>
+              <p>{t('trustShippingDesc')}</p>
             </div>
             <div className="trust-item">
-              <h3>SECURE PAYMENTS</h3>
-              <p>Industry-standard encryption</p>
+              <h3>{t('trustPayments')}</h3>
+              <p>{t('trustPaymentsDesc')}</p>
             </div>
           </div>
         </div>

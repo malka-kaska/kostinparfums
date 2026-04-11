@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader, Package } from 'lucide-react';
 import { clearCart } from '../mock';
+import { useLanguage } from '../context/LanguageContext';
 import './CheckoutSuccess.css';
 
 const CheckoutSuccess = () => {
@@ -9,6 +10,7 @@ const CheckoutSuccess = () => {
   const [status, setStatus] = useState('loading');
   const [paymentDetails, setPaymentDetails] = useState(null);
   const sessionId = searchParams.get('session_id');
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!sessionId) {
@@ -21,7 +23,6 @@ const CheckoutSuccess = () => {
       const pollInterval = 2000;
 
       if (attempts >= maxAttempts) {
-        // After max attempts, assume success if we got redirected here
         setStatus('success');
         clearCart();
         window.dispatchEvent(new Event('cartUpdated'));
@@ -33,7 +34,6 @@ const CheckoutSuccess = () => {
         const response = await fetch(`${API_URL}/api/payments/status/${sessionId}`);
         
         if (!response.ok) {
-          // If we can't check status but got redirected from Stripe, assume success
           if (attempts >= 2) {
             setStatus('success');
             clearCart();
@@ -48,7 +48,6 @@ const CheckoutSuccess = () => {
 
         if (data.payment_status === 'paid') {
           setStatus('success');
-          // Clear the cart after successful payment
           clearCart();
           window.dispatchEvent(new Event('cartUpdated'));
           return;
@@ -57,11 +56,9 @@ const CheckoutSuccess = () => {
           return;
         }
 
-        // Continue polling
         setTimeout(() => pollPaymentStatus(attempts + 1), pollInterval);
       } catch (error) {
         console.error('Error checking payment status:', error);
-        // If we're on success page from Stripe redirect, payment likely succeeded
         if (attempts >= 2) {
           setStatus('success');
           clearCart();
@@ -82,32 +79,30 @@ const CheckoutSuccess = () => {
           {status === 'loading' && (
             <div className="status-content">
               <Loader className="status-icon spinning" size={64} />
-              <h1 className="heading-2">Processing Payment</h1>
-              <p className="status-message">Please wait while we confirm your payment...</p>
+              <h1 className="heading-2">{t('processingPaymentTitle')}</h1>
+              <p className="status-message">{t('processingPaymentMsg')}</p>
             </div>
           )}
 
           {status === 'success' && (
             <div className="status-content success">
               <CheckCircle className="status-icon success-icon" size={64} />
-              <h1 className="heading-2">Payment Successful!</h1>
-              <p className="status-message">
-                Thank you for your order. You will receive a confirmation email shortly.
-              </p>
+              <h1 className="heading-2">{t('paymentSuccessful')}</h1>
+              <p className="status-message">{t('thankYou')}</p>
               {paymentDetails && (
                 <div className="payment-details">
                   <p className="amount">
-                    Total Paid: <strong>€{paymentDetails.amount_total.toFixed(2)}</strong>
+                    {t('totalPaid')} <strong>&euro;{paymentDetails.amount_total.toFixed(2)}</strong>
                   </p>
                 </div>
               )}
               <div className="action-buttons">
                 <Link to="/products" className="btn-primary">
-                  Continue Shopping
+                  {t('continueShopping')}
                 </Link>
                 <Link to="/profile" className="btn-secondary">
                   <Package size={18} />
-                  View Orders
+                  {t('viewOrders')}
                 </Link>
               </div>
             </div>
@@ -116,12 +111,10 @@ const CheckoutSuccess = () => {
           {status === 'expired' && (
             <div className="status-content error">
               <XCircle className="status-icon error-icon" size={64} />
-              <h1 className="heading-2">Session Expired</h1>
-              <p className="status-message">
-                Your payment session has expired. Please try again.
-              </p>
+              <h1 className="heading-2">{t('sessionExpired')}</h1>
+              <p className="status-message">{t('sessionExpiredMsg')}</p>
               <Link to="/cart" className="btn-primary">
-                Return to Cart
+                {t('returnToCart')}
               </Link>
             </div>
           )}
@@ -129,12 +122,10 @@ const CheckoutSuccess = () => {
           {status === 'error' && (
             <div className="status-content error">
               <XCircle className="status-icon error-icon" size={64} />
-              <h1 className="heading-2">Something Went Wrong</h1>
-              <p className="status-message">
-                We couldn't verify your payment. If you were charged, please contact support.
-              </p>
+              <h1 className="heading-2">{t('somethingWentWrong')}</h1>
+              <p className="status-message">{t('paymentVerifyFailed')}</p>
               <Link to="/cart" className="btn-primary">
-                Return to Cart
+                {t('returnToCart')}
               </Link>
             </div>
           )}
@@ -142,12 +133,10 @@ const CheckoutSuccess = () => {
           {status === 'timeout' && (
             <div className="status-content">
               <Loader className="status-icon" size={64} />
-              <h1 className="heading-2">Payment Processing</h1>
-              <p className="status-message">
-                Your payment is still being processed. Please check your email for confirmation or contact support.
-              </p>
+              <h1 className="heading-2">{t('paymentProcessingTitle')}</h1>
+              <p className="status-message">{t('paymentProcessingMsg')}</p>
               <Link to="/" className="btn-primary">
-                Return to Home
+                {t('returnToHome')}
               </Link>
             </div>
           )}

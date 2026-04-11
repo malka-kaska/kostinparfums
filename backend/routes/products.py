@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/products", tags=["products"])
 
 
 def product_doc_to_response(doc: dict) -> dict:
-    return {
+    resp = {
         "id": str(doc["_id"]) if "_id" in doc else doc.get("id", ""),
         "name": doc.get("name", ""),
         "brand": doc.get("brand", ""),
@@ -25,6 +25,9 @@ def product_doc_to_response(doc: dict) -> dict:
         "is_active": doc.get("is_active", True),
         "created_at": doc.get("created_at"),
     }
+    if doc.get("description_bg"):
+        resp["description_bg"] = doc["description_bg"]
+    return resp
 
 
 @router.get("")

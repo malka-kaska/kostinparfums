@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, Loader } from 'lucide-react';
 import { getCart, updateCartItem, removeFromCart, clearCart, getCartTotal } from '../mock';
+import { useLanguage } from '../context/LanguageContext';
 import './Cart.css';
 
 const Cart = () => {
@@ -10,6 +11,7 @@ const Cart = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadCart();
@@ -35,7 +37,7 @@ const Cart = () => {
   };
 
   const handleClearCart = () => {
-    if (window.confirm('Are you sure you want to clear your cart?')) {
+    if (window.confirm(t('clearCartConfirm'))) {
       clearCart();
       loadCart();
       window.dispatchEvent(new Event('cartUpdated'));
@@ -50,7 +52,6 @@ const Cart = () => {
       const API_URL = process.env.REACT_APP_BACKEND_URL;
       const originUrl = window.location.origin;
 
-      // Prepare cart items for checkout
       const items = cart.map(item => ({
         id: item.id,
         name: item.name,
@@ -76,7 +77,6 @@ const Cart = () => {
 
       const data = await response.json();
 
-      // Redirect to Stripe checkout
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {
@@ -95,12 +95,12 @@ const Cart = () => {
         <div className="container section-padding">
           <div className="empty-cart">
             <ShoppingBag size={64} strokeWidth={1} />
-            <h2 className="heading-2 mt-4">Your cart is empty</h2>
+            <h2 className="heading-2 mt-4">{t('cartEmpty')}</h2>
             <p className="body-regular mt-3" style={{ color: 'var(--text-secondary)' }}>
-              Looks like you haven't added anything to your cart yet.
+              {t('cartEmptyDesc')}
             </p>
             <Link to="/products" className="btn-primary mt-5">
-              Start Shopping
+              {t('startShopping')}
             </Link>
           </div>
         </div>
@@ -112,9 +112,9 @@ const Cart = () => {
     <div className="cart-page">
       <div className="container section-padding-small">
         <div className="cart-header">
-          <h1 className="heading-1">Shopping Cart</h1>
+          <h1 className="heading-1">{t('shoppingCart')}</h1>
           <button className="clear-cart-button" onClick={handleClearCart}>
-            Clear Cart
+            {t('clearCartBtn')}
           </button>
         </div>
 
@@ -131,7 +131,7 @@ const Cart = () => {
                     <p className="cart-item-brand">{item.brand}</p>
                     <h3>{item.name}</h3>
                   </Link>
-                  <p className="cart-item-price">€{item.price.toFixed(2)}</p>
+                  <p className="cart-item-price">&euro;{item.price.toFixed(2)}</p>
                 </div>
 
                 <div className="cart-item-actions">
@@ -154,13 +154,13 @@ const Cart = () => {
                   </div>
 
                   <p className="cart-item-subtotal">
-                    €{(item.price * item.quantity).toFixed(2)}
+                    &euro;{(item.price * item.quantity).toFixed(2)}
                   </p>
 
                   <button 
                     className="cart-remove-button"
                     onClick={() => handleRemoveItem(item.id)}
-                    aria-label="Remove item"
+                    aria-label={t('remove')}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -170,29 +170,29 @@ const Cart = () => {
           </div>
 
           <div className="cart-summary">
-            <h3 className="heading-3 mb-4">Order Summary</h3>
+            <h3 className="heading-3 mb-4">{t('orderSummary')}</h3>
             
             <div className="summary-row">
-              <span>Subtotal ({cart.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-              <span>€{total.toFixed(2)}</span>
+              <span>{t('subtotal')} ({cart.reduce((sum, item) => sum + item.quantity, 0)} {t('items')})</span>
+              <span>&euro;{total.toFixed(2)}</span>
             </div>
             
             <div className="summary-row">
-              <span>Shipping</span>
-              <span>{total >= 100 ? 'Free' : '€9.95'}</span>
+              <span>{t('shipping')}</span>
+              <span>{total >= 100 ? t('freeShipping') : '\u20ac9.95'}</span>
             </div>
             
             {total < 100 && (
               <p className="free-shipping-hint">
-                Add €{(100 - total).toFixed(2)} more for free shipping!
+                {t('addMoreForFree', { amount: (100 - total).toFixed(2) })}
               </p>
             )}
             
             <div className="summary-divider"></div>
             
             <div className="summary-row summary-total">
-              <span>Total</span>
-              <span>€{(total >= 100 ? total : total + 9.95).toFixed(2)}</span>
+              <span>{t('total')}</span>
+              <span>&euro;{(total >= 100 ? total : total + 9.95).toFixed(2)}</span>
             </div>
 
             {error && (
@@ -210,19 +210,19 @@ const Cart = () => {
               {isLoading ? (
                 <>
                   <Loader size={18} className="spinning" />
-                  Processing...
+                  {t('processingPayment')}
                 </>
               ) : (
-                'Proceed to Checkout'
+                t('proceedToCheckout')
               )}
             </button>
 
             <div className="payment-methods">
-              <p>Secure checkout powered by Stripe</p>
+              <p>{t('secureCheckout')}</p>
             </div>
 
             <Link to="/products" className="continue-shopping">
-              Continue Shopping
+              {t('continueShopping')}
             </Link>
           </div>
         </div>

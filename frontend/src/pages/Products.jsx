@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { products as mockProducts, categories as mockCategories, brands as mockBrands } from '../mock';
+import { useLanguage } from '../context/LanguageContext';
 import './Products.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -19,8 +20,8 @@ const Products = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [usingMock, setUsingMock] = useState(false);
+  const { t } = useLanguage();
 
-  // Fetch categories and brands on mount
   useEffect(() => {
     const fetchMeta = async () => {
       try {
@@ -54,7 +55,6 @@ const Products = () => {
     fetchMeta();
   }, []);
 
-  // Listen to URL parameter changes
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category') || 'all';
     const searchFromUrl = searchParams.get('search') || '';
@@ -62,7 +62,6 @@ const Products = () => {
     setSearchQuery(searchFromUrl);
   }, [searchParams]);
 
-  // Fetch products when filters change
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -81,7 +80,6 @@ const Products = () => {
             setProducts(data.products);
             setUsingMock(false);
           } else {
-            // Fallback to mock
             applyMockFilters();
           }
         } else {
@@ -123,6 +121,15 @@ const Products = () => {
     fetchProducts();
   }, [selectedCategory, selectedBrand, sortBy, searchQuery, usingMock]);
 
+  const categoryNames = {
+    perfumes: t('perfumes'),
+    makeup: t('makeup'),
+    skincare: t('skincare'),
+    haircare: t('haircare'),
+    bodycare: t('bodyCare'),
+    menscare: t('mensCare'),
+  };
+
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
     if (category !== 'all') {
@@ -143,23 +150,23 @@ const Products = () => {
     <div className="products-page">
       <div className="container">
         <div className="page-header section-padding-small">
-          <h1 className="hero-medium" data-testid="products-heading">All Products</h1>
+          <h1 className="hero-medium" data-testid="products-heading">{t('allProducts')}</h1>
           <p className="body-large mt-3" style={{ color: 'var(--text-secondary)' }}>
-            Discover our curated collection of {products.length} luxury products
+            {t('discoverCollection', { count: products.length })}
           </p>
         </div>
 
         <div className="products-layout">
           <aside className={`filters-sidebar ${filtersOpen ? 'open' : ''}`} data-testid="filters-sidebar">
             <div className="filters-header">
-              <h3 className="heading-3">Filters</h3>
+              <h3 className="heading-3">{t('filters')}</h3>
               <button className="close-filters" onClick={() => setFiltersOpen(false)}>
                 <X size={20} />
               </button>
             </div>
 
             <div className="filter-group">
-              <h4 className="filter-title">Category</h4>
+              <h4 className="filter-title">{t('category')}</h4>
               <div className="filter-options">
                 <label className="filter-option">
                   <input
@@ -168,7 +175,7 @@ const Products = () => {
                     checked={selectedCategory === 'all'}
                     onChange={() => handleCategoryChange('all')}
                   />
-                  <span>All Products</span>
+                  <span>{t('allProductsFilter')}</span>
                 </label>
                 {categories.map(category => (
                   <label key={category.id} className="filter-option">
@@ -178,14 +185,14 @@ const Products = () => {
                       checked={selectedCategory === category.id}
                       onChange={() => handleCategoryChange(category.id)}
                     />
-                    <span>{category.name}</span>
+                    <span>{categoryNames[category.id] || category.name}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="filter-group">
-              <h4 className="filter-title">Brand</h4>
+              <h4 className="filter-title">{t('brand')}</h4>
               <div className="filter-options scrollable">
                 <label className="filter-option">
                   <input
@@ -194,7 +201,7 @@ const Products = () => {
                     checked={selectedBrand === 'all'}
                     onChange={() => setSelectedBrand('all')}
                   />
-                  <span>All Brands</span>
+                  <span>{t('allBrands')}</span>
                 </label>
                 {brands.map(brand => (
                   <label key={brand} className="filter-option">
@@ -211,7 +218,7 @@ const Products = () => {
             </div>
 
             <button className="btn-primary" onClick={clearFilters} data-testid="clear-filters-btn">
-              Clear All Filters
+              {t('clearAllFilters')}
             </button>
           </aside>
 
@@ -223,11 +230,11 @@ const Products = () => {
                 data-testid="filters-toggle"
               >
                 <SlidersHorizontal size={20} />
-                <span>Filters</span>
+                <span>{t('filters')}</span>
               </button>
 
               <div className="sort-controls">
-                <label htmlFor="sort">Sort by:</label>
+                <label htmlFor="sort">{t('sortBy')}</label>
                 <select
                   id="sort"
                   value={sortBy}
@@ -235,9 +242,9 @@ const Products = () => {
                   className="sort-select"
                   data-testid="sort-select"
                 >
-                  <option value="name">Name</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
+                  <option value="name">{t('sortName')}</option>
+                  <option value="price-low">{t('sortPriceLow')}</option>
+                  <option value="price-high">{t('sortPriceHigh')}</option>
                 </select>
               </div>
             </div>
@@ -251,11 +258,11 @@ const Products = () => {
             ) : (
               <div className="no-products" data-testid="no-products">
                 <p className="body-large">
-                  {loading ? 'Loading products...' : 'No products found matching your filters.'}
+                  {loading ? t('loadingProducts') : t('noProductsFound')}
                 </p>
                 {!loading && (
                   <button className="btn-primary mt-4" onClick={clearFilters}>
-                    Clear Filters
+                    {t('clearFilters')}
                   </button>
                 )}
               </div>

@@ -94,7 +94,11 @@ async def get_categories(request: Request):
         {"$sort": {"_id": 1}},
     ]
     results = await db.products.aggregate(pipeline).to_list(100)
-    categories = [{"id": r["_id"], "name": r["_id"].title(), "product_count": r["count"]} for r in results]
+    cat_display = {
+        "perfumes": "Perfumes", "makeup": "Makeup", "skincare": "Skincare",
+        "haircare": "Haircare", "bodycare": "Body Care", "menscare": "Men's Care",
+    }
+    categories = [{"id": r["_id"], "name": cat_display.get(r["_id"], r["_id"].title()), "product_count": r["count"]} for r in results]
     return categories
 
 

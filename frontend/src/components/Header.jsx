@@ -123,6 +123,12 @@ const Header = () => {
             <Link to="/products?category=haircare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               HAIRCARE
             </Link>
+            <Link to="/products?category=bodycare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              BODY CARE
+            </Link>
+            <Link to="/products?category=menscare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              MEN'S CARE
+            </Link>
           </nav>
           
           {/* Search Bar */}

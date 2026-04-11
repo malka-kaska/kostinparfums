@@ -105,7 +105,9 @@ const ProductDetail = () => {
               )}
             </div>
 
-            <p className="body-regular mt-4" data-testid="product-description">{product.description}</p>
+            <p className="body-regular mt-4" data-testid="product-description">
+              {product.description ? product.description.replace(/<[^>]*>/g, '') : ''}
+            </p>
 
             <div className="product-actions mt-5">
               <div className="quantity-selector" data-testid="quantity-selector">

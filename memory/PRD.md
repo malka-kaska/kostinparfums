@@ -1,88 +1,57 @@
 # KOSTIN - Luxury Cosmetics E-Commerce
 
 ## Original Problem Statement
-Build a luxury cosmetics e-commerce website named "KOSTIN" with the slogan "Curated beauty essentials".
+Build a luxury cosmetics e-commerce website named "KOSTIN" with the slogan "Curated beauty essentials". Features: product catalog, filtering, shopping cart, JWT auth, admin panel, Stripe payments, bilingual BG/EN support.
 
-## Product Requirements
-- **Product Categories:** Perfumes, Makeup, Skincare, Haircare, Body Care, Men's Care
-- **Products:** 186 real products from wholesale supplier, user-curated with competitor-researched pricing
-- **Pricing Strategy:** Wholesale cost + €15 shipping + margin (user sets final price per product)
-- **Product filtering** (by category, brand, price, search, sort)
-- **Shopping cart** with Stripe checkout (EUR)
-- **User authentication** (JWT with httpOnly cookies)
-- **Admin panel** for product CRUD management
-- **Europe-only shipping**, free over €100
-
-## Technical Architecture
-```
-/app
-├── backend/
-│   ├── .env (MONGO_URL, DB_NAME, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, STRIPE keys, FRONTEND_URL)
-│   ├── server.py (main FastAPI app, payment routes)
-│   ├── routes/
-│   │   ├── auth.py (register, login, logout, me, refresh, forgot/reset password)
-│   │   └── products.py (CRUD, categories, brands, filtering)
-│   ├── models/schemas.py (Pydantic models)
-│   └── utils/auth.py (JWT, bcrypt, admin seeding)
-├── frontend/
-│   ├── src/
-│   │   ├── context/AuthContext.jsx (real API auth with httpOnly cookies)
-│   │   ├── components/ (Header, Footer, Hero, ProductCard, ScrollToTop)
-│   │   ├── pages/ (Home, Products, ProductDetail, Cart, Auth, Admin, Profile, etc.)
-│   │   └── mock.js (legacy fallback, no longer primary)
-│   └── .env (REACT_APP_BACKEND_URL)
-├── contracts.md (API endpoint definitions)
-└── memory/
-    ├── PRD.md
-    └── test_credentials.md
-```
+## Tech Stack
+- **Frontend**: React, React Router, Context API (Auth + Language), Lucide icons
+- **Backend**: FastAPI, Motor (async MongoDB), JWT Auth, Stripe SDK
+- **Database**: MongoDB (kostin_cosmetics)
+- **Integrations**: Stripe Payments, emergentintegrations (LLM for translations)
 
 ## What's Been Implemented
 
-### Backend
-- JWT Authentication (register, login, logout, /me, refresh, forgot/reset password)
-- Password Security (bcrypt, brute force protection)
-- Admin Seeding from .env
-- Products API (full CRUD, filtering by category/brand/search/price/sort, pagination)
-- Categories & Brands API (dynamic aggregation)
-- Stripe Payments (checkout, status, webhooks)
-- CORS with credentials support
+### Core Features (Complete)
+1. **Product Catalog** - 185 real luxury products from wholesale CSV, with calculated retail pricing
+2. **JWT Authentication** - Register/Login with bcrypt password hashing, admin seeding
+3. **Product Detail Pages** - Full product info, stock status, related products, quantity selector
+4. **Shopping Cart** - localStorage-based, add/remove/update, quantity controls
+5. **Stripe Checkout** - Full payment flow with success/error handling
+6. **Admin Panel** - CRUD operations for products (admin-only)
+7. **User Profile** - Account info, order history, saved addresses
+8. **Category Navigation** - Perfumes, Makeup, Skincare, Haircare, Body Care, Men's Care
+9. **Search & Filtering** - By category, brand, search term; sorting by name/price
 
-### Frontend
-- AuthContext with real API (httpOnly cookies)
-- All 6 categories in navigation
-- Products page with real data, filters, sorting
-- Product detail with real data, add to cart
-- Admin panel with product CRUD
-- Cart with Stripe checkout
-- Profile, Legal pages, About Us, FAQ
+### Content Pages (Complete)
+- About Us, FAQ, Shipping & Returns, Privacy Policy, Terms of Service
 
-### Product Data
-- 186 products imported from wholesale CSV
-- 71 perfumes (user-picked with user-set prices)
-- 20 makeup, 25 skincare, 25 haircare, 20 bodycare, 25 menscare (curated)
-- 38 brands including Chanel, Dior, Tom Ford, Creed, Guerlain, etc.
-- Wholesale prices stored but hidden from public API
+### BG/EN Localization (Complete - Dec 2025)
+- Language toggle in header (Globe icon + BG/EN label)
+- Auto-detection from browser language
+- Persistent language preference via localStorage
+- 290+ translation keys for all UI text
+- Bulgarian product descriptions generated via GPT-4.1-mini for all 185 products
+- Product names and brand names remain untranslated (as requested)
+- Coverage: Header, Footer, Home, Products, Product Detail, Cart, Auth, Profile, Admin, FAQ, About Us, Shipping & Returns
 
-## Test Credentials
-- **Admin:** admin@kostin.com / Admin123!
-- **Test User:** test@example.com / Test123!
-- **Stripe Test Card:** 4242 4242 4242 4242
+## Database Schema
+- `users`: {email, hashed_password, name, role, created_at}
+- `products`: {name, brand, category, size, price, wholesale_price, description, description_bg, stock, image_url, is_active}
 
-## Testing Status
-- Iteration 2: Auth + Products API — Backend 100%, Frontend 100%
-- Iteration 3: Real products (186) — Backend 100% (21/21), Frontend 100%
+## API Endpoints
+- POST /api/auth/login, POST /api/auth/register, GET /api/auth/me
+- GET /api/products, GET /api/products/{id}, GET /api/products/categories, GET /api/products/brands
+- POST /api/products, PUT /api/products/{id}, DELETE /api/products/{id}
+- POST /api/payments/checkout, GET /api/payments/status/{session_id}, GET /api/payments/config
 
 ## Prioritized Backlog
-
-### P1 - Next Up
-1. Shopping Cart Backend — persist cart per user in DB
-2. Orders System — create order on payment, track in profile
-3. Product image replacement — user wants custom images
-
-### P2 - Future
-4. Supplier API integration (dropship order forwarding)
-5. Wishlist functionality
-6. Product reviews/ratings
-7. Email notifications (order confirmation, shipping)
-8. Stock sync with supplier API
+### P1
+- Dropshipping supplier API integration (waiting for user's API)
+### P2
+- Shopping cart backend (persist in DB per user session)
+- Admin panel enhancements (order tracking, image upload, translations editing)
+### P3
+- Privacy Policy / Terms of Service Bulgarian translations
+- Loyalty program
+- Order confirmation emails
+- Stock sync with supplier API

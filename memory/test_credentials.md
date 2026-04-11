@@ -1,8 +1,8 @@
 # KOSTIN Test Credentials
 
 ## Admin Account
-- **Email:** admin@kostin.com
-- **Password:** Admin123!
+- **Email:** konstantin.kirchev.bs@gmail.com
+- **Password:** aS1zX2QwE34$
 - **Role:** admin
 
 ## Test User Account

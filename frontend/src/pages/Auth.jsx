@@ -182,7 +182,7 @@ const Auth = () => {
                   {t('demoCredentials')}
                 </p>
                 <p className="body-small" style={{ marginTop: '8px' }}>
-                  <strong>{t('admin')}</strong> admin@kostin.com / Admin123!
+                  <strong>{t('admin')}</strong> konstantin.kirchev.bs@gmail.com
                 </p>
               </div>
             )}

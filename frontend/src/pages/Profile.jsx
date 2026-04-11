@@ -9,6 +9,7 @@ const Profile = () => {
   const { user, logout, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [addresses, setAddresses] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
     label: '', street: '', city: '', postalCode: '', country: ''
@@ -31,6 +32,18 @@ const Profile = () => {
       setAddresses(defaultAddresses);
       localStorage.setItem('userAddresses', JSON.stringify(defaultAddresses));
     }
+    // Fetch user orders
+    const fetchOrders = async () => {
+      try {
+        const API_URL = process.env.REACT_APP_BACKEND_URL;
+        const res = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data.orders);
+        }
+      } catch {}
+    };
+    if (user) fetchOrders();
   }, [navigate, user, loading]);
 
   const handleLogout = async () => {
@@ -64,15 +77,6 @@ const Profile = () => {
     setAddresses(updatedAddresses);
     localStorage.setItem('userAddresses', JSON.stringify(updatedAddresses));
   };
-
-  const orders = [
-    { id: 'KST-2024-001', date: '2024-12-15', total: 245.50, status: 'Delivered',
-      items: [{ name: 'Luxury Perfume', quantity: 1, price: 125.00 }, { name: 'Skincare Set', quantity: 1, price: 98.00 }, { name: 'Lip Gloss', quantity: 1, price: 22.50 }] },
-    { id: 'KST-2024-002', date: '2024-12-18', total: 189.00, status: 'Shipped',
-      items: [{ name: 'Foundation', quantity: 1, price: 54.00 }, { name: 'Night Cream', quantity: 1, price: 135.00 }] },
-    { id: 'KST-2024-003', date: '2024-12-20', total: 325.75, status: 'Processing',
-      items: [{ name: 'Signature Fragrance', quantity: 1, price: 145.00 }, { name: 'Hair Oil', quantity: 2, price: 62.00 }, { name: 'Body Lotion', quantity: 1, price: 56.75 }] }
-  ];
 
   if (!user) return null;
 
@@ -140,33 +144,40 @@ const Profile = () => {
                   <Package size={24} />
                   <h2 className="heading-2">{t('orderHistory')}</h2>
                 </div>
-                <div className="orders-list">
-                  {orders.map(order => (
-                    <div key={order.id} className="order-card" data-testid={`order-${order.id}`}>
-                      <div className="order-header">
-                        <div>
-                          <p className="order-id">{order.id}</p>
-                          <p className="order-date">
-                            {new Date(order.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
-                          </p>
-                        </div>
-                        <span className={`order-status status-${order.status.toLowerCase()}`}>{order.status}</span>
-                      </div>
-                      <div className="order-items-list">
-                        {order.items.map((item, index) => (
-                          <div key={index} className="order-item-row">
-                            <span className="item-name">{item.name} x {item.quantity}</span>
-                            <span className="item-price">&euro;{(item.price * item.quantity).toFixed(2)}</span>
+                {orders.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '40px 20px', textAlign: 'center' }}>
+                    <Package size={48} strokeWidth={1} style={{ color: 'var(--text-secondary)', marginBottom: '16px' }} />
+                    <p className="body-regular" style={{ color: 'var(--text-secondary)' }}>{t('noOrders')}</p>
+                  </div>
+                ) : (
+                  <div className="orders-list">
+                    {orders.map(order => (
+                      <div key={order.id} className="order-card" data-testid={`order-${order.id}`}>
+                        <div className="order-header">
+                          <div>
+                            <p className="order-id">#{order.id.slice(-8).toUpperCase()}</p>
+                            <p className="order-date">
+                              {order.created_at ? new Date(order.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                            </p>
                           </div>
-                        ))}
+                          <span className={`order-status status-${(order.status || 'pending').toLowerCase()}`}>{order.status}</span>
+                        </div>
+                        <div className="order-items-list">
+                          {(order.items || []).map((item, index) => (
+                            <div key={index} className="order-item-row">
+                              <span className="item-name">{item.name} x {item.quantity}</span>
+                              <span className="item-price">&euro;{(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="order-footer">
+                          <span className="order-total-label">{t('total')}</span>
+                          <span className="order-total">&euro;{(order.total || 0).toFixed(2)}</span>
+                        </div>
                       </div>
-                      <div className="order-footer">
-                        <span className="order-total-label">{t('total')}</span>
-                        <span className="order-total">&euro;{order.total.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
             </div>
           )}

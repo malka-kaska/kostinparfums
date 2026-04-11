@@ -1,20 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Star } from 'lucide-react';
-import { addToCart } from '../mock';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './ProductCard.css';
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = ({ product }) => {
   const { t } = useLanguage();
+  const { addToCart } = useAuth();
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.preventDefault();
-    addToCart(product, 1);
-    window.dispatchEvent(new Event('cartUpdated'));
-    if (onAddToCart) {
-      onAddToCart(product);
-    }
+    await addToCart(product, 1);
   };
 
   const rating = 4.5;

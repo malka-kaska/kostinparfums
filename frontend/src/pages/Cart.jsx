@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, Loader } from 'lucide-react';
-import { getCart, updateCartItem, removeFromCart, clearCart, getCartTotal } from '../mock';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Cart.css';
 
@@ -12,35 +12,35 @@ const Cart = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user, getCartItems, getCartTotal, updateCartItem, removeCartItem, clearCartAll } = useAuth();
+
+  const loadCart = useCallback(() => {
+    setCart(getCartItems());
+    setTotal(getCartTotal());
+  }, [getCartItems, getCartTotal]);
 
   useEffect(() => {
     loadCart();
-  }, []);
+    const handleCartUpdate = () => loadCart();
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+  }, [loadCart]);
 
-  const loadCart = () => {
-    const cartItems = getCart();
-    setCart(cartItems);
-    setTotal(getCartTotal());
-  };
-
-  const handleUpdateQuantity = (productId, newQuantity) => {
+  const handleUpdateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
-    updateCartItem(productId, newQuantity);
+    await updateCartItem(productId, newQuantity);
     loadCart();
-    window.dispatchEvent(new Event('cartUpdated'));
   };
 
-  const handleRemoveItem = (productId) => {
-    removeFromCart(productId);
+  const handleRemoveItem = async (productId) => {
+    await removeCartItem(productId);
     loadCart();
-    window.dispatchEvent(new Event('cartUpdated'));
   };
 
-  const handleClearCart = () => {
+  const handleClearCart = async () => {
     if (window.confirm(t('clearCartConfirm'))) {
-      clearCart();
+      await clearCartAll();
       loadCart();
-      window.dispatchEvent(new Event('cartUpdated'));
     }
   };
 
@@ -61,13 +61,9 @@ const Cart = () => {
 
       const response = await fetch(`${API_URL}/api/payments/checkout`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          origin_url: originUrl,
-          items: items
-        })
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ origin_url: originUrl, items })
       });
 
       if (!response.ok) {
@@ -76,7 +72,6 @@ const Cart = () => {
       }
 
       const data = await response.json();
-
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {
@@ -99,7 +94,7 @@ const Cart = () => {
             <p className="body-regular mt-3" style={{ color: 'var(--text-secondary)' }}>
               {t('cartEmptyDesc')}
             </p>
-            <Link to="/products" className="btn-primary mt-5">
+            <Link to="/products" className="btn-primary mt-5" data-testid="start-shopping-btn">
               {t('startShopping')}
             </Link>
           </div>
@@ -112,8 +107,8 @@ const Cart = () => {
     <div className="cart-page">
       <div className="container section-padding-small">
         <div className="cart-header">
-          <h1 className="heading-1">{t('shoppingCart')}</h1>
-          <button className="clear-cart-button" onClick={handleClearCart}>
+          <h1 className="heading-1" data-testid="cart-heading">{t('shoppingCart')}</h1>
+          <button className="clear-cart-button" onClick={handleClearCart} data-testid="clear-cart-btn">
             {t('clearCartBtn')}
           </button>
         </div>
@@ -121,7 +116,7 @@ const Cart = () => {
         <div className="cart-layout">
           <div className="cart-items">
             {cart.map(item => (
-              <div key={item.id} className="cart-item">
+              <div key={item.id} className="cart-item" data-testid={`cart-item-${item.id}`}>
                 <Link to={`/product/${item.id}`} className="cart-item-image">
                   <img src={item.image} alt={item.name} />
                 </Link>
@@ -147,7 +142,6 @@ const Cart = () => {
                     <button 
                       onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                       className="cart-quantity-button"
-                      disabled={item.quantity >= item.stock}
                     >
                       <Plus size={16} />
                     </button>
@@ -195,23 +189,17 @@ const Cart = () => {
               <span>&euro;{(total >= 100 ? total : total + 9.95).toFixed(2)}</span>
             </div>
 
-            {error && (
-              <div className="checkout-error">
-                {error}
-              </div>
-            )}
+            {error && <div className="checkout-error">{error}</div>}
 
             <button 
               className="btn-primary checkout-button" 
               onClick={handleCheckout} 
               disabled={isLoading}
               style={{ width: '100%', marginTop: '24px' }}
+              data-testid="checkout-button"
             >
               {isLoading ? (
-                <>
-                  <Loader size={18} className="spinning" />
-                  {t('processingPayment')}
-                </>
+                <><Loader size={18} className="spinning" />{t('processingPayment')}</>
               ) : (
                 t('proceedToCheckout')
               )}

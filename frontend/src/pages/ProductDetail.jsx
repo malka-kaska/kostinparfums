@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
-import { products as mockProducts, addToCart } from '../mock';
+import { products as mockProducts } from '../mock';
 import ProductCard from '../components/ProductCard';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './ProductDetail.css';
 
@@ -16,6 +17,7 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { t, lang } = useLanguage();
+  const { addToCart } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -55,9 +57,8 @@ const ProductDetail = () => {
     setQuantity(1);
   }, [id]);
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    window.dispatchEvent(new Event('cartUpdated'));
+  const handleAddToCart = async () => {
+    await addToCart(product, quantity);
     alert(t('addedToCart', { qty: quantity, name: product.name }));
   };
 

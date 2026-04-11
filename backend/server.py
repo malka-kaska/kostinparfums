@@ -26,6 +26,8 @@ sys.path.insert(0, str(ROOT_DIR))
 
 from routes.auth import router as auth_router
 from routes.products import router as products_router
+from routes.cart import router as cart_router
+from routes.orders import router as orders_router
 from utils.auth import seed_admin
 
 # MongoDB connection
@@ -149,6 +151,19 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest):
 
         session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
 
+        # Try to get user info if authenticated
+        user_id = ""
+        user_email = ""
+        user_name = ""
+        try:
+            from utils.auth import get_current_user
+            user = await get_current_user(request, db)
+            user_id = user["_id"] if isinstance(user["_id"], str) else str(user["_id"])
+            user_email = user.get("email", "")
+            user_name = user.get("name", "")
+        except Exception:
+            pass
+
         transaction = {
             "id": str(uuid.uuid4()),
             "session_id": session.session_id,
@@ -157,6 +172,9 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest):
             "status": "pending",
             "payment_status": "initiated",
             "items": checkout_data.items,
+            "user_id": user_id,
+            "user_email": user_email,
+            "user_name": user_name,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
@@ -231,6 +249,42 @@ async def stripe_webhook(request: Request):
                     }
                 }
             )
+
+            # Create order on successful payment
+            if webhook_response.payment_status == "paid":
+                transaction = await db.payment_transactions.find_one(
+                    {"session_id": webhook_response.session_id}
+                )
+                if transaction:
+                    existing_order = await db.orders.find_one(
+                        {"session_id": webhook_response.session_id}
+                    )
+                    if not existing_order:
+                        order_items = []
+                        for item in transaction.get("items", []):
+                            order_items.append({
+                                "product_id": str(item.get("id", "")),
+                                "name": item.get("name", ""),
+                                "price": float(item.get("price", 0)),
+                                "quantity": int(item.get("quantity", 1)),
+                            })
+                        total = transaction.get("amount", 0)
+                        shipping = 0 if total >= 100 else 9.95
+                        await db.orders.insert_one({
+                            "user_id": transaction.get("user_id", ""),
+                            "user_email": transaction.get("user_email", ""),
+                            "user_name": transaction.get("user_name", ""),
+                            "items": order_items,
+                            "total": round(total + shipping, 2),
+                            "shipping_cost": shipping,
+                            "status": "confirmed",
+                            "payment_status": "paid",
+                            "session_id": webhook_response.session_id,
+                            "created_at": datetime.now(timezone.utc).isoformat(),
+                            "updated_at": datetime.now(timezone.utc).isoformat(),
+                        })
+                        logger.info(f"Order created for session {webhook_response.session_id}")
+
             logger.info(f"Webhook received: {webhook_response.event_type} for session {webhook_response.session_id}")
 
         return {"status": "success"}
@@ -244,6 +298,8 @@ async def stripe_webhook(request: Request):
 app.include_router(api_router)
 app.include_router(auth_router)
 app.include_router(products_router)
+app.include_router(cart_router)
+app.include_router(orders_router)
 
 # CORS — must use explicit origin for credentials
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")

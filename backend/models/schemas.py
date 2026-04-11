@@ -37,6 +37,7 @@ class ProductCreate(BaseModel):
     category: str
     price: float
     description: str = ""
+    description_bg: Optional[str] = None
     image: str = ""
     stock: int = 0
     is_active: bool = True
@@ -48,9 +49,19 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = None
     price: Optional[float] = None
     description: Optional[str] = None
+    description_bg: Optional[str] = None
     image: Optional[str] = None
     stock: Optional[int] = None
     is_active: Optional[bool] = None
+
+
+class CartItemAdd(BaseModel):
+    product_id: str
+    quantity: int = 1
+
+
+class CartItemUpdate(BaseModel):
+    quantity: int
 
 
 class ProductResponse(BaseModel):

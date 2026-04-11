@@ -1,168 +1,207 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import './Legal.css';
 
+const PrivacyPolicyEN = () => (
+  <div className="legal-content">
+    <section className="legal-section">
+      <h2>1. Introduction</h2>
+      <p>KOSTIN ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and make purchases from our online store.</p>
+      <p>We comply with the General Data Protection Regulation (GDPR) and other applicable European data protection laws.</p>
+    </section>
+    <section className="legal-section">
+      <h2>2. Data Controller</h2>
+      <p>KOSTIN is the data controller responsible for your personal data. If you have any questions about this Privacy Policy, please contact us at:</p>
+      <ul>
+        <li>Email: privacy@kostin.com</li>
+        <li>Address: Brussels, Belgium</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>3. Information We Collect</h2>
+      <h3>3.1 Personal Data</h3>
+      <p>We may collect the following personal data:</p>
+      <ul>
+        <li><strong>Identity Data:</strong> First name, last name</li>
+        <li><strong>Contact Data:</strong> Email address, phone number, shipping address, billing address</li>
+        <li><strong>Transaction Data:</strong> Payment details, purchase history, order information</li>
+        <li><strong>Technical Data:</strong> IP address, browser type, device information, cookies</li>
+        <li><strong>Usage Data:</strong> How you use our website, pages visited, time spent</li>
+        <li><strong>Marketing Data:</strong> Your preferences for receiving marketing communications</li>
+      </ul>
+      <h3>3.2 How We Collect Data</h3>
+      <ul>
+        <li>Directly from you when you create an account, make a purchase, or contact us</li>
+        <li>Automatically through cookies and similar technologies</li>
+        <li>From third-party payment processors (Stripe)</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>4. How We Use Your Data</h2>
+      <p>We use your personal data for the following purposes:</p>
+      <ul>
+        <li>To process and fulfill your orders</li>
+        <li>To manage your account and provide customer support</li>
+        <li>To send order confirmations and shipping updates</li>
+        <li>To improve our website and services</li>
+        <li>To send marketing communications (with your consent)</li>
+        <li>To comply with legal obligations</li>
+        <li>To prevent fraud and ensure security</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>5. Legal Basis for Processing (GDPR)</h2>
+      <ul>
+        <li><strong>Contract:</strong> Processing necessary to fulfill orders</li>
+        <li><strong>Consent:</strong> Marketing communications</li>
+        <li><strong>Legitimate Interests:</strong> Improving our services, fraud prevention</li>
+        <li><strong>Legal Obligation:</strong> Tax and accounting requirements</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>6. Data Sharing</h2>
+      <p>We may share your data with:</p>
+      <ul>
+        <li><strong>Payment Processors:</strong> Stripe, for secure payment processing</li>
+        <li><strong>Shipping Partners:</strong> To deliver your orders</li>
+        <li><strong>Service Providers:</strong> Email services, analytics, hosting</li>
+      </ul>
+      <p>We do not sell your personal data to third parties.</p>
+    </section>
+    <section className="legal-section">
+      <h2>7. Your Rights (GDPR)</h2>
+      <p>Under GDPR, you have the right to:</p>
+      <ul>
+        <li>Access your personal data</li>
+        <li>Rectify inaccurate data</li>
+        <li>Request erasure of your data</li>
+        <li>Restrict processing of your data</li>
+        <li>Data portability</li>
+        <li>Object to processing</li>
+        <li>Withdraw consent at any time</li>
+      </ul>
+      <p>To exercise these rights, contact us at privacy@kostin.com.</p>
+    </section>
+    <section className="legal-section">
+      <h2>8. Cookies</h2>
+      <p>We use cookies to improve your browsing experience and analyze site traffic. You can manage cookie preferences through your browser settings.</p>
+    </section>
+    <section className="legal-section">
+      <h2>9. Data Retention</h2>
+      <p>We retain your personal data for as long as necessary to fulfill the purposes outlined in this policy, or as required by law. Order data is retained for 7 years for tax purposes.</p>
+    </section>
+    <section className="legal-section">
+      <h2>10. Contact</h2>
+      <p>For privacy-related inquiries: <a href="mailto:privacy@kostin.com">privacy@kostin.com</a></p>
+    </section>
+  </div>
+);
+
+const PrivacyPolicyBG = () => (
+  <div className="legal-content">
+    <section className="legal-section">
+      <h2>1. Въведение</h2>
+      <p>KOSTIN ("ние" или "нас") се ангажира да защитава вашата поверителност. Тази Политика за поверителност обяснява как събираме, използваме, разкриваме и защитаваме вашата информация, когато посещавате нашия уебсайт и правите покупки от нашия онлайн магазин.</p>
+      <p>Ние спазваме Общия регламент за защита на данните (GDPR) и другите приложими европейски закони за защита на данните.</p>
+    </section>
+    <section className="legal-section">
+      <h2>2. Администратор на данни</h2>
+      <p>KOSTIN е администраторът на данни, отговорен за вашите лични данни. Ако имате въпроси относно тази Политика за поверителност, моля свържете се с нас на:</p>
+      <ul>
+        <li>Имейл: privacy@kostin.com</li>
+        <li>Адрес: Брюксел, Белгия</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>3. Информация, която събираме</h2>
+      <h3>3.1 Лични данни</h3>
+      <p>Можем да събираме следните лични данни:</p>
+      <ul>
+        <li><strong>Данни за самоличност:</strong> Име, фамилия</li>
+        <li><strong>Данни за контакт:</strong> Имейл адрес, телефон, адрес за доставка, адрес за фактуриране</li>
+        <li><strong>Данни за транзакции:</strong> Данни за плащане, история на покупките, информация за поръчки</li>
+        <li><strong>Технически данни:</strong> IP адрес, тип браузър, информация за устройството, бисквитки</li>
+        <li><strong>Данни за използване:</strong> Как използвате нашия уебсайт, посетени страници, прекарано време</li>
+        <li><strong>Маркетингови данни:</strong> Вашите предпочитания за получаване на маркетингови съобщения</li>
+      </ul>
+      <h3>3.2 Как събираме данни</h3>
+      <ul>
+        <li>Директно от вас, когато създавате акаунт, правите покупка или се свързвате с нас</li>
+        <li>Автоматично чрез бисквитки и подобни технологии</li>
+        <li>От доставчици на платежни услуги (Stripe)</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>4. Как използваме вашите данни</h2>
+      <p>Използваме вашите лични данни за следните цели:</p>
+      <ul>
+        <li>За обработка и изпълнение на вашите поръчки</li>
+        <li>За управление на вашия акаунт и предоставяне на клиентска поддръжка</li>
+        <li>За изпращане на потвърждения за поръчки и актуализации за доставка</li>
+        <li>За подобряване на нашия уебсайт и услуги</li>
+        <li>За изпращане на маркетингови съобщения (с вашето съгласие)</li>
+        <li>За спазване на правни задължения</li>
+        <li>За предотвратяване на измами и осигуряване на сигурност</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>5. Правно основание за обработка (GDPR)</h2>
+      <ul>
+        <li><strong>Договор:</strong> Обработка, необходима за изпълнение на поръчки</li>
+        <li><strong>Съгласие:</strong> Маркетингови съобщения</li>
+        <li><strong>Легитимни интереси:</strong> Подобряване на нашите услуги, предотвратяване на измами</li>
+        <li><strong>Правно задължение:</strong> Данъчни и счетоводни изисквания</li>
+      </ul>
+    </section>
+    <section className="legal-section">
+      <h2>6. Споделяне на данни</h2>
+      <p>Можем да споделяме вашите данни с:</p>
+      <ul>
+        <li><strong>Доставчици на платежни услуги:</strong> Stripe, за сигурна обработка на плащания</li>
+        <li><strong>Куриерски партньори:</strong> За доставка на вашите поръчки</li>
+        <li><strong>Доставчици на услуги:</strong> Имейл услуги, анализи, хостинг</li>
+      </ul>
+      <p>Ние не продаваме вашите лични данни на трети страни.</p>
+    </section>
+    <section className="legal-section">
+      <h2>7. Вашите права (GDPR)</h2>
+      <p>Съгласно GDPR, вие имате право да:</p>
+      <ul>
+        <li>Достъп до вашите лични данни</li>
+        <li>Коригиране на неточни данни</li>
+        <li>Заявка за изтриване на вашите данни</li>
+        <li>Ограничаване на обработката на вашите данни</li>
+        <li>Преносимост на данните</li>
+        <li>Възражение срещу обработката</li>
+        <li>Оттегляне на съгласие по всяко време</li>
+      </ul>
+      <p>За да упражните тези права, свържете се с нас на privacy@kostin.com.</p>
+    </section>
+    <section className="legal-section">
+      <h2>8. Бисквитки</h2>
+      <p>Използваме бисквитки за подобряване на вашето сърфиране и анализ на трафика на сайта. Можете да управлявате предпочитанията за бисквитки чрез настройките на вашия браузър.</p>
+    </section>
+    <section className="legal-section">
+      <h2>9. Съхранение на данни</h2>
+      <p>Съхраняваме вашите лични данни толкова дълго, колкото е необходимо за целите, описани в тази политика, или както се изисква от закона. Данните за поръчки се съхраняват 7 години за данъчни цели.</p>
+    </section>
+    <section className="legal-section">
+      <h2>10. Контакт</h2>
+      <p>За запитвания свързани с поверителност: <a href="mailto:privacy@kostin.com">privacy@kostin.com</a></p>
+    </section>
+  </div>
+);
+
 const PrivacyPolicy = () => {
+  const { lang, t } = useLanguage();
   return (
     <div className="legal-page">
       <div className="container section-padding">
         <div className="legal-header">
-          <h1 className="section-title">PRIVACY POLICY</h1>
-          <p className="legal-updated">Last updated: January 2025</p>
+          <h1 className="section-title">{t('privacyPolicy').toUpperCase()}</h1>
+          <p className="legal-updated">{lang === 'bg' ? 'Последна актуализация: Януари 2025' : 'Last updated: January 2025'}</p>
         </div>
-
-        <div className="legal-content">
-          <section className="legal-section">
-            <h2>1. Introduction</h2>
-            <p>
-              KOSTIN ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and make purchases from our online store.
-            </p>
-            <p>
-              We comply with the General Data Protection Regulation (GDPR) and other applicable European data protection laws.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>2. Data Controller</h2>
-            <p>
-              KOSTIN is the data controller responsible for your personal data. If you have any questions about this Privacy Policy, please contact us at:
-            </p>
-            <ul>
-              <li>Email: privacy@kostin.com</li>
-              <li>Address: Brussels, Belgium, EU</li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>3. Information We Collect</h2>
-            <h3>3.1 Personal Data</h3>
-            <p>We may collect the following personal data:</p>
-            <ul>
-              <li>Name and contact information (email address, phone number)</li>
-              <li>Billing and shipping addresses</li>
-              <li>Payment information (processed securely through our payment providers)</li>
-              <li>Order history and preferences</li>
-              <li>Account credentials</li>
-            </ul>
-
-            <h3>3.2 Automatically Collected Data</h3>
-            <p>When you visit our website, we automatically collect:</p>
-            <ul>
-              <li>IP address and device information</li>
-              <li>Browser type and version</li>
-              <li>Pages visited and time spent</li>
-              <li>Cookies and similar tracking technologies</li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>4. Legal Basis for Processing (GDPR)</h2>
-            <p>We process your personal data based on:</p>
-            <ul>
-              <li><strong>Contract Performance:</strong> To fulfill orders and provide our services</li>
-              <li><strong>Legitimate Interest:</strong> To improve our website and services</li>
-              <li><strong>Legal Obligation:</strong> To comply with tax and accounting requirements</li>
-              <li><strong>Consent:</strong> For marketing communications (when applicable)</li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>5. How We Use Your Information</h2>
-            <p>We use your personal data to:</p>
-            <ul>
-              <li>Process and fulfill your orders</li>
-              <li>Communicate with you about your orders</li>
-              <li>Provide customer support</li>
-              <li>Send marketing communications (with your consent)</li>
-              <li>Improve our website and services</li>
-              <li>Comply with legal obligations</li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>6. Data Sharing</h2>
-            <p>We may share your data with:</p>
-            <ul>
-              <li><strong>Payment Processors:</strong> To process transactions securely</li>
-              <li><strong>Shipping Partners:</strong> To deliver your orders within Europe</li>
-              <li><strong>Service Providers:</strong> Who help us operate our business</li>
-              <li><strong>Legal Authorities:</strong> When required by law</li>
-            </ul>
-            <p>We do not sell your personal data to third parties.</p>
-          </section>
-
-          <section className="legal-section">
-            <h2>7. International Transfers</h2>
-            <p>
-              Your data is primarily stored and processed within the European Economic Area (EEA). If we transfer data outside the EEA, we ensure appropriate safeguards are in place, such as Standard Contractual Clauses approved by the European Commission.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>8. Data Retention</h2>
-            <p>We retain your personal data for:</p>
-            <ul>
-              <li>Active accounts: As long as your account is active</li>
-              <li>Order data: 7 years for tax and legal compliance</li>
-              <li>Marketing data: Until you withdraw consent</li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>9. Your Rights (GDPR)</h2>
-            <p>Under GDPR, you have the right to:</p>
-            <ul>
-              <li><strong>Access:</strong> Request a copy of your personal data</li>
-              <li><strong>Rectification:</strong> Correct inaccurate data</li>
-              <li><strong>Erasure:</strong> Request deletion of your data ("right to be forgotten")</li>
-              <li><strong>Restriction:</strong> Limit how we use your data</li>
-              <li><strong>Portability:</strong> Receive your data in a portable format</li>
-              <li><strong>Object:</strong> Object to processing based on legitimate interest</li>
-              <li><strong>Withdraw Consent:</strong> Withdraw consent at any time</li>
-            </ul>
-            <p>
-              To exercise these rights, contact us at privacy@kostin.com. We will respond within 30 days.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>10. Cookies</h2>
-            <p>
-              We use cookies to improve your browsing experience. You can manage cookie preferences through your browser settings. For more information, see our Cookie Policy.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>11. Security</h2>
-            <p>
-              We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>12. Complaints</h2>
-            <p>
-              If you believe your data protection rights have been violated, you have the right to lodge a complaint with your local Data Protection Authority. In Belgium, this is the Data Protection Authority (Gegevensbeschermingsautoriteit).
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>13. Changes to This Policy</h2>
-            <p>
-              We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on our website and updating the "Last updated" date.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>14. Contact Us</h2>
-            <p>
-              For any questions about this Privacy Policy or our data practices, please contact us:
-            </p>
-            <ul>
-              <li>Email: privacy@kostin.com</li>
-              <li>Address: Brussels, Belgium, EU</li>
-            </ul>
-          </section>
-        </div>
+        {lang === 'bg' ? <PrivacyPolicyBG /> : <PrivacyPolicyEN />}
       </div>
     </div>
   );

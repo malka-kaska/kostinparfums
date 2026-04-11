@@ -1,40 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, X, Globe } from 'lucide-react';
-import { getCart } from '../mock';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Header.css';
 
 const Header = () => {
-  const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, getCartCount } = useAuth();
   const { lang, t, toggleLanguage } = useLanguage();
 
   useEffect(() => {
-    updateCartCount();
-    
-    const handleCartUpdate = () => {
-      updateCartCount();
-    };
-    
-    window.addEventListener('storage', handleCartUpdate);
-    window.addEventListener('cartUpdated', handleCartUpdate);
-    
+    const updateCount = () => setCartCount(getCartCount());
+    updateCount();
+    window.addEventListener('cartUpdated', updateCount);
+    window.addEventListener('storage', updateCount);
     return () => {
-      window.removeEventListener('storage', handleCartUpdate);
-      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('cartUpdated', updateCount);
+      window.removeEventListener('storage', updateCount);
     };
-  }, []);
-
-  const updateCartCount = () => {
-    const cart = getCart();
-    const count = cart.reduce((total, item) => total + item.quantity, 0);
-    setCartCount(count);
-  };
+  }, [getCartCount]);
 
   const handleLogout = async () => {
     await logout();

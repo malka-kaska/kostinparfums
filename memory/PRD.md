@@ -12,46 +12,46 @@ Build a luxury cosmetics e-commerce website named "KOSTIN" with the slogan "Cura
 ## What's Been Implemented
 
 ### Core Features (Complete)
-1. **Product Catalog** - 185 real luxury products from wholesale CSV, with calculated retail pricing
-2. **JWT Authentication** - Register/Login with bcrypt password hashing, admin seeding
-3. **Product Detail Pages** - Full product info, stock status, related products, quantity selector
-4. **Shopping Cart** - localStorage-based, add/remove/update, quantity controls
-5. **Stripe Checkout** - Full payment flow with success/error handling
-6. **Admin Panel** - CRUD operations for products (admin-only)
-7. **User Profile** - Account info, order history, saved addresses
+1. **Product Catalog** - 185 real luxury products from wholesale CSV, calculated retail pricing
+2. **JWT Authentication** - Register/Login with bcrypt, admin seeding
+3. **Product Detail Pages** - Full product info, stock status, related products, bilingual descriptions
+4. **Shopping Cart (Backend)** - MongoDB-persisted for logged-in users, localStorage fallback for guests
+5. **Stripe Checkout** - Full payment flow with order creation on webhook
+6. **Admin Panel** - Products tab (CRUD) + Orders tab (status management)
+7. **User Profile** - Account info, real order history from backend, saved addresses
 8. **Category Navigation** - Perfumes, Makeup, Skincare, Haircare, Body Care, Men's Care
 9. **Search & Filtering** - By category, brand, search term; sorting by name/price
 
-### Content Pages (Complete)
-- About Us, FAQ, Shipping & Returns, Privacy Policy, Terms of Service
+### BG/EN Localization (Complete)
+- Language toggle in header, auto-detection, localStorage persistence
+- 290+ translation keys covering all UI text
+- Bulgarian product descriptions for all 185 products (GPT-4.1-mini generated)
+- Privacy Policy & Terms of Service fully translated to Bulgarian
+- Product/brand names remain untranslated
 
-### BG/EN Localization (Complete - Dec 2025)
-- Language toggle in header (Globe icon + BG/EN label)
-- Auto-detection from browser language
-- Persistent language preference via localStorage
-- 290+ translation keys for all UI text
-- Bulgarian product descriptions generated via GPT-4.1-mini for all 185 products
-- Product names and brand names remain untranslated (as requested)
-- Coverage: Header, Footer, Home, Products, Product Detail, Cart, Auth, Profile, Admin, FAQ, About Us, Shipping & Returns
+### Content Pages (Complete)
+- About Us, FAQ, Shipping & Returns, Privacy Policy (BG/EN), Terms of Service (BG/EN)
 
 ## Database Schema
-- `users`: {email, hashed_password, name, role, created_at}
+- `users`: {email, password_hash, name, role, created_at}
 - `products`: {name, brand, category, size, price, wholesale_price, description, description_bg, stock, image_url, is_active}
+- `carts`: {user_id, items: [{product_id, quantity}], updated_at}
+- `orders`: {user_id, user_email, user_name, items, total, shipping_cost, status, payment_status, session_id, created_at}
+- `payment_transactions`: {session_id, amount, currency, status, payment_status, items, user_id, user_email}
 
 ## API Endpoints
-- POST /api/auth/login, POST /api/auth/register, GET /api/auth/me
-- GET /api/products, GET /api/products/{id}, GET /api/products/categories, GET /api/products/brands
-- POST /api/products, PUT /api/products/{id}, DELETE /api/products/{id}
-- POST /api/payments/checkout, GET /api/payments/status/{session_id}, GET /api/payments/config
+- Auth: POST /api/auth/login, POST /api/auth/register, GET /api/auth/me, POST /api/auth/logout
+- Products: GET /api/products, GET /api/products/{id}, GET /api/products/categories, GET /api/products/brands, POST/PUT/DELETE /api/products
+- Cart: GET /api/cart, POST /api/cart/add, PUT /api/cart/update/{id}, DELETE /api/cart/remove/{id}, DELETE /api/cart/clear
+- Orders: GET /api/orders, GET /api/orders/{id}, PUT /api/orders/{id}/status
+- Payments: POST /api/payments/checkout, GET /api/payments/status/{session_id}, GET /api/payments/config
 
 ## Prioritized Backlog
 ### P1
 - Dropshipping supplier API integration (waiting for user's API)
 ### P2
-- Shopping cart backend (persist in DB per user session)
-- Admin panel enhancements (order tracking, image upload, translations editing)
+- Admin image upload for products (object storage integration)
 ### P3
-- Privacy Policy / Terms of Service Bulgarian translations
 - Loyalty program
 - Order confirmation emails
 - Stock sync with supplier API

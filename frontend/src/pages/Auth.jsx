@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -17,10 +17,13 @@ const Auth = () => {
   const { login, register, user } = useAuth();
   const { t } = useLanguage();
 
-  if (user) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  if (user) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

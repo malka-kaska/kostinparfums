@@ -15,7 +15,7 @@ export const en = {
 
   // Home / Hero
   heroTitle: "THE LUXURY COSMETICS DESTINATION",
-  heroSubtitle: "Curated beauty essentials from the world's finest brands",
+  heroSubtitle: "Curated fragrances and beauty essentials from the world's finest brands",
   heroButton: "EXPLORE OUR COLLECTION",
   newArrivals: "NEW ARRIVALS",
   bestSellers: "BEST SELLERS",
@@ -295,5 +295,5 @@ export const en = {
   // Common
   loading: "Loading...",
   error: "Something went wrong",
-  curatedBeautyEssentials: "CURATED BEAUTY ESSENTIALS",
+  curatedBeautyEssentials: "CURATED FRAGRANCES AND BEAUTY ESSENTIALS",
 };

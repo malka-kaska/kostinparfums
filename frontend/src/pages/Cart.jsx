@@ -67,11 +67,15 @@ const Cart = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create checkout session');
+        let detail;
+        try {
+          const errorData = await response.clone().json();
+          detail = errorData.detail;
+        } catch {}
+        throw new Error(detail || 'Failed to create checkout session');
       }
 
-      const data = await response.json();
+      const data = await response.clone().json();
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {

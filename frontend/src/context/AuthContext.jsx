@@ -53,10 +53,21 @@ export const AuthProvider = ({ children }) => {
       body: JSON.stringify({ email, password }),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Login failed');
+      let detail;
+      try {
+        const err = await res.clone().json();
+        detail = err.detail;
+      } catch {
+        // body may have been consumed by platform monitoring script
+      }
+      if (!detail) {
+        if (res.status === 429) detail = 'Too many failed attempts. Try again in 15 minutes.';
+        else if (res.status === 401) detail = 'Invalid email or password';
+        else detail = 'Login failed';
+      }
+      throw new Error(detail);
     }
-    const data = await res.json();
+    const data = await res.clone().json();
     setUser(data);
 
     // Sync localStorage cart to backend
@@ -87,10 +98,18 @@ export const AuthProvider = ({ children }) => {
       body: JSON.stringify({ email, password, name }),
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Registration failed');
+      let detail;
+      try {
+        const err = await res.clone().json();
+        detail = err.detail;
+      } catch {}
+      if (!detail) {
+        if (res.status === 400) detail = 'Email already registered';
+        else detail = 'Registration failed';
+      }
+      throw new Error(detail);
     }
-    const data = await res.json();
+    const data = await res.clone().json();
     setUser(data);
     await fetchCart();
     return data;

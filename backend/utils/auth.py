@@ -96,3 +96,6 @@ async def seed_admin(db):
     await db.users.create_index("email", unique=True)
     await db.login_attempts.create_index("identifier")
     await db.password_reset_tokens.create_index("expires_at", expireAfterSeconds=0)
+
+    # Clear any brute-force lockouts for admin on startup
+    await db.login_attempts.delete_many({"identifier": {"$regex": admin_email}})

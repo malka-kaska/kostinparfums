@@ -10,6 +10,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
@@ -64,12 +65,15 @@ const Products = () => {
         if (res.ok) {
           const data = await res.json();
           setProducts(data.products);
+          setTotalProducts(data.total);
         } else {
           setProducts([]);
+          setTotalProducts(0);
         }
       } catch (err) {
         console.error('Failed to fetch products:', err);
         setProducts([]);
+        setTotalProducts(0);
       } finally {
         setLoading(false);
       }
@@ -110,7 +114,7 @@ const Products = () => {
         <div className="page-header section-padding-small">
           <h1 className="hero-medium" data-testid="products-heading">{t('allProducts')}</h1>
           <p className="body-large mt-3" style={{ color: 'var(--text-secondary)' }}>
-            {t('discoverCollection', { count: products.length })}
+            {t('discoverCollection', { count: totalProducts })}
           </p>
         </div>
 

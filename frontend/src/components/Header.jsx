@@ -115,17 +115,11 @@ const Header = () => {
             <Link to="/products?category=perfumes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               {t('perfumes')}
             </Link>
-            <Link to="/products?category=makeup" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              {t('makeup')}
-            </Link>
             <Link to="/products?category=skincare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               {t('skincare')}
             </Link>
             <Link to="/products?category=haircare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               {t('haircare')}
-            </Link>
-            <Link to="/products?category=bodycare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              {t('bodyCare')}
             </Link>
             <Link to="/products?category=menscare" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               {t('mensCare')}

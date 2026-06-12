@@ -65,6 +65,29 @@ async def get_current_user(request: Request, db) -> dict:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+async def get_current_user_optional(request: Request, db) -> dict | None:
+    """Get current user if authenticated, otherwise return None"""
+    token = request.cookies.get("access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "access":
+            return None
+        user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+        if not user:
+            return None
+        user["_id"] = str(user["_id"])
+        user.pop("password_hash", None)
+        return user
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+
 async def seed_admin(db):
     admin_email = os.environ.get("ADMIN_EMAIL")
     admin_password = os.environ.get("ADMIN_PASSWORD")

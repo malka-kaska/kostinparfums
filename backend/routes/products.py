@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, Query
 from bson import ObjectId
 from typing import Optional
-from models.schemas import ProductCreate, ProductUpdate, ProductResponse
-from utils.auth import get_current_user
+from models.schemas import ProductCreate, ProductUpdate, ProductResponse, ProductVisibilityUpdate
+from utils.auth import get_current_user, get_current_user_optional
 import logging
 import uuid
 
@@ -12,9 +12,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/products", tags=["products"])
 
 
-def product_doc_to_response(doc: dict) -> dict:
+def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict:
     resp = {
         "id": str(doc["_id"]) if "_id" in doc else doc.get("id", ""),
+        "sku": doc.get("sku", ""),
         "name": doc.get("name", ""),
         "brand": doc.get("brand", ""),
         "category": doc.get("category", ""),
@@ -23,6 +24,7 @@ def product_doc_to_response(doc: dict) -> dict:
         "image": doc.get("image", ""),
         "stock": doc.get("stock", 0),
         "is_active": doc.get("is_active", True),
+        "is_visible": doc.get("is_visible", True),
         "created_at": doc.get("created_at"),
     }
     if doc.get("description_bg"):
@@ -42,8 +44,9 @@ async def get_products(
     page: int = Query(1, ge=1),
     limit: int = Query(100, ge=1, le=200),
 ):
+    """Get products - only visible products for regular users"""
     db = request.app.state.db
-    query = {"is_active": True}
+    query = {"is_active": True, "is_visible": True}
 
     if category:
         query["category"] = category
@@ -82,6 +85,61 @@ async def get_products(
 
     return {
         "products": [product_doc_to_response(p) for p in products],
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit if limit > 0 else 0,
+    }
+
+
+@router.get("/admin/all")
+async def get_all_products_admin(
+    request: Request,
+    category: Optional[str] = None,
+    brand: Optional[str] = None,
+    search: Optional[str] = None,
+    sort: Optional[str] = "name",
+    page: int = Query(1, ge=1),
+    limit: int = Query(200, ge=1, le=500),
+):
+    """Get ALL products including hidden ones - Admin only"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    query = {}  # No visibility filter for admin
+
+    if category:
+        query["category"] = category
+    if brand:
+        query["brand"] = brand
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"brand": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}},
+        ]
+
+    # Sort
+    sort_field = "name"
+    sort_dir = 1
+    if sort == "price-low":
+        sort_field = "price"
+        sort_dir = 1
+    elif sort == "price-high":
+        sort_field = "price"
+        sort_dir = -1
+    elif sort == "newest":
+        sort_field = "created_at"
+        sort_dir = -1
+
+    skip = (page - 1) * limit
+    total = await db.products.count_documents(query)
+    cursor = db.products.find(query).sort(sort_field, sort_dir).skip(skip).limit(limit)
+    products = await cursor.to_list(limit)
+
+    return {
+        "products": [product_doc_to_response(p, include_visibility=True) for p in products],
         "total": total,
         "page": page,
         "pages": (total + limit - 1) // limit if limit > 0 else 0,
@@ -195,3 +253,32 @@ async def delete_product(request: Request, product_id: str):
         raise HTTPException(status_code=404, detail="Product not found")
 
     return {"message": "Product deleted"}
+
+
+@router.patch("/{product_id}/visibility")
+async def toggle_product_visibility(request: Request, product_id: str, data: ProductVisibilityUpdate):
+    """Toggle product visibility - Admin only"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    try:
+        result = await db.products.find_one_and_update(
+            {"_id": ObjectId(product_id)},
+            {
+                "$set": {
+                    "is_visible": data.is_visible,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            },
+            return_document=True,
+        )
+    except Exception:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    logger.info(f"Product {product_id} visibility set to {data.is_visible}")
+    return product_doc_to_response(result)

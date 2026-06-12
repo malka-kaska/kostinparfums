@@ -403,3 +403,87 @@ textarea.form-input {
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }
+
+/* Visibility Toggle */
+.visibility-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.visibility-toggle.visible {
+  color: var(--status-success, #10b981);
+  border-color: var(--status-success, #10b981);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.visibility-toggle.hidden {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.visibility-toggle:hover {
+  transform: scale(1.05);
+}
+
+.visibility-toggle.visible:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.visibility-toggle.hidden:hover {
+  opacity: 1;
+  border-color: var(--text-primary);
+}
+
+/* Hidden product row styling */
+.products-table tr.hidden-product {
+  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.products-table tr.hidden-product:hover {
+  opacity: 0.7;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+}

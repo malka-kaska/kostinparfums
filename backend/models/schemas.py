@@ -41,6 +41,7 @@ class ProductCreate(BaseModel):
     image: str = ""
     stock: int = 0
     is_active: bool = True
+    is_visible: bool = True
 
 
 class ProductUpdate(BaseModel):
@@ -53,6 +54,11 @@ class ProductUpdate(BaseModel):
     image: Optional[str] = None
     stock: Optional[int] = None
     is_active: Optional[bool] = None
+    is_visible: Optional[bool] = None
+
+
+class ProductVisibilityUpdate(BaseModel):
+    is_visible: bool
 
 
 class CartItemAdd(BaseModel):
@@ -74,6 +80,7 @@ class ProductResponse(BaseModel):
     image: str
     stock: int
     is_active: bool
+    is_visible: bool = True
     created_at: Optional[str] = None
 
 

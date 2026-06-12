@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
-import { products as mockProducts, categories as mockCategories } from '../mock';
 import { useLanguage } from '../context/LanguageContext';
 import './Home.css';
 
@@ -22,31 +21,15 @@ const Home = () => {
         ]);
         if (prodRes.ok) {
           const prodData = await prodRes.json();
-          if (prodData.products.length > 0) {
-            setProducts(prodData.products);
-          } else {
-            setProducts(mockProducts);
-          }
-        } else {
-          setProducts(mockProducts);
+          setProducts(prodData.products || []);
         }
         if (catRes.ok) {
           const catData = await catRes.json();
-          if (catData.length > 0) {
-            setCategories(catData);
-          } else {
-            setCategories(mockCategories.map(c => ({
-              ...c,
-              product_count: mockProducts.filter(p => p.category === c.id).length,
-            })));
-          }
+          setCategories(catData || []);
         }
       } catch {
-        setProducts(mockProducts);
-        setCategories(mockCategories.map(c => ({
-          ...c,
-          product_count: mockProducts.filter(p => p.category === c.id).length,
-        })));
+        setProducts([]);
+        setCategories([]);
       }
     };
     fetchData();

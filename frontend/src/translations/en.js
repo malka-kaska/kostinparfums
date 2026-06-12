@@ -167,6 +167,12 @@ export const en = {
   image: "Image",
   actions: "Actions",
   confirmDelete: "Are you sure you want to delete this product?",
+  visibility: "Visibility",
+  hideProduct: "Hide product from store",
+  showProduct: "Show product in store",
+  prevPage: "Prev",
+  nextPage: "Next",
+  pageOf: "Page",
 
   // Checkout Success
   processingPaymentTitle: "Processing Payment",

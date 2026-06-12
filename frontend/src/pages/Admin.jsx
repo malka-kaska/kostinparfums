@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Admin.css';
@@ -45,17 +45,25 @@ const Admin = () => {
     }
   }, [user, authLoading, navigate]);
 
+  const [page, setPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const PRODUCTS_PER_PAGE = 50;
+
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/products?limit=200`, { credentials: 'include' });
+      // Use admin endpoint to get ALL products including hidden ones
+      const res = await fetch(`${API_URL}/api/products/admin/all?limit=${PRODUCTS_PER_PAGE}&page=${page}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products);
+        setTotalProducts(data.total);
+        setTotalPages(data.pages);
       }
     } catch (err) {
       console.error('Failed to fetch products:', err);
     }
-  }, []);
+  }, [page]);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -74,7 +82,8 @@ const Admin = () => {
       fetchProducts();
       fetchOrders();
     }
-  }, [user, fetchProducts, fetchOrders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, page]);
 
   const handleEdit = (product) => {
     setEditingProduct(product.id);
@@ -147,6 +156,25 @@ const Admin = () => {
     }
   };
 
+  const handleToggleVisibility = async (productId, currentVisibility) => {
+    try {
+      const res = await fetch(`${API_URL}/api/products/${productId}/visibility`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ is_visible: !currentVisibility }),
+      });
+      if (res.ok) {
+        fetchProducts();
+      } else {
+        const err = await res.clone().json();
+        alert(err.detail || 'Failed to toggle visibility');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  };
+
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
       const res = await fetch(`${API_URL}/api/orders/${orderId}/status`, {
@@ -180,7 +208,7 @@ const Admin = () => {
             data-testid="admin-tab-products"
           >
             <ShoppingBag size={18} />
-            <span>{t('product')} ({products.length})</span>
+            <span>{t('product')} ({totalProducts})</span>
           </button>
           <button
             className={`admin-tab ${activeTab === 'orders' ? 'active' : ''}`}
@@ -196,7 +224,7 @@ const Admin = () => {
           <>
             <div className="admin-section-header">
               <p className="body-regular" style={{ color: 'var(--text-secondary)' }}>
-                {t('manageProducts', { count: products.length })}
+                {t('manageProducts', { count: totalProducts })}
               </p>
               <button className="btn-primary" onClick={handleCreate} data-testid="add-product-button">
                 <Plus size={18} style={{ marginRight: '8px' }} />
@@ -277,18 +305,29 @@ const Admin = () => {
                       <th>{t('category')}</th>
                       <th>{t('price')}</th>
                       <th>{t('stock')}</th>
+                      <th>{t('visibility')}</th>
                       <th>{t('actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {products.map(product => (
-                      <tr key={product.id} data-testid={`product-row-${product.id}`}>
+                      <tr key={product.id} data-testid={`product-row-${product.id}`} className={!product.is_visible ? 'hidden-product' : ''}>
                         <td><img src={product.image} alt={product.name} className="table-image" /></td>
                         <td><div className="table-product-name">{product.name}</div></td>
                         <td>{product.brand}</td>
                         <td style={{ textTransform: 'capitalize' }}>{product.category}</td>
                         <td>&euro;{product.price.toFixed(2)}</td>
                         <td><span className={`stock-badge ${product.stock < 20 ? 'low' : ''}`}>{product.stock}</span></td>
+                        <td>
+                          <button
+                            className={`visibility-toggle ${product.is_visible ? 'visible' : 'hidden'}`}
+                            onClick={() => handleToggleVisibility(product.id, product.is_visible)}
+                            title={product.is_visible ? t('hideProduct') : t('showProduct')}
+                            data-testid={`visibility-toggle-${product.id}`}
+                          >
+                            {product.is_visible ? <Eye size={18} /> : <EyeOff size={18} />}
+                          </button>
+                        </td>
                         <td>
                           <div className="table-actions">
                             <button className="action-button edit" onClick={() => handleEdit(product)} aria-label="Edit" data-testid={`edit-product-${product.id}`}><Edit size={16} /></button>
@@ -301,6 +340,29 @@ const Admin = () => {
                 </table>
               )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination" data-testid="pagination">
+                <button
+                  className="pagination-btn"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  &laquo; {t('prevPage') || 'Prev'}
+                </button>
+                <span className="pagination-info">
+                  {t('pageOf') || 'Page'} {page} / {totalPages}
+                </span>
+                <button
+                  className="pagination-btn"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  {t('nextPage') || 'Next'} &raquo;
+                </button>
+              </div>
+            )}
           </>
         )}
 

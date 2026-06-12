@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
-import { products as mockProducts } from '../mock';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -33,23 +32,12 @@ const ProductDetail = () => {
             setRelatedProducts(relData.products.filter(p => p.id !== data.id).slice(0, 4));
           }
         } else {
-          loadFromMock();
+          setProduct(null);
         }
       } catch {
-        loadFromMock();
+        setProduct(null);
       } finally {
         setLoading(false);
-      }
-    };
-
-    const loadFromMock = () => {
-      const foundProduct = mockProducts.find(p => p.id === parseInt(id));
-      setProduct(foundProduct || null);
-      if (foundProduct) {
-        const related = mockProducts
-          .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id)
-          .slice(0, 4);
-        setRelatedProducts(related);
       }
     };
 

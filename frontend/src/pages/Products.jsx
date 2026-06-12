@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { products as mockProducts, categories as mockCategories, brands as mockBrands } from '../mock';
 import { useLanguage } from '../context/LanguageContext';
 import './Products.css';
 
@@ -19,7 +18,6 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [usingMock, setUsingMock] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -31,25 +29,14 @@ const Products = () => {
         ]);
         if (catRes.ok) {
           const catData = await catRes.json();
-          if (catData.length > 0) {
-            setCategories(catData.map(c => ({ id: c.id, name: c.name })));
-          } else {
-            setCategories(mockCategories);
-            setUsingMock(true);
-          }
+          setCategories(catData.map(c => ({ id: c.id, name: c.name })));
         }
         if (brandRes.ok) {
           const brandData = await brandRes.json();
-          if (brandData.length > 0) {
-            setBrands(brandData.map(b => b.name));
-          } else {
-            setBrands(mockBrands);
-          }
+          setBrands(brandData.map(b => b.name));
         }
-      } catch {
-        setCategories(mockCategories);
-        setBrands(mockBrands);
-        setUsingMock(true);
+      } catch (err) {
+        console.error('Failed to fetch categories/brands:', err);
       }
     };
     fetchMeta();
@@ -76,50 +63,21 @@ const Products = () => {
         const res = await fetch(`${API_URL}/api/products?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.products.length > 0 || !usingMock) {
-            setProducts(data.products);
-            setUsingMock(false);
-          } else {
-            applyMockFilters();
-          }
+          setProducts(data.products);
         } else {
-          applyMockFilters();
+          setProducts([]);
         }
-      } catch {
-        applyMockFilters();
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    const applyMockFilters = () => {
-      setUsingMock(true);
-      let filtered = [...mockProducts];
-      if (selectedCategory !== 'all') {
-        filtered = filtered.filter(p => p.category === selectedCategory);
-      }
-      if (selectedBrand !== 'all') {
-        filtered = filtered.filter(p => p.brand === selectedBrand);
-      }
-      if (searchQuery) {
-        filtered = filtered.filter(p =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.description.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-      filtered.sort((a, b) => {
-        switch (sortBy) {
-          case 'price-low': return a.price - b.price;
-          case 'price-high': return b.price - a.price;
-          default: return a.name.localeCompare(b.name);
-        }
-      });
-      setProducts(filtered);
-    };
-
     fetchProducts();
-  }, [selectedCategory, selectedBrand, sortBy, searchQuery, usingMock]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, selectedBrand, sortBy, searchQuery]);
 
   const categoryNames = {
     perfumes: t('perfumes'),

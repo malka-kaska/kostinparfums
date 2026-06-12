@@ -2,7 +2,7 @@
 
 ## Admin Account
 - **Email:** konstantin.kirchev.bs@gmail.com
-- **Password:** aS1zX2QwE34$
+- **Password:** aS1zX2QwE34xK9
 - **Role:** admin
 
 ## Test User Account

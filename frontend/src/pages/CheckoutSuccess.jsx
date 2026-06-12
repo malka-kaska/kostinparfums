@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader, Package } from 'lucide-react';
-import { clearCart } from '../mock';
 import { useLanguage } from '../context/LanguageContext';
 import './CheckoutSuccess.css';
+
+const clearCart = () => {
+  try { localStorage.removeItem('cart'); } catch (e) {}
+};
 
 const CheckoutSuccess = () => {
   const [searchParams] = useSearchParams();

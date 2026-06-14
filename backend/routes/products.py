@@ -13,6 +13,21 @@ router = APIRouter(prefix="/api/products", tags=["products"])
 
 
 def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict:
+    # Handle images - support both legacy 'image' field and new 'images' array
+    images = doc.get("images", [])
+    legacy_image = doc.get("image", "")
+    
+    # If no images array but has legacy image, use that
+    if not images and legacy_image:
+        # Legacy image might contain multiple URLs separated by |
+        if isinstance(legacy_image, str) and "|" in legacy_image:
+            images = [url.strip() for url in legacy_image.split("|") if url.strip()]
+        else:
+            images = [legacy_image] if legacy_image else []
+    
+    # Main image is the first in the array
+    main_image = images[0] if images else ""
+    
     resp = {
         "id": str(doc["_id"]) if "_id" in doc else doc.get("id", ""),
         "sku": doc.get("sku", ""),
@@ -21,7 +36,8 @@ def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict
         "category": doc.get("category", ""),
         "price": doc.get("price", 0),
         "description": doc.get("description", ""),
-        "image": doc.get("image", ""),
+        "image": main_image,  # Legacy field - first image
+        "images": images,  # New field - all images in order
         "stock": doc.get("stock", 0),
         "is_active": doc.get("is_active", True),
         "is_visible": doc.get("is_visible", True),

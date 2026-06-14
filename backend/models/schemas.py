@@ -38,7 +38,8 @@ class ProductCreate(BaseModel):
     price: float
     description: str = ""
     description_bg: Optional[str] = None
-    image: str = ""
+    image: str = ""  # Legacy single image field
+    images: Optional[List[str]] = None  # New: array of image URLs
     stock: int = 0
     is_active: bool = True
     is_visible: bool = True
@@ -51,7 +52,8 @@ class ProductUpdate(BaseModel):
     price: Optional[float] = None
     description: Optional[str] = None
     description_bg: Optional[str] = None
-    image: Optional[str] = None
+    image: Optional[str] = None  # Legacy single image field
+    images: Optional[List[str]] = None  # New: array of image URLs
     stock: Optional[int] = None
     is_active: Optional[bool] = None
     is_visible: Optional[bool] = None

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff, Upload, Loader } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff, Upload, Loader, GripVertical, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Admin.css';
@@ -17,52 +17,92 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', brand: '', category: '', price: '', description: '', description_bg: '', image: '', stock: ''
+    name: '', brand: '', category: '', price: '', description: '', description_bg: '', images: [], stock: ''
   });
+  const [draggedIndex, setDraggedIndex] = useState(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  // Image upload handler
+  // Multiple image upload handler
   const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedTypes.includes(file.type)) {
-      alert(t('invalidImageType') || 'Invalid file type. Please upload JPG, PNG, WebP or GIF.');
-      return;
-    }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert(t('imageTooLarge') || 'Image too large. Maximum size is 10MB.');
-      return;
-    }
-
+    
     setUploading(true);
+    const newImages = [...formData.images];
+    
     try {
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
+      for (const file of files) {
+        // Validate file type
+        if (!allowedTypes.includes(file.type)) {
+          alert(`${file.name}: ${t('invalidImageType') || 'Invalid file type.'}`);
+          continue;
+        }
 
-      const res = await fetch(`${API_URL}/api/upload/image`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formDataUpload,
-      });
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`${file.name}: ${t('imageTooLarge') || 'Image too large. Maximum size is 10MB.'}`);
+          continue;
+        }
 
-      if (res.ok) {
-        const data = await res.json();
-        setFormData(prev => ({ ...prev, image: data.url }));
-      } else {
-        const err = await res.clone().json();
-        alert(err.detail || 'Upload failed');
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        const res = await fetch(`${API_URL}/api/upload/image`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formDataUpload,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          newImages.push(data.url);
+        } else {
+          const err = await res.clone().json();
+          alert(`${file.name}: ${err.detail || 'Upload failed'}`);
+        }
       }
+      
+      setFormData(prev => ({ ...prev, images: newImages }));
     } catch (err) {
       alert('Upload error: ' + err.message);
     } finally {
       setUploading(false);
+      // Reset the input
+      e.target.value = '';
     }
+  };
+
+  // Remove image from list
+  const handleRemoveImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Drag and drop handlers for reordering
+  const handleDragStart = (index) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    const newImages = [...formData.images];
+    const draggedItem = newImages[draggedIndex];
+    newImages.splice(draggedIndex, 1);
+    newImages.splice(index, 0, draggedItem);
+    
+    setFormData(prev => ({ ...prev, images: newImages }));
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
   };
 
   const CATEGORY_OPTIONS = [
@@ -132,11 +172,15 @@ const Admin = () => {
   const handleEdit = (product) => {
     setEditingProduct(product.id);
     setIsCreating(false);
+    // Use images array if available, otherwise convert legacy image field
+    const images = product.images && product.images.length > 0 
+      ? product.images 
+      : (product.image ? [product.image] : []);
     setFormData({
       name: product.name, brand: product.brand, category: product.category,
       price: product.price.toString(), description: product.description || '',
       description_bg: product.description_bg || '',
-      image: product.image, stock: product.stock.toString()
+      images: images, stock: product.stock.toString()
     });
   };
 
@@ -146,7 +190,7 @@ const Admin = () => {
     setFormData({
       name: '', brand: '', category: 'perfumes',
       price: '', description: '', description_bg: '',
-      image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400',
+      images: [],
       stock: ''
     });
   };
@@ -158,7 +202,9 @@ const Admin = () => {
         name: formData.name, brand: formData.brand, category: formData.category,
         price: parseFloat(formData.price), description: formData.description,
         description_bg: formData.description_bg || undefined,
-        image: formData.image, stock: parseInt(formData.stock) || 0,
+        image: formData.images[0] || '',  // Legacy field - first image
+        images: formData.images,  // New field - all images in order
+        stock: parseInt(formData.stock) || 0,
       };
 
       if (isCreating) {
@@ -311,44 +357,77 @@ const Admin = () => {
                       <input type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} className="form-input" data-testid="product-stock-input" />
                     </div>
                     <div className="form-group image-upload-group">
-                      <label className="form-label">{t('productImage')}</label>
-                      <div className="image-upload-wrapper">
-                        {formData.image && (
-                          <div className="image-preview">
-                            <img src={formData.image} alt="Preview" />
+                      <label className="form-label">{t('productImages') || 'Product Images'}</label>
+                      <p className="form-hint">{t('dragToReorder') || 'Drag to reorder. First image is the main product image.'}</p>
+                      
+                      {/* Image gallery with drag and drop */}
+                      <div className="images-gallery" data-testid="images-gallery">
+                        {formData.images.map((img, index) => (
+                          <div
+                            key={index}
+                            className={`gallery-item ${draggedIndex === index ? 'dragging' : ''} ${index === 0 ? 'main-image' : ''}`}
+                            draggable
+                            onDragStart={() => handleDragStart(index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDragEnd={handleDragEnd}
+                            data-testid={`gallery-item-${index}`}
+                          >
+                            <div className="gallery-item-drag">
+                              <GripVertical size={16} />
+                            </div>
+                            <img src={img} alt={`Product ${index + 1}`} />
+                            {index === 0 && <span className="main-badge">{t('mainImage') || 'Main'}</span>}
+                            <button
+                              type="button"
+                              className="gallery-item-remove"
+                              onClick={() => handleRemoveImage(index)}
+                              aria-label="Remove image"
+                            >
+                              <X size={14} />
+                            </button>
                           </div>
-                        )}
-                        <div className="image-upload-controls">
-                          <label className="upload-button" data-testid="upload-image-button">
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp,image/gif"
-                              onChange={handleImageUpload}
-                              disabled={uploading}
-                              style={{ display: 'none' }}
-                            />
-                            {uploading ? (
-                              <>
-                                <Loader size={16} className="spin" />
-                                <span>{t('uploading') || 'Uploading...'}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Upload size={16} />
-                                <span>{t('uploadImage') || 'Upload Image'}</span>
-                              </>
-                            )}
-                          </label>
-                          <span className="or-divider">{t('or') || 'or'}</span>
+                        ))}
+                        
+                        {/* Add more images button */}
+                        <label className="gallery-add-button" data-testid="upload-image-button">
                           <input
-                            type="text"
-                            value={formData.image}
-                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                            className="form-input"
-                            placeholder={t('imageUrlPlaceholder') || 'Paste image URL...'}
-                            data-testid="product-image-input"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            onChange={handleImageUpload}
+                            disabled={uploading}
+                            multiple
+                            style={{ display: 'none' }}
                           />
-                        </div>
+                          {uploading ? (
+                            <Loader size={24} className="spin" />
+                          ) : (
+                            <>
+                              <Upload size={24} />
+                              <span>{t('addImages') || 'Add Images'}</span>
+                            </>
+                          )}
+                        </label>
+                      </div>
+                      
+                      {/* URL input for adding image by URL */}
+                      <div className="image-url-input">
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder={t('imageUrlPlaceholder') || 'Paste image URL and press Enter...'}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.target.value.trim()) {
+                              e.preventDefault();
+                              setFormData(prev => ({
+                                ...prev,
+                                images: [...prev.images, e.target.value.trim()]
+                              }));
+                              e.target.value = '';
+                            }
+                          }}
+                          data-testid="product-image-url-input"
+                        />
+                        <span className="url-hint">{t('pressEnterToAdd') || 'Press Enter to add'}</span>
                       </div>
                     </div>
                     <div className="form-group" style={{ gridColumn: '1 / -1' }}>

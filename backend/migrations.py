@@ -2,69 +2,70 @@
 Database migrations for KOSTIN E-commerce
 Runs automatically on server startup
 """
-import asyncio
 import json
-import os
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
 MIGRATIONS_COLLECTION = "migrations"
 DATA_DIR = Path(__file__).parent / "data"
-
-
-async def check_migration_done(db, migration_name: str) -> bool:
-    """Check if a migration has already been applied"""
-    result = await db[MIGRATIONS_COLLECTION].find_one({"name": migration_name})
-    return result is not None
-
-
-async def mark_migration_done(db, migration_name: str):
-    """Mark a migration as completed"""
-    from datetime import datetime, timezone
-    await db[MIGRATIONS_COLLECTION].insert_one({
-        "name": migration_name,
-        "applied_at": datetime.now(timezone.utc).isoformat()
-    })
-    logger.info(f"Migration '{migration_name}' marked as complete")
+REQUIRED_PRODUCT_COUNT = 7000  # Minimum products we expect
 
 
 async def migrate_products_from_backup(db):
     """
     Import products from JSON backup file.
-    This migration runs only once - when products collection is empty or migration not done.
+    This ensures we always have products in the database.
     """
-    migration_name = "import_products_v1"
+    migration_name = "import_products_v2"  # New version to force re-check
     
-    # Check if already done
-    if await check_migration_done(db, migration_name):
-        logger.info(f"Migration '{migration_name}' already applied, skipping")
-        return
-    
-    # Check if products already exist
+    # Always check product count first
     product_count = await db.products.count_documents({})
-    if product_count > 100:  # Allow some manual products, but if we have many, skip
-        logger.info(f"Products collection already has {product_count} items, marking migration as done")
-        await mark_migration_done(db, migration_name)
+    logger.info(f"Current product count in database: {product_count}")
+    
+    # If we have enough products, we're done
+    if product_count >= REQUIRED_PRODUCT_COUNT:
+        logger.info(f"Database has {product_count} products (>= {REQUIRED_PRODUCT_COUNT}), no import needed")
+        # Mark migration as done if not already
+        existing = await db[MIGRATIONS_COLLECTION].find_one({"name": migration_name})
+        if not existing:
+            await db[MIGRATIONS_COLLECTION].insert_one({
+                "name": migration_name,
+                "applied_at": datetime.now(timezone.utc).isoformat(),
+                "product_count": product_count
+            })
         return
+    
+    # Need to import products
+    logger.info(f"Database has only {product_count} products, need to import from backup")
     
     # Load products from backup
     backup_file = DATA_DIR / "products_backup.json"
+    logger.info(f"Looking for backup file at: {backup_file}")
+    logger.info(f"Backup file exists: {backup_file.exists()}")
+    
     if not backup_file.exists():
-        logger.warning(f"Products backup file not found at {backup_file}")
+        logger.error(f"CRITICAL: Products backup file not found at {backup_file}")
+        logger.error(f"DATA_DIR contents: {list(DATA_DIR.iterdir()) if DATA_DIR.exists() else 'DIR NOT FOUND'}")
         return
     
-    logger.info(f"Starting product import from {backup_file}")
+    logger.info(f"Loading products from {backup_file}")
     
-    with open(backup_file, 'r', encoding='utf-8') as f:
-        products = json.load(f)
+    try:
+        with open(backup_file, 'r', encoding='utf-8') as f:
+            products = json.load(f)
+        logger.info(f"Loaded {len(products)} products from backup file")
+    except Exception as e:
+        logger.error(f"Failed to load products from backup: {e}")
+        return
     
     if not products:
-        logger.warning("No products found in backup file")
+        logger.error("No products found in backup file")
         return
     
-    # Clear existing products (if any)
+    # Clear existing products
     if product_count > 0:
         logger.info(f"Clearing {product_count} existing products")
         await db.products.delete_many({})
@@ -73,31 +74,46 @@ async def migrate_products_from_backup(db):
     batch_size = 500
     total_inserted = 0
     
-    for i in range(0, len(products), batch_size):
-        batch = products[i:i + batch_size]
-        await db.products.insert_many(batch)
-        total_inserted += len(batch)
-        logger.info(f"Inserted batch: {total_inserted}/{len(products)} products")
-    
-    logger.info(f"Successfully imported {total_inserted} products")
-    await mark_migration_done(db, migration_name)
+    try:
+        for i in range(0, len(products), batch_size):
+            batch = products[i:i + batch_size]
+            await db.products.insert_many(batch)
+            total_inserted += len(batch)
+            logger.info(f"Inserted batch: {total_inserted}/{len(products)} products")
+        
+        logger.info(f"Successfully imported {total_inserted} products")
+        
+        # Mark migration as done
+        await db[MIGRATIONS_COLLECTION].update_one(
+            {"name": migration_name},
+            {
+                "$set": {
+                    "applied_at": datetime.now(timezone.utc).isoformat(),
+                    "product_count": total_inserted,
+                    "status": "success"
+                }
+            },
+            upsert=True
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to insert products: {e}")
+        raise
 
 
 async def run_migrations(db):
     """Run all pending migrations"""
-    logger.info("Checking for pending migrations...")
+    logger.info("=" * 50)
+    logger.info("Starting database migrations...")
+    logger.info(f"DATA_DIR: {DATA_DIR}")
+    logger.info(f"DATA_DIR exists: {DATA_DIR.exists()}")
     
-    # Add new migrations here
-    migrations = [
-        migrate_products_from_backup,
-    ]
-    
-    for migration in migrations:
-        try:
-            await migration(db)
-        except Exception as e:
-            logger.error(f"Migration failed: {migration.__name__} - {e}")
-            # Don't stop other migrations
-            continue
+    try:
+        await migrate_products_from_backup(db)
+    except Exception as e:
+        logger.error(f"Migration failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
     
     logger.info("Migration check complete")
+    logger.info("=" * 50)

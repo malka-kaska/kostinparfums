@@ -29,6 +29,7 @@ from routes.products import router as products_router
 from routes.cart import router as cart_router
 from routes.orders import router as orders_router
 from utils.auth import seed_admin
+from migrations import run_migrations
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -314,6 +315,11 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
+    # Run database migrations first
+    await run_migrations(db)
+    logger.info("Migrations check complete")
+    
+    # Seed admin user
     await seed_admin(db)
     logger.info("Admin user seeded successfully")
 

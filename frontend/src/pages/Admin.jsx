@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff, Upload, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Admin.css';
@@ -15,11 +15,55 @@ const Admin = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '', brand: '', category: '', price: '', description: '', description_bg: '', image: '', stock: ''
   });
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  // Image upload handler
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      alert(t('invalidImageType') || 'Invalid file type. Please upload JPG, PNG, WebP or GIF.');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert(t('imageTooLarge') || 'Image too large. Maximum size is 10MB.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      const res = await fetch(`${API_URL}/api/upload/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formDataUpload,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setFormData(prev => ({ ...prev, image: data.url }));
+      } else {
+        const err = await res.clone().json();
+        alert(err.detail || 'Upload failed');
+      }
+    } catch (err) {
+      alert('Upload error: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const CATEGORY_OPTIONS = [
     { id: 'perfumes', name: t('perfumes') },
@@ -266,9 +310,46 @@ const Admin = () => {
                       <label className="form-label">{t('stock')}</label>
                       <input type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} className="form-input" data-testid="product-stock-input" />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">{t('imageUrl')}</label>
-                      <input type="text" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} className="form-input" data-testid="product-image-input" />
+                    <div className="form-group image-upload-group">
+                      <label className="form-label">{t('productImage')}</label>
+                      <div className="image-upload-wrapper">
+                        {formData.image && (
+                          <div className="image-preview">
+                            <img src={formData.image} alt="Preview" />
+                          </div>
+                        )}
+                        <div className="image-upload-controls">
+                          <label className="upload-button" data-testid="upload-image-button">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              onChange={handleImageUpload}
+                              disabled={uploading}
+                              style={{ display: 'none' }}
+                            />
+                            {uploading ? (
+                              <>
+                                <Loader size={16} className="spin" />
+                                <span>{t('uploading') || 'Uploading...'}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload size={16} />
+                                <span>{t('uploadImage') || 'Upload Image'}</span>
+                              </>
+                            )}
+                          </label>
+                          <span className="or-divider">{t('or') || 'or'}</span>
+                          <input
+                            type="text"
+                            value={formData.image}
+                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                            className="form-input"
+                            placeholder={t('imageUrlPlaceholder') || 'Paste image URL...'}
+                            data-testid="product-image-input"
+                          />
+                        </div>
+                      </div>
                     </div>
                     <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                       <label className="form-label">{t('description')} (EN)</label>

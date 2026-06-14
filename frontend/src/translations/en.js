@@ -176,6 +176,13 @@ export const en = {
   prevPage: "Prev",
   nextPage: "Next",
   pageOf: "Page",
+  productImage: "Product Image",
+  uploadImage: "Upload Image",
+  uploading: "Uploading...",
+  or: "or",
+  imageUrlPlaceholder: "Paste image URL...",
+  invalidImageType: "Invalid file type. Please upload JPG, PNG, WebP or GIF.",
+  imageTooLarge: "Image too large. Maximum size is 10MB.",
 
   // Checkout Success
   processingPaymentTitle: "Processing Payment",

@@ -4,6 +4,7 @@ import { ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getProductImages, FALLBACK_IMAGE } from '../utils/imageUtils';
 import './ProductDetail.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -15,6 +16,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [imageError, setImageError] = useState({});
   const { t, lang } = useLanguage();
   const { addToCart } = useAuth();
 
@@ -43,6 +46,8 @@ const ProductDetail = () => {
 
     fetchProduct();
     setQuantity(1);
+    setSelectedImageIndex(0);
+    setImageError({});
   }, [id]);
 
   const handleAddToCart = async () => {
@@ -56,6 +61,10 @@ const ProductDetail = () => {
       return product.description_bg.replace(/<[^>]*>/g, '');
     }
     return product.description ? product.description.replace(/<[^>]*>/g, '') : '';
+  };
+
+  const handleImageError = (index) => {
+    setImageError(prev => ({ ...prev, [index]: true }));
   };
 
   if (loading) {
@@ -74,6 +83,10 @@ const ProductDetail = () => {
     );
   }
 
+  // Get all product images
+  const productImages = getProductImages(product.image);
+  const currentImage = imageError[selectedImageIndex] ? FALLBACK_IMAGE : productImages[selectedImageIndex];
+
   return (
     <div className="product-detail-page">
       <div className="container section-padding-small">
@@ -83,8 +96,35 @@ const ProductDetail = () => {
         </button>
 
         <div className="product-detail-grid">
-          <div className="product-detail-image">
-            <img src={product.image} alt={product.name} data-testid="product-image" />
+          <div className="product-detail-images">
+            <div className="product-detail-main-image">
+              <img 
+                src={currentImage}
+                alt={product.name}
+                data-testid="product-image"
+                onError={() => handleImageError(selectedImageIndex)}
+              />
+            </div>
+            
+            {/* Gallery thumbnails if multiple images */}
+            {productImages.length > 1 && (
+              <div className="product-gallery" data-testid="product-gallery">
+                {productImages.map((img, index) => (
+                  <button
+                    key={index}
+                    className={`gallery-thumbnail ${index === selectedImageIndex ? 'active' : ''}`}
+                    onClick={() => setSelectedImageIndex(index)}
+                    data-testid={`gallery-thumb-${index}`}
+                  >
+                    <img 
+                      src={imageError[index] ? FALLBACK_IMAGE : img}
+                      alt={`${product.name} ${index + 1}`}
+                      onError={() => handleImageError(index)}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="product-detail-info">
@@ -152,10 +192,12 @@ const ProductDetail = () => {
                 <span className="meta-label">{t('brandLabel')}</span>
                 <span className="meta-value">{product.brand}</span>
               </div>
-              <div className="meta-item">
-                <span className="meta-label">{t('skuLabel')}</span>
-                <span className="meta-value">LUX-{String(product.id).padStart(6, '0')}</span>
-              </div>
+              {product.sku && (
+                <div className="meta-item">
+                  <span className="meta-label">{t('skuLabel')}</span>
+                  <span className="meta-value">{product.sku}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

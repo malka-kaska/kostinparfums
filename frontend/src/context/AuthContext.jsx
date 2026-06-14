@@ -1,10 +1,24 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const CART_STORAGE_KEY = 'kostin_cart';
 
 const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
+
+// Local storage cart helpers
+const getLocalCart = () => {
+  try {
+    return JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalCart = (items) => {
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -72,7 +86,7 @@ export const AuthProvider = ({ children }) => {
 
     // Sync localStorage cart to backend
     try {
-      const localCart = JSON.parse(localStorage.getItem('kostin_cart') || '[]');
+      const localCart = getLocalCart();
       if (localCart.length > 0) {
         for (const item of localCart) {
           await fetch(`${API_URL}/api/cart/add`, {
@@ -82,7 +96,7 @@ export const AuthProvider = ({ children }) => {
             body: JSON.stringify({ product_id: String(item.id), quantity: item.quantity }),
           }).catch(() => {});
         }
-        localStorage.removeItem('kostin_cart');
+        localStorage.removeItem(CART_STORAGE_KEY);
       }
     } catch {}
 
@@ -144,8 +158,22 @@ export const AuthProvider = ({ children }) => {
       } catch {}
     }
     // Fallback to localStorage for non-authenticated users
-    const { addToCart: localAdd } = await import('../mock');
-    localAdd(product, quantity);
+    const cart = getLocalCart();
+    const existingIndex = cart.findIndex(item => item.id === product.id);
+    if (existingIndex >= 0) {
+      cart[existingIndex].quantity += quantity;
+    } else {
+      cart.push({
+        id: product.id,
+        name: product.name,
+        brand: product.brand,
+        image: product.image,
+        price: product.price,
+        stock: product.stock,
+        quantity,
+      });
+    }
+    saveLocalCart(cart);
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
@@ -166,8 +194,13 @@ export const AuthProvider = ({ children }) => {
         }
       } catch {}
     }
-    const { updateCartItem: localUpdate } = await import('../mock');
-    localUpdate(productId, quantity);
+    // localStorage fallback
+    const cart = getLocalCart();
+    const index = cart.findIndex(item => item.id === productId);
+    if (index >= 0) {
+      cart[index].quantity = quantity;
+      saveLocalCart(cart);
+    }
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
@@ -186,8 +219,10 @@ export const AuthProvider = ({ children }) => {
         }
       } catch {}
     }
-    const { removeFromCart: localRemove } = await import('../mock');
-    localRemove(productId);
+    // localStorage fallback
+    const cart = getLocalCart();
+    const filtered = cart.filter(item => item.id !== productId);
+    saveLocalCart(filtered);
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
@@ -206,8 +241,8 @@ export const AuthProvider = ({ children }) => {
         }
       } catch {}
     }
-    const { clearCart: localClear } = await import('../mock');
-    localClear();
+    // localStorage fallback
+    localStorage.removeItem(CART_STORAGE_KEY);
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
@@ -223,11 +258,7 @@ export const AuthProvider = ({ children }) => {
         quantity: item.quantity,
       }));
     }
-    try {
-      return JSON.parse(localStorage.getItem('kostin_cart') || '[]');
-    } catch {
-      return [];
-    }
+    return getLocalCart();
   };
 
   const getCartTotal = () => {

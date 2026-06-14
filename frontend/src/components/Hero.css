@@ -1,17 +1,18 @@
-/* Venba-Inspired Hero Section */
+/* Luxury Hero Section */
 
 .hero {
   position: relative;
   width: 100%;
-  height: 500px;
+  height: 550px;
   overflow: hidden;
 }
 
 .hero-image-bg {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #d4a574 0%, #e5d4c1 100%);
-  background-image: url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1600&q=80');
+  /* Luxury perfume/beauty image */
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background-image: url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1920&q=80');
   background-size: cover;
   background-position: center;
   position: relative;
@@ -23,7 +24,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+  background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
   display: flex;
   align-items: center;
 }
@@ -34,32 +35,32 @@
 }
 
 .hero-title {
-  font-size: 42px;
-  font-weight: 600;
+  font-size: 48px;
+  font-weight: 500;
   color: #ffffff;
-  line-height: 1.2;
-  letter-spacing: 0.05em;
-  margin-bottom: 20px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  margin-bottom: 24px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .hero-subtitle {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 400;
-  color: #ffffff;
-  line-height: 1.6;
-  margin-bottom: 32px;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  color: rgba(255,255,255,0.9);
+  line-height: 1.7;
+  margin-bottom: 36px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
 .hero-button {
   display: inline-block;
   background: #ffffff;
   color: #000000;
-  padding: 16px 40px;
+  padding: 18px 48px;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
   transition: all 0.3s ease;
@@ -73,22 +74,26 @@
 
 @media (max-width: 768px) {
   .hero {
-    height: 400px;
+    height: 450px;
   }
   
   .hero-title {
-    font-size: 28px;
+    font-size: 32px;
   }
   
   .hero-subtitle {
-    font-size: 14px;
+    font-size: 15px;
   }
   
   .hero-overlay {
-    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 100%);
   }
   
   .hero-content {
     padding: 40px 0;
+  }
+  
+  .hero-button {
+    padding: 14px 36px;
   }
 }

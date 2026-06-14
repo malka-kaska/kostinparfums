@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
+import { CATEGORY_IMAGES } from '../utils/imageUtils';
 import './Home.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -42,6 +43,7 @@ const Home = () => {
     haircare: t('haircare'),
     bodycare: t('bodyCare'),
     menscare: t('mensCare'),
+    other: t('other') || 'Other',
   };
 
   const newArrivals = products.slice(0, 8);
@@ -89,11 +91,16 @@ const Home = () => {
                 key={category.id}
                 to={`/products?category=${category.id}`}
                 className="category-card"
+                style={{
+                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${CATEGORY_IMAGES[category.id] || CATEGORY_IMAGES.other})`,
+                }}
               >
-                <h3 className="category-name">{categoryNames[category.id] || category.name}</h3>
-                <p className="category-count">
-                  {category.product_count} {t('productsCount')}
-                </p>
+                <div className="category-content">
+                  <h3 className="category-name">{categoryNames[category.id] || category.name}</h3>
+                  <p className="category-count">
+                    {category.product_count} {category.product_count === 1 ? t('productSingular') : t('productsCount')}
+                  </p>
+                </div>
               </Link>
             ))}
           </div>

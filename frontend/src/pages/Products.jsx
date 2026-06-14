@@ -114,7 +114,9 @@ const Products = () => {
         <div className="page-header section-padding-small">
           <h1 className="hero-medium" data-testid="products-heading">{t('allProducts')}</h1>
           <p className="body-large mt-3" style={{ color: 'var(--text-secondary)' }}>
-            {t('discoverCollection', { count: totalProducts })}
+            {totalProducts === 1 
+              ? t('discoverCollectionSingular', { count: totalProducts })
+              : t('discoverCollection', { count: totalProducts })}
           </p>
         </div>
 

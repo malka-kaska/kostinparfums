@@ -21,7 +21,9 @@ export const en = {
   bestSellers: "BEST SELLERS",
   viewAllProducts: "VIEW ALL PRODUCTS",
   shopByCategory: "SHOP BY CATEGORY",
-  productsCount: "Products",
+  productsCount: "products",
+  productSingular: "product",
+  other: "Other",
   trustAuthentic: "100% AUTHENTIC",
   trustAuthenticDesc: "All products sourced from trusted suppliers",
   trustShipping: "FAST SHIPPING",
@@ -32,6 +34,7 @@ export const en = {
   // Products page
   allProducts: "All Products",
   discoverCollection: "Discover our curated collection of {count} luxury products",
+  discoverCollectionSingular: "Discover our curated collection of {count} luxury product",
   filters: "Filters",
   category: "Category",
   allProductsFilter: "All Products",

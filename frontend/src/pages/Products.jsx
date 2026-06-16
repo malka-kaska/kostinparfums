@@ -129,31 +129,7 @@ const Products = () => {
               </button>
             </div>
 
-            <div className="filter-group">
-              <h4 className="filter-title">{t('category')}</h4>
-              <div className="filter-options">
-                <label className="filter-option">
-                  <input
-                    type="radio"
-                    name="category"
-                    checked={selectedCategory === 'all'}
-                    onChange={() => handleCategoryChange('all')}
-                  />
-                  <span>{t('allProductsFilter')}</span>
-                </label>
-                {categories.map(category => (
-                  <label key={category.id} className="filter-option">
-                    <input
-                      type="radio"
-                      name="category"
-                      checked={selectedCategory === category.id}
-                      onChange={() => handleCategoryChange(category.id)}
-                    />
-                    <span>{categoryNames[category.id] || category.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            {/* Category filter hidden - only perfumes for now */}
 
             <div className="filter-group">
               <h4 className="filter-title">{t('brand')}</h4>

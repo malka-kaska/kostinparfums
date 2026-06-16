@@ -9,12 +9,6 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const CATEGORY_OPTIONS = [
   { id: 'perfumes', name: 'Perfumes' },
-  { id: 'skincare', name: 'Skincare' },
-  { id: 'haircare', name: 'Haircare' },
-  { id: 'menscare', name: "Men's Care" },
-  { id: 'bodycare', name: 'Body Care' },
-  { id: 'makeup', name: 'Makeup' },
-  { id: 'other', name: 'Other' },
 ];
 
 const Admin = () => {

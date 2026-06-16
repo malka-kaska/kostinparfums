@@ -85,8 +85,8 @@ const Home = () => {
       <section className="section-padding categories-section">
         <div className="container">
           <h2 className="section-title">{t('shopByCategory')}</h2>
-          <div className="categories-grid" data-testid="categories-grid">
-            {categories.map(category => (
+          <div className="categories-grid single-category" data-testid="categories-grid">
+            {categories.filter(c => c.id === 'perfumes').map(category => (
               <Link
                 key={category.id}
                 to={`/products?category=${category.id}`}

@@ -114,6 +114,7 @@ async def get_all_products_admin(
     brand: Optional[str] = None,
     search: Optional[str] = None,
     sort: Optional[str] = "name",
+    visibility: Optional[str] = None,  # all, visible, hidden
     page: int = Query(1, ge=1),
     limit: int = Query(200, ge=1, le=500),
 ):
@@ -123,7 +124,14 @@ async def get_all_products_admin(
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    query = {}  # No visibility filter for admin
+    query = {}
+
+    # Visibility filter
+    if visibility == "visible":
+        query["is_visible"] = True
+    elif visibility == "hidden":
+        query["is_visible"] = False
+    # 'all' or None = no visibility filter
 
     if category:
         query["category"] = category
@@ -134,12 +142,16 @@ async def get_all_products_admin(
             {"name": {"$regex": search, "$options": "i"}},
             {"brand": {"$regex": search, "$options": "i"}},
             {"description": {"$regex": search, "$options": "i"}},
+            {"sku": {"$regex": search, "$options": "i"}},
         ]
 
     # Sort
     sort_field = "name"
     sort_dir = 1
-    if sort == "price-low":
+    if sort == "name-desc":
+        sort_field = "name"
+        sort_dir = -1
+    elif sort == "price-low":
         sort_field = "price"
         sort_dir = 1
     elif sort == "price-high":
@@ -147,6 +159,9 @@ async def get_all_products_admin(
         sort_dir = -1
     elif sort == "newest":
         sort_field = "created_at"
+        sort_dir = -1
+    elif sort == "best-sellers":
+        sort_field = "sold_count"
         sort_dir = -1
 
     skip = (page - 1) * limit

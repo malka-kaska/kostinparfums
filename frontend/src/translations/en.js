@@ -188,6 +188,17 @@ export const en = {
   mainImage: "Main",
   invalidImageType: "Invalid file type. Please upload JPG, PNG, WebP or GIF.",
   imageTooLarge: "Image too large. Maximum size is 10MB.",
+  searchProducts: "Search products...",
+  allCategories: "All Categories",
+  visibleOnly: "Visible Only",
+  hiddenOnly: "Hidden Only",
+  sortAZ: "Name A-Z",
+  sortZA: "Name Z-A",
+  sortPriceLow: "Price: Low to High",
+  sortPriceHigh: "Price: High to Low",
+  sortBestSellers: "Best Sellers",
+  sortNewest: "Newest First",
+  clearFilters: "Clear Filters",
 
   // Checkout Success
   processingPaymentTitle: "Processing Payment",

@@ -1,11 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff, Upload, Loader, GripVertical, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff, Upload, Loader, GripVertical, Search, Filter } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Admin.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const CATEGORY_OPTIONS = [
+  { id: 'perfumes', name: 'Perfumes' },
+  { id: 'skincare', name: 'Skincare' },
+  { id: 'haircare', name: 'Haircare' },
+  { id: 'menscare', name: "Men's Care" },
+  { id: 'bodycare', name: 'Body Care' },
+  { id: 'makeup', name: 'Makeup' },
+  { id: 'other', name: 'Other' },
+];
 
 const Admin = () => {
   const { user, loading: authLoading } = useAuth();
@@ -134,10 +144,32 @@ const Admin = () => {
   const [totalPages, setTotalPages] = useState(0);
   const PRODUCTS_PER_PAGE = 50;
 
+  // Filter states
+  const [filterVisibility, setFilterVisibility] = useState('all'); // all, visible, hidden
+  const [filterSort, setFilterSort] = useState('name'); // name, name-desc, price-low, price-high, best-sellers
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
+
   const fetchProducts = useCallback(async () => {
     try {
-      // Use admin endpoint to get ALL products including hidden ones
-      const res = await fetch(`${API_URL}/api/products/admin/all?limit=${PRODUCTS_PER_PAGE}&page=${page}`, { credentials: 'include' });
+      const params = new URLSearchParams();
+      params.set('limit', PRODUCTS_PER_PAGE);
+      params.set('page', page);
+      
+      if (filterVisibility !== 'all') {
+        params.set('visibility', filterVisibility);
+      }
+      if (filterSort) {
+        params.set('sort', filterSort);
+      }
+      if (filterSearch.trim()) {
+        params.set('search', filterSearch.trim());
+      }
+      if (filterCategory !== 'all') {
+        params.set('category', filterCategory);
+      }
+      
+      const res = await fetch(`${API_URL}/api/products/admin/all?${params.toString()}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products);
@@ -147,7 +179,7 @@ const Admin = () => {
     } catch (err) {
       console.error('Failed to fetch products:', err);
     }
-  }, [page]);
+  }, [page, filterVisibility, filterSort, filterSearch, filterCategory]);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -161,13 +193,18 @@ const Admin = () => {
     }
   }, []);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filterVisibility, filterSort, filterSearch, filterCategory]);
+
   useEffect(() => {
     if (user?.role === 'admin') {
       fetchProducts();
       fetchOrders();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, page]);
+  }, [user, page, filterVisibility, filterSort, filterSearch, filterCategory]);
 
   const handleEdit = (product) => {
     setEditingProduct(product.id);
@@ -320,6 +357,75 @@ const Admin = () => {
                 <Plus size={18} style={{ marginRight: '8px' }} />
                 {t('addProduct')}
               </button>
+            </div>
+
+            {/* Filters Section */}
+            <div className="admin-filters" data-testid="admin-filters">
+              <div className="filter-search">
+                <Search size={18} />
+                <input
+                  type="text"
+                  placeholder={t('searchProducts') || 'Search products...'}
+                  value={filterSearch}
+                  onChange={(e) => setFilterSearch(e.target.value)}
+                  data-testid="filter-search"
+                />
+              </div>
+              
+              <div className="filter-group">
+                <Filter size={16} />
+                <select
+                  value={filterVisibility}
+                  onChange={(e) => setFilterVisibility(e.target.value)}
+                  data-testid="filter-visibility"
+                >
+                  <option value="all">{t('allProducts') || 'All Products'}</option>
+                  <option value="visible">{t('visibleOnly') || 'Visible Only'}</option>
+                  <option value="hidden">{t('hiddenOnly') || 'Hidden Only'}</option>
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  data-testid="filter-category"
+                >
+                  <option value="all">{t('allCategories') || 'All Categories'}</option>
+                  {CATEGORY_OPTIONS.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <select
+                  value={filterSort}
+                  onChange={(e) => setFilterSort(e.target.value)}
+                  data-testid="filter-sort"
+                >
+                  <option value="name">{t('sortAZ') || 'Name A-Z'}</option>
+                  <option value="name-desc">{t('sortZA') || 'Name Z-A'}</option>
+                  <option value="price-low">{t('sortPriceLow') || 'Price: Low to High'}</option>
+                  <option value="price-high">{t('sortPriceHigh') || 'Price: High to Low'}</option>
+                  <option value="best-sellers">{t('sortBestSellers') || 'Best Sellers'}</option>
+                  <option value="newest">{t('sortNewest') || 'Newest First'}</option>
+                </select>
+              </div>
+
+              {(filterVisibility !== 'all' || filterCategory !== 'all' || filterSearch) && (
+                <button 
+                  className="filter-clear"
+                  onClick={() => {
+                    setFilterVisibility('all');
+                    setFilterCategory('all');
+                    setFilterSearch('');
+                    setFilterSort('name');
+                  }}
+                >
+                  {t('clearFilters') || 'Clear Filters'}
+                </button>
+              )}
             </div>
 
             {(isCreating || editingProduct) && (

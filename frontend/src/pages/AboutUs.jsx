@@ -4,6 +4,26 @@ import { Shield, Award, Heart, Check } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import './AboutUs.css';
 
+// Safe text renderer that handles <strong> tags without dangerouslySetInnerHTML
+const SafeText = ({ text }) => {
+  if (!text) return null;
+  
+  // Split by <strong> tags and render safely
+  const parts = text.split(/(<strong>.*?<\/strong>)/g);
+  
+  return (
+    <>
+      {parts.map((part, index) => {
+        const strongMatch = part.match(/<strong>(.*?)<\/strong>/);
+        if (strongMatch) {
+          return <strong key={index}>{strongMatch[1]}</strong>;
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+};
+
 const AboutUs = () => {
   const { t } = useLanguage();
 
@@ -19,7 +39,7 @@ const AboutUs = () => {
       <div className="container section-padding">
         <section className="about-intro">
           <p className="intro-text">{t('aboutIntro1')}</p>
-          <p className="intro-text" dangerouslySetInnerHTML={{ __html: t('aboutIntro2') }} />
+          <p className="intro-text"><SafeText text={t('aboutIntro2')} /></p>
         </section>
 
         <section className="about-values">
@@ -66,7 +86,7 @@ const AboutUs = () => {
         <section className="about-philosophy">
           <div className="philosophy-content">
             <h2 className="section-heading">{t('aboutPhilosophyTitle')}</h2>
-            <p className="section-text" dangerouslySetInnerHTML={{ __html: t('aboutPhilosophy1') }} />
+            <p className="section-text"><SafeText text={t('aboutPhilosophy1')} /></p>
             <p className="section-text">{t('aboutPhilosophy2')}</p>
           </div>
         </section>

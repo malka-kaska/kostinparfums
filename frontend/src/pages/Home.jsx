@@ -3,48 +3,34 @@ import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
-import { CATEGORY_IMAGES } from '../utils/imageUtils';
 import './Home.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Category images for Men and Women fragrances
+const GENDER_IMAGES = {
+  men: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&q=80',
+  women: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80',
+};
+
 const Home = () => {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const { t } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, catRes] = await Promise.all([
-          fetch(`${API_URL}/api/products?limit=20`),
-          fetch(`${API_URL}/api/products/categories`),
-        ]);
+        const prodRes = await fetch(`${API_URL}/api/products?limit=20`);
         if (prodRes.ok) {
           const prodData = await prodRes.json();
           setProducts(prodData.products || []);
         }
-        if (catRes.ok) {
-          const catData = await catRes.json();
-          setCategories(catData || []);
-        }
       } catch {
         setProducts([]);
-        setCategories([]);
       }
     };
     fetchData();
   }, []);
-
-  const categoryNames = {
-    perfumes: t('perfumes'),
-    makeup: t('makeup'),
-    skincare: t('skincare'),
-    haircare: t('haircare'),
-    bodycare: t('bodyCare'),
-    menscare: t('mensCare'),
-    other: t('other') || 'Other',
-  };
 
   const newArrivals = products.slice(0, 8);
   const bestSellers = products.slice(8, 16);
@@ -52,6 +38,39 @@ const Home = () => {
   return (
     <div className="home-page">
       <Hero />
+
+      {/* Shop by Gender Section */}
+      <section className="section-padding gender-section">
+        <div className="container">
+          <h2 className="section-title">{t('shopByCategory')}</h2>
+          <div className="gender-grid" data-testid="gender-grid">
+            <Link
+              to="/products?gender=men"
+              className="gender-card"
+              style={{
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${GENDER_IMAGES.men})`,
+              }}
+            >
+              <div className="gender-content">
+                <h3 className="gender-name">{t('mensFragrances')}</h3>
+                <span className="gender-cta">{t('shopNow') || 'Shop Now'}</span>
+              </div>
+            </Link>
+            <Link
+              to="/products?gender=women"
+              className="gender-card"
+              style={{
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${GENDER_IMAGES.women})`,
+              }}
+            >
+              <div className="gender-content">
+                <h3 className="gender-name">{t('womensFragrances')}</h3>
+                <span className="gender-cta">{t('shopNow') || 'Shop Now'}</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <section className="section-padding-small">
         <div className="container">
@@ -81,31 +100,6 @@ const Home = () => {
           </div>
         </section>
       )}
-
-      <section className="section-padding categories-section">
-        <div className="container">
-          <h2 className="section-title">{t('shopByCategory')}</h2>
-          <div className="categories-grid single-category" data-testid="categories-grid">
-            {categories.filter(c => c.id === 'perfumes').map(category => (
-              <Link
-                key={category.id}
-                to={`/products?category=${category.id}`}
-                className="category-card"
-                style={{
-                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${CATEGORY_IMAGES[category.id] || CATEGORY_IMAGES.other})`,
-                }}
-              >
-                <div className="category-content">
-                  <h3 className="category-name">{categoryNames[category.id] || category.name}</h3>
-                  <p className="category-count">
-                    {category.product_count} {category.product_count === 1 ? t('productSingular') : t('productsCount')}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section className="trust-section">
         <div className="container">

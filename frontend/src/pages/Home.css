@@ -31,6 +31,82 @@
   background: var(--bg-primary);
 }
 
+/* Gender Grid (Men/Women) */
+.gender-section {
+  background: var(--bg-primary);
+}
+
+.gender-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.gender-card {
+  position: relative;
+  height: 400px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.gender-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0) 100%);
+  transition: all 0.4s ease;
+}
+
+.gender-card:hover::before {
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);
+}
+
+.gender-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.gender-content {
+  position: relative;
+  z-index: 1;
+  padding: 40px;
+  width: 100%;
+}
+
+.gender-name {
+  font-size: 32px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.gender-cta {
+  display: inline-block;
+  font-size: 12px;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 12px 32px;
+  border: 1px solid #ffffff;
+  transition: all 0.3s ease;
+}
+
+.gender-card:hover .gender-cta {
+  background: #ffffff;
+  color: #000000;
+}
+
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

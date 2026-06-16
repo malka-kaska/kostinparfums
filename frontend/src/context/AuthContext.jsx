@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const CART_STORAGE_KEY = 'kostin_cart';
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
         setUser(data);
         return data;
       }
-    } catch {}
+    } catch { /* silent fail - user remains null */ }
     setUser(null);
     return null;
   }, []);
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
         setCartData(data);
         return data;
       }
-    } catch {}
+    } catch { /* silent fail - cart remains null */ }
     return null;
   }, []);
 
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     init();
   }, [fetchUser, fetchCart]);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -98,13 +98,13 @@ export const AuthProvider = ({ children }) => {
         }
         localStorage.removeItem(CART_STORAGE_KEY);
       }
-    } catch {}
+    } catch { /* silent fail - cart sync is optimistic */ }
 
     await fetchCart();
     return data;
-  };
+  }, [fetchCart]);
 
-  const register = async (email, password, name) => {
+  const register = useCallback(async (email, password, name) => {
     const res = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const err = await res.clone().json();
         detail = err.detail;
-      } catch {}
+      } catch { /* JSON parse may fail if body consumed */ }
       if (!detail) {
         if (res.status === 400) detail = 'Email already registered';
         else detail = 'Registration failed';
@@ -127,20 +127,20 @@ export const AuthProvider = ({ children }) => {
     setUser(data);
     await fetchCart();
     return data;
-  };
+  }, [fetchCart]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
-    } catch {}
+    } catch { /* silent fail - logout is best-effort */ }
     setUser(null);
     setCartData(null);
-  };
+  }, []);
 
-  const addToCart = async (product, quantity = 1) => {
+  const addToCart = useCallback(async (product, quantity = 1) => {
     if (user) {
       try {
         const res = await fetch(`${API_URL}/api/cart/add`, {
@@ -155,7 +155,7 @@ export const AuthProvider = ({ children }) => {
           window.dispatchEvent(new Event('cartUpdated'));
           return data;
         }
-      } catch {}
+      } catch { /* JSON parse may fail if body consumed */ }
     }
     // Fallback to localStorage for non-authenticated users
     const cart = getLocalCart();
@@ -175,9 +175,9 @@ export const AuthProvider = ({ children }) => {
     }
     saveLocalCart(cart);
     window.dispatchEvent(new Event('cartUpdated'));
-  };
+  }, [user]);
 
-  const updateCartItem = async (productId, quantity) => {
+  const updateCartItem = useCallback(async (productId, quantity) => {
     if (user) {
       try {
         const res = await fetch(`${API_URL}/api/cart/update/${productId}`, {
@@ -192,7 +192,7 @@ export const AuthProvider = ({ children }) => {
           window.dispatchEvent(new Event('cartUpdated'));
           return data;
         }
-      } catch {}
+      } catch { /* JSON parse may fail if body consumed */ }
     }
     // localStorage fallback
     const cart = getLocalCart();
@@ -202,9 +202,9 @@ export const AuthProvider = ({ children }) => {
       saveLocalCart(cart);
     }
     window.dispatchEvent(new Event('cartUpdated'));
-  };
+  }, [user]);
 
-  const removeCartItem = async (productId) => {
+  const removeCartItem = useCallback(async (productId) => {
     if (user) {
       try {
         const res = await fetch(`${API_URL}/api/cart/remove/${productId}`, {
@@ -217,16 +217,16 @@ export const AuthProvider = ({ children }) => {
           window.dispatchEvent(new Event('cartUpdated'));
           return data;
         }
-      } catch {}
+      } catch { /* JSON parse may fail if body consumed */ }
     }
     // localStorage fallback
     const cart = getLocalCart();
     const filtered = cart.filter(item => item.id !== productId);
     saveLocalCart(filtered);
     window.dispatchEvent(new Event('cartUpdated'));
-  };
+  }, [user]);
 
-  const clearCartAll = async () => {
+  const clearCartAll = useCallback(async () => {
     if (user) {
       try {
         const res = await fetch(`${API_URL}/api/cart/clear`, {
@@ -239,14 +239,14 @@ export const AuthProvider = ({ children }) => {
           window.dispatchEvent(new Event('cartUpdated'));
           return data;
         }
-      } catch {}
+      } catch { /* JSON parse may fail if body consumed */ }
     }
     // localStorage fallback
     localStorage.removeItem(CART_STORAGE_KEY);
     window.dispatchEvent(new Event('cartUpdated'));
-  };
+  }, [user]);
 
-  const getCartItems = () => {
+  const getCartItems = useCallback(() => {
     if (user && cartData) {
       return cartData.items.map(item => ({
         id: item.product_id,
@@ -259,27 +259,29 @@ export const AuthProvider = ({ children }) => {
       }));
     }
     return getLocalCart();
-  };
+  }, [user, cartData]);
 
-  const getCartTotal = () => {
+  const getCartTotal = useCallback(() => {
     if (user && cartData) return cartData.total;
     const items = getCartItems();
     return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  };
+  }, [user, cartData, getCartItems]);
 
-  const getCartCount = () => {
+  const getCartCount = useCallback(() => {
     if (user && cartData) return cartData.item_count;
     const items = getCartItems();
     return items.reduce((sum, item) => sum + item.quantity, 0);
-  };
+  }, [user, cartData, getCartItems]);
+
+  const contextValue = useMemo(() => ({
+    user, loading, login, register, logout,
+    addToCart, updateCartItem, removeCartItem, clearCartAll,
+    getCartItems, getCartTotal, getCartCount,
+    cartData, fetchCart,
+  }), [user, loading, login, register, logout, addToCart, updateCartItem, removeCartItem, clearCartAll, getCartItems, getCartTotal, getCartCount, cartData, fetchCart]);
 
   return (
-    <AuthContext.Provider value={{
-      user, loading, login, register, logout,
-      addToCart, updateCartItem, removeCartItem, clearCartAll,
-      getCartItems, getCartTotal, getCartCount,
-      cartData, fetchCart,
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

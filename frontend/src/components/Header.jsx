@@ -112,8 +112,11 @@ const Header = () => {
             <Link to="/products" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               {t('shopAll')}
             </Link>
-            <Link to="/products?category=perfumes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              {t('perfumes')}
+            <Link to="/products?category=perfumes&gender=men" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              {t('mensFragrances')}
+            </Link>
+            <Link to="/products?category=perfumes&gender=women" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              {t('womensFragrances')}
             </Link>
           </nav>
           

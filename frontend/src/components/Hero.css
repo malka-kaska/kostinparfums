@@ -1,32 +1,43 @@
-/* Luxury Hero Section */
+/* Luxury Hero Section with Carousel */
 
 .hero {
   position: relative;
   width: 100%;
-  height: 550px;
+  height: 600px;
   overflow: hidden;
 }
 
-.hero-image-bg {
+/* Slides Container */
+.hero-slides {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  /* Luxury perfume/beauty image */
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-  background-image: url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1920&q=80');
-  background-size: cover;
-  background-position: center;
-  position: relative;
 }
 
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.hero-slide.active {
+  opacity: 1;
+}
+
+/* Overlay */
 .hero-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
+  inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%);
   display: flex;
   align-items: center;
+  z-index: 2;
 }
 
 .hero-content {
@@ -72,9 +83,41 @@
   color: #ffffff;
 }
 
+/* Slide Indicators */
+.hero-indicators {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 3;
+}
+
+.hero-indicator {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.6);
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.hero-indicator:hover {
+  border-color: #ffffff;
+}
+
+.hero-indicator.active {
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .hero {
-    height: 450px;
+    height: 500px;
   }
   
   .hero-title {
@@ -91,9 +134,14 @@
   
   .hero-content {
     padding: 40px 0;
+    text-align: center;
   }
   
   .hero-button {
     padding: 14px 36px;
+  }
+  
+  .hero-indicators {
+    bottom: 20px;
   }
 }

@@ -747,3 +747,35 @@ textarea.form-input {
   color: var(--text-secondary);
   white-space: nowrap;
 }
+
+
+/* Gender Selection */
+.gender-group {
+  grid-column: 1 / -1;
+}
+
+.gender-checkboxes {
+  display: flex;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.gender-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.gender-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-gold);
+  cursor: pointer;
+}
+
+.gender-checkbox span {
+  user-select: none;
+}

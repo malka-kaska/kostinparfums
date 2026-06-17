@@ -41,6 +41,7 @@ def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict
         "stock": doc.get("stock", 0),
         "is_active": doc.get("is_active", True),
         "is_visible": doc.get("is_visible", True),
+        "gender": doc.get("gender", []),  # New field - ["men"], ["women"], or both
         "created_at": doc.get("created_at"),
     }
     if doc.get("description_bg"):
@@ -53,6 +54,8 @@ async def get_products(
     request: Request,
     category: Optional[str] = None,
     brand: Optional[str] = None,
+    brands: Optional[str] = None,  # Comma-separated list of brands for multi-select
+    gender: Optional[str] = None,  # "men" or "women" - filters products that include this gender
     search: Optional[str] = None,
     sort: Optional[str] = "name",
     min_price: Optional[float] = None,
@@ -66,8 +69,19 @@ async def get_products(
 
     if category:
         query["category"] = category
-    if brand:
+    
+    # Support both single brand and multiple brands
+    if brands:
+        brand_list = [b.strip() for b in brands.split(",") if b.strip()]
+        if brand_list:
+            query["brand"] = {"$in": brand_list}
+    elif brand:
         query["brand"] = brand
+    
+    # Gender filter - show products that include this gender in their gender array
+    if gender:
+        query["gender"] = {"$in": [gender]}
+    
     if search:
         query["$or"] = [
             {"name": {"$regex": search, "$options": "i"}},
@@ -195,11 +209,13 @@ async def get_categories(request: Request):
 
 
 @router.get("/brands")
-async def get_brands(request: Request, category: Optional[str] = None):
+async def get_brands(request: Request, category: Optional[str] = None, gender: Optional[str] = None):
     db = request.app.state.db
     match = {"is_active": True, "is_visible": True}
     if category:
         match["category"] = category
+    if gender:
+        match["gender"] = {"$in": [gender]}
     pipeline = [
         {"$match": match},
         {"$group": {"_id": "$brand", "count": {"$sum": 1}}},

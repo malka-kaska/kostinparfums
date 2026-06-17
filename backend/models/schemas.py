@@ -43,6 +43,7 @@ class ProductCreate(BaseModel):
     stock: int = 0
     is_active: bool = True
     is_visible: bool = True
+    gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
 
 
 class ProductUpdate(BaseModel):
@@ -57,6 +58,7 @@ class ProductUpdate(BaseModel):
     stock: Optional[int] = None
     is_active: Optional[bool] = None
     is_visible: Optional[bool] = None
+    gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
 
 
 class ProductVisibilityUpdate(BaseModel):

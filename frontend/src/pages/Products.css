@@ -98,15 +98,39 @@
   color: var(--text-primary);
 }
 
-.filter-option input[type="radio"] {
+.filter-option input[type="radio"],
+.filter-option input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
+  accent-color: var(--accent-gold);
 }
 
-.filter-option input[type="radio"]:checked + span {
+.filter-option input[type="radio"]:checked + span,
+.filter-option input[type="checkbox"]:checked + span {
   color: var(--text-primary);
   font-weight: 500;
+}
+
+.filter-option.checkbox {
+  padding: 4px 0;
+}
+
+.clear-brands-btn {
+  margin-top: 12px;
+  background: none;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.clear-brands-btn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
 }
 
 /* Products Main */

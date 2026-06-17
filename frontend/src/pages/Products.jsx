@@ -14,40 +14,58 @@ const Products = () => {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
-  const [selectedBrand, setSelectedBrand] = useState('all');
+  const [selectedBrands, setSelectedBrands] = useState([]); // Multiple brands support
+  const [selectedGender, setSelectedGender] = useState(searchParams.get('gender') || 'all');
   const [sortBy, setSortBy] = useState('name');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
 
+  // Fetch brands with gender filter
+  const fetchBrands = async (gender) => {
+    try {
+      const params = new URLSearchParams();
+      if (gender && gender !== 'all') params.set('gender', gender);
+      const brandRes = await fetch(`${API_URL}/api/products/brands?${params.toString()}`);
+      if (brandRes.ok) {
+        const brandData = await brandRes.json();
+        setBrands(brandData.map(b => b.name));
+      }
+    } catch (err) {
+      console.error('Failed to fetch brands:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchMeta = async () => {
       try {
-        const [catRes, brandRes] = await Promise.all([
-          fetch(`${API_URL}/api/products/categories`),
-          fetch(`${API_URL}/api/products/brands`),
-        ]);
+        const catRes = await fetch(`${API_URL}/api/products/categories`);
         if (catRes.ok) {
           const catData = await catRes.json();
           setCategories(catData.map(c => ({ id: c.id, name: c.name })));
         }
-        if (brandRes.ok) {
-          const brandData = await brandRes.json();
-          setBrands(brandData.map(b => b.name));
-        }
       } catch (err) {
-        console.error('Failed to fetch categories/brands:', err);
+        console.error('Failed to fetch categories:', err);
       }
     };
     fetchMeta();
   }, []);
 
+  // Refetch brands when gender changes
+  useEffect(() => {
+    fetchBrands(selectedGender);
+    // Reset selected brands when gender changes
+    setSelectedBrands([]);
+  }, [selectedGender]);
+
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category') || 'all';
     const searchFromUrl = searchParams.get('search') || '';
+    const genderFromUrl = searchParams.get('gender') || 'all';
     setSelectedCategory(categoryFromUrl);
     setSearchQuery(searchFromUrl);
+    setSelectedGender(genderFromUrl);
   }, [searchParams]);
 
   useEffect(() => {
@@ -56,7 +74,8 @@ const Products = () => {
       try {
         const params = new URLSearchParams();
         if (selectedCategory !== 'all') params.set('category', selectedCategory);
-        if (selectedBrand !== 'all') params.set('brand', selectedBrand);
+        if (selectedBrands.length > 0) params.set('brands', selectedBrands.join(','));
+        if (selectedGender !== 'all') params.set('gender', selectedGender);
         if (searchQuery) params.set('search', searchQuery);
         if (sortBy) params.set('sort', sortBy);
         params.set('limit', '200');
@@ -81,7 +100,7 @@ const Products = () => {
 
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, selectedBrand, sortBy, searchQuery]);
+  }, [selectedCategory, selectedBrands, selectedGender, sortBy, searchQuery]);
 
   const categoryNames = {
     perfumes: t('perfumes'),
@@ -101,9 +120,28 @@ const Products = () => {
     }
   };
 
+  const handleGenderChange = (gender) => {
+    setSelectedGender(gender);
+    const newParams = {};
+    if (gender !== 'all') newParams.gender = gender;
+    if (selectedCategory !== 'all') newParams.category = selectedCategory;
+    setSearchParams(newParams);
+  };
+
+  const handleBrandToggle = (brand) => {
+    setSelectedBrands(prev => {
+      if (prev.includes(brand)) {
+        return prev.filter(b => b !== brand);
+      } else {
+        return [...prev, brand];
+      }
+    });
+  };
+
   const clearFilters = () => {
     setSelectedCategory('all');
-    setSelectedBrand('all');
+    setSelectedBrands([]);
+    setSelectedGender('all');
     setSearchQuery('');
     setSearchParams({});
   };
@@ -131,30 +169,62 @@ const Products = () => {
 
             {/* Category filter hidden - only perfumes for now */}
 
+            {/* Gender filter */}
             <div className="filter-group">
-              <h4 className="filter-title">{t('brand')}</h4>
-              <div className="filter-options scrollable">
+              <h4 className="filter-title">{t('gender') || 'Gender'}</h4>
+              <div className="filter-options">
                 <label className="filter-option">
                   <input
                     type="radio"
-                    name="brand"
-                    checked={selectedBrand === 'all'}
-                    onChange={() => setSelectedBrand('all')}
+                    name="gender"
+                    checked={selectedGender === 'all'}
+                    onChange={() => handleGenderChange('all')}
                   />
-                  <span>{t('allBrands')}</span>
+                  <span>{t('all') || 'All'}</span>
                 </label>
+                <label className="filter-option">
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={selectedGender === 'women'}
+                    onChange={() => handleGenderChange('women')}
+                  />
+                  <span>{t('forWomen') || 'For Women'}</span>
+                </label>
+                <label className="filter-option">
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={selectedGender === 'men'}
+                    onChange={() => handleGenderChange('men')}
+                  />
+                  <span>{t('forMen') || 'For Men'}</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="filter-group">
+              <h4 className="filter-title">{t('brand')}</h4>
+              <div className="filter-options scrollable">
                 {brands.map(brand => (
-                  <label key={brand} className="filter-option">
+                  <label key={brand} className="filter-option checkbox">
                     <input
-                      type="radio"
-                      name="brand"
-                      checked={selectedBrand === brand}
-                      onChange={() => setSelectedBrand(brand)}
+                      type="checkbox"
+                      checked={selectedBrands.includes(brand)}
+                      onChange={() => handleBrandToggle(brand)}
                     />
                     <span>{brand}</span>
                   </label>
                 ))}
               </div>
+              {selectedBrands.length > 0 && (
+                <button 
+                  className="clear-brands-btn"
+                  onClick={() => setSelectedBrands([])}
+                >
+                  {t('clearBrands') || 'Clear brands'} ({selectedBrands.length})
+                </button>
+              )}
             </div>
 
             <button className="btn-primary" onClick={clearFilters} data-testid="clear-filters-btn">

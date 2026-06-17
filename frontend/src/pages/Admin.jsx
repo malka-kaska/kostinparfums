@@ -21,7 +21,7 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', brand: '', category: '', price: '', description: '', description_bg: '', images: [], stock: ''
+    name: '', brand: '', category: '', price: '', description: '', description_bg: '', images: [], stock: '', gender: []
   });
   const [draggedIndex, setDraggedIndex] = useState(null);
   const navigate = useNavigate();
@@ -211,7 +211,8 @@ const Admin = () => {
       name: product.name, brand: product.brand, category: product.category,
       price: product.price.toString(), description: product.description || '',
       description_bg: product.description_bg || '',
-      images: images, stock: product.stock.toString()
+      images: images, stock: product.stock.toString(),
+      gender: product.gender || []
     });
   };
 
@@ -222,7 +223,8 @@ const Admin = () => {
       name: '', brand: '', category: 'perfumes',
       price: '', description: '', description_bg: '',
       images: [],
-      stock: ''
+      stock: '',
+      gender: []
     });
   };
 
@@ -236,6 +238,7 @@ const Admin = () => {
         image: formData.images[0] || '',  // Legacy field - first image
         images: formData.images,  // New field - all images in order
         stock: parseInt(formData.stock) || 0,
+        gender: formData.gender || [],
       };
 
       if (isCreating) {
@@ -529,6 +532,40 @@ const Admin = () => {
                         />
                         <span className="url-hint">{t('pressEnterToAdd') || 'Press Enter to add'}</span>
                       </div>
+                    </div>
+                    <div className="form-group gender-group">
+                      <label className="form-label">{t('targetAudience') || 'Target Audience'}</label>
+                      <div className="gender-checkboxes">
+                        <label className="gender-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={formData.gender?.includes('women')}
+                            onChange={(e) => {
+                              const newGender = e.target.checked
+                                ? [...(formData.gender || []), 'women']
+                                : (formData.gender || []).filter(g => g !== 'women');
+                              setFormData({ ...formData, gender: newGender });
+                            }}
+                            data-testid="gender-women-checkbox"
+                          />
+                          <span>{t('forWomen') || 'For Women'}</span>
+                        </label>
+                        <label className="gender-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={formData.gender?.includes('men')}
+                            onChange={(e) => {
+                              const newGender = e.target.checked
+                                ? [...(formData.gender || []), 'men']
+                                : (formData.gender || []).filter(g => g !== 'men');
+                              setFormData({ ...formData, gender: newGender });
+                            }}
+                            data-testid="gender-men-checkbox"
+                          />
+                          <span>{t('forMen') || 'For Men'}</span>
+                        </label>
+                      </div>
+                      <p className="form-hint">{t('genderHint') || 'Select both for unisex products'}</p>
                     </div>
                     <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                       <label className="form-label">{t('description')} (EN)</label>

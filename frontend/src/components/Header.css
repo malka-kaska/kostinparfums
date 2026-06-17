@@ -328,13 +328,25 @@
   .logo-tagline {
     font-size: 7px;
     margin-top: 4px;
+    max-width: 200px;
+    line-height: 1.3;
   }
   
   .header-icons {
-    gap: 12px;
+    gap: 8px;
   }
   
   .icon-button {
     padding: 6px;
+  }
+  
+  .lang-toggle,
+  .theme-toggle {
+    padding: 6px 8px;
+    border: none;
+  }
+  
+  .lang-label {
+    font-size: 10px;
   }
 }

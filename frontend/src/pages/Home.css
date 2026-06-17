@@ -221,6 +221,18 @@
     grid-template-columns: 1fr;
     gap: 40px;
   }
+  
+  .gender-grid {
+    gap: 16px;
+  }
+  
+  .gender-card {
+    height: 350px;
+  }
+  
+  .gender-name {
+    font-size: 26px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -235,5 +247,28 @@
   .section-title {
     font-size: 20px;
     margin-bottom: 30px;
+  }
+  
+  .gender-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .gender-card {
+    height: 280px;
+  }
+  
+  .gender-name {
+    font-size: 24px;
+    letter-spacing: 0.1em;
+  }
+  
+  .gender-cta {
+    font-size: 11px;
+    padding: 10px 24px;
+  }
+  
+  .gender-content {
+    padding: 24px;
   }
 }

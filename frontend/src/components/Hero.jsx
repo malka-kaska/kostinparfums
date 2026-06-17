@@ -10,7 +10,7 @@ const HERO_SLIDES = [
     alt: 'Luxury Perfume Collection'
   },
   {
-    image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=1920&q=80',
+    image: 'https://images.unsplash.com/photo-1615160460366-2c9a41771b51?w=1920&q=80',
     alt: 'Premium Fragrances'
   },
   {

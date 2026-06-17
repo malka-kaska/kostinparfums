@@ -49,6 +49,13 @@ Build a luxury perfume e-commerce website named "KOSTIN" with the slogan "Сел
 - **React Hooks Optimization**: Added useMemo/useCallback to AuthContext.jsx to prevent unnecessary re-renders
 - **Context Provider**: Wrapped AuthContext value in useMemo for better performance
 
+### Dark/Light Theme System (June 2026)
+- **ThemeContext**: Created context for managing theme state with localStorage persistence
+- **System Preference Detection**: Auto-detects user's system theme (prefers-color-scheme)
+- **Theme Toggle Button**: Added Sun/Moon icon button in header for manual theme switching
+- **CSS Variables**: Implemented comprehensive dark theme with CSS custom properties
+- **Persistence**: Theme preference saved in localStorage and persists across sessions
+
 ### BG/EN Localization (Complete)
 - Language toggle in header, auto-detection, localStorage persistence
 - 290+ translation keys covering all UI text
@@ -101,7 +108,8 @@ Build a luxury perfume e-commerce website named "KOSTIN" with the slogan "Сел
 │   └── Profile.jsx
 ├── context/
 │   ├── AuthContext.jsx        # Optimized with useMemo/useCallback
-│   └── LanguageContext.jsx
+│   ├── LanguageContext.jsx
+│   └── ThemeContext.jsx       # Dark/Light theme management
 └── translations/
     ├── en.js
     └── bg.js

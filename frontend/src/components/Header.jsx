@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, Globe } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Globe, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import './Header.css';
 
 const Header = () => {
@@ -12,6 +13,7 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, logout, getCartCount } = useAuth();
   const { lang, t, toggleLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const updateCount = () => setCartCount(getCartCount());
@@ -54,6 +56,16 @@ const Header = () => {
             </button>
 
             <div className="header-icons">
+              <button
+                className="icon-button theme-toggle"
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+                data-testid="theme-toggle"
+                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              </button>
+
               <button
                 className="icon-button lang-toggle"
                 onClick={toggleLanguage}

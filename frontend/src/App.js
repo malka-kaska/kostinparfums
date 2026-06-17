@@ -3,6 +3,7 @@ import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
@@ -24,6 +25,7 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
+        <ThemeProvider>
         <LanguageProvider>
         <AuthProvider>
         <ScrollToTop />
@@ -46,6 +48,7 @@ function App() {
         <Footer />
         </AuthProvider>
         </LanguageProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </div>
   );

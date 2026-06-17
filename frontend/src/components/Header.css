@@ -55,7 +55,8 @@
 }
 
 /* Language Toggle */
-.lang-toggle {
+.lang-toggle,
+.theme-toggle {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -69,7 +70,8 @@
   transition: all 0.2s ease;
 }
 
-.lang-toggle:hover {
+.lang-toggle:hover,
+.theme-toggle:hover {
   border-color: var(--accent-gold);
   color: var(--accent-gold);
 }

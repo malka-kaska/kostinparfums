@@ -18,7 +18,7 @@
   position: relative;
   width: 100%;
   padding-top: 100%; /* Square aspect ratio */
-  background: #f8f7f5; /* Light off-white background */
+  background: var(--bg-secondary); /* Light off-white background */
   overflow: hidden;
 }
 
@@ -31,7 +31,7 @@
   object-fit: contain; /* Changed from cover to contain */
   padding: 12px;
   transition: transform 0.4s ease;
-  background: #f8f7f5;
+  background: var(--bg-secondary);
 }
 
 .product-card:hover .product-image {
@@ -43,7 +43,7 @@
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  background: #ffffff;
+  background: var(--bg-primary);
   border: 1px solid var(--text-primary);
   color: var(--text-primary);
   padding: 10px 20px;

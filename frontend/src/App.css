@@ -3,15 +3,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Venba-inspired Colors */
+  /* Light Theme Colors */
   --bg-primary: #ffffff;
   --bg-secondary: #f8f8f8;
+  --bg-tertiary: #f0f0f0;
   --bg-announcement: #000000;
   
   /* Text Colors */
   --text-primary: #000000;
   --text-secondary: #666666;
   --text-light: #999999;
+  --text-inverse: #ffffff;
   
   /* Accent Colors */
   --accent-gold: #d4a574;
@@ -24,6 +26,48 @@
   /* Borders */
   --border-light: #e5e5e5;
   --border-medium: #cccccc;
+  
+  /* Cards & Surfaces */
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  
+  /* Form elements */
+  --input-bg: #ffffff;
+  --input-border: #e5e5e5;
+}
+
+/* Dark Theme */
+:root.dark {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1a1a1a;
+  --bg-announcement: #1a1a1a;
+  
+  /* Text Colors */
+  --text-primary: #f5f5f5;
+  --text-secondary: #a0a0a0;
+  --text-light: #707070;
+  --text-inverse: #000000;
+  
+  /* Accent Colors - slightly brighter for dark mode */
+  --accent-gold: #e0b88a;
+  --accent-orange: #f0b560;
+  
+  /* Interactive */
+  --interactive-base: #ffffff;
+  --interactive-hover: #e0e0e0;
+  
+  /* Borders */
+  --border-light: #2a2a2a;
+  --border-medium: #3a3a3a;
+  
+  /* Cards & Surfaces */
+  --card-bg: #141414;
+  --card-shadow: rgba(0, 0, 0, 0.3);
+  
+  /* Form elements */
+  --input-bg: #1a1a1a;
+  --input-border: #2a2a2a;
 }
 
 * {

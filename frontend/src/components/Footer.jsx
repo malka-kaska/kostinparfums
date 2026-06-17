@@ -38,10 +38,9 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-subtitle">{t('footerShop')}</h4>
             <ul className="footer-links">
-              <li><Link to="/products?category=perfumes">{t('perfumes')}</Link></li>
-              <li><Link to="/products?category=makeup">{t('makeup')}</Link></li>
-              <li><Link to="/products?category=skincare">{t('skincare')}</Link></li>
-              <li><Link to="/products?category=haircare">{t('haircare')}</Link></li>
+              <li><Link to="/products">{t('shopAll')}</Link></li>
+              <li><Link to="/products?category=perfumes&gender=women">{t('womensFragrances')}</Link></li>
+              <li><Link to="/products?category=perfumes&gender=men">{t('mensFragrances')}</Link></li>
             </ul>
           </div>
           

@@ -10,8 +10,8 @@ const HERO_SLIDES = [
     alt: 'Luxury Perfume Collection'
   },
   {
-    image: 'https://images.unsplash.com/photo-1698867928110-2408e8e2f44a?w=1920&q=80',
-    alt: 'Dior Sauvage'
+    image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=1920&q=80',
+    alt: 'Bleu de Chanel'
   },
   {
     image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1920&q=80',

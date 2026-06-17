@@ -181,7 +181,7 @@ async def get_all_products_admin(
 async def get_categories(request: Request):
     db = request.app.state.db
     pipeline = [
-        {"$match": {"is_active": True}},
+        {"$match": {"is_active": True, "is_visible": True}},
         {"$group": {"_id": "$category", "count": {"$sum": 1}}},
         {"$sort": {"_id": 1}},
     ]
@@ -197,7 +197,7 @@ async def get_categories(request: Request):
 @router.get("/brands")
 async def get_brands(request: Request, category: Optional[str] = None):
     db = request.app.state.db
-    match = {"is_active": True}
+    match = {"is_active": True, "is_visible": True}
     if category:
         match["category"] = category
     pipeline = [

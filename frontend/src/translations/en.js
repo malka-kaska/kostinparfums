@@ -325,5 +325,5 @@ export const en = {
   // Common
   loading: "Loading...",
   error: "Something went wrong",
-  curatedBeautyEssentials: "CURATED FRAGRANCES AND LUXURY ESSENTIALS",
+  curatedBeautyEssentials: "SELECTION OF LUXURY FRAGRANCES",
 };

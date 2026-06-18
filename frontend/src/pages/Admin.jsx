@@ -329,15 +329,27 @@ const Admin = () => {
     if (user?.role === 'admin') {
       fetchProducts();
       fetchOrders();
-      fetchHomepageSettings();
-      // Also fetch all products for featured selection
-      fetch(`${API_URL}/api/products/admin/all?limit=500`, { credentials: 'include' })
-        .then(res => res.json())
-        .then(data => setAllProductsForSelection(data.products || []))
-        .catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, page, filterVisibility, filterSort, filterSearch, filterCategory]);
+
+  // Separate useEffect for homepage data - runs once when user is admin
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchHomepageSettings();
+      // Fetch all visible products for featured selection
+      fetch(`${API_URL}/api/products/admin/all?limit=10000`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          console.log('Loaded products for selection:', data.products?.length);
+          const visibleProducts = (data.products || []).filter(p => p.is_visible);
+          console.log('Visible products:', visibleProducts.length);
+          setAllProductsForSelection(visibleProducts);
+        })
+        .catch(err => console.error('Failed to load products:', err));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleEdit = (product) => {
     setEditingProduct(product.id);

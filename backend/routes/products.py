@@ -130,7 +130,7 @@ async def get_all_products_admin(
     sort: Optional[str] = "name",
     visibility: Optional[str] = None,  # all, visible, hidden
     page: int = Query(1, ge=1),
-    limit: int = Query(200, ge=1, le=500),
+    limit: int = Query(200, ge=1, le=10000),
 ):
     """Get ALL products including hidden ones - Admin only"""
     db = request.app.state.db

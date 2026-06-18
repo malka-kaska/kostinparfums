@@ -47,59 +47,73 @@ async def get_homepage_settings(request: Request):
 @router.put("/hero-slides")
 async def update_hero_slides(request: Request, data: UpdateHeroSlidesRequest):
     """Update hero carousel slides (admin only)"""
-    db = request.app.state.db
-    
-    # Verify admin (check cookie)
-    from utils.auth import verify_token
-    access_token = request.cookies.get("access_token")
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    payload = verify_token(access_token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-    if not user or user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    # Update or create settings
-    await db.settings.update_one(
-        {"type": "homepage"},
-        {"$set": {"hero_slides": [s.dict() for s in data.slides]}},
-        upsert=True
-    )
-    
-    return {"message": "Hero slides updated", "slides": [s.dict() for s in data.slides]}
+    try:
+        db = request.app.state.db
+        
+        # Verify admin using get_current_user
+        from utils.auth import get_current_user
+        try:
+            user = await get_current_user(request, db)
+        except:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        
+        if not user or user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Convert slides to dict format
+        slides_data = []
+        for s in data.slides:
+            if hasattr(s, 'model_dump'):
+                slides_data.append(s.model_dump())
+            elif hasattr(s, 'dict'):
+                slides_data.append(s.dict())
+            else:
+                slides_data.append({"image": s.image, "alt": s.alt})
+        
+        # Update or create settings
+        await db.settings.update_one(
+            {"type": "homepage"},
+            {"$set": {"hero_slides": slides_data}},
+            upsert=True
+        )
+        
+        return {"message": "Hero slides updated", "slides": slides_data}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating hero slides: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/featured-products")
 async def update_featured_products(request: Request, data: UpdateFeaturedProductsRequest):
     """Update featured products on homepage (admin only)"""
-    db = request.app.state.db
-    
-    # Verify admin
-    from utils.auth import verify_token
-    access_token = request.cookies.get("access_token")
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    payload = verify_token(access_token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-    if not user or user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    # Update or create settings
-    await db.settings.update_one(
-        {"type": "homepage"},
-        {"$set": {"featured_product_ids": data.product_ids}},
-        upsert=True
-    )
-    
-    return {"message": "Featured products updated", "product_ids": data.product_ids}
+    try:
+        db = request.app.state.db
+        
+        # Verify admin using get_current_user
+        from utils.auth import get_current_user
+        try:
+            user = await get_current_user(request, db)
+        except:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        
+        if not user or user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        # Update or create settings
+        await db.settings.update_one(
+            {"type": "homepage"},
+            {"$set": {"featured_product_ids": data.product_ids}},
+            upsert=True
+        )
+        
+        return {"message": "Featured products updated", "product_ids": data.product_ids}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating featured products: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/featured-products")

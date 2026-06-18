@@ -27,7 +27,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
         httponly=True,
         secure=False,
         samesite="lax",
-        max_age=900,
+        max_age=604800,  # 7 days
         path="/",
     )
     response.set_cookie(
@@ -36,7 +36,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
         httponly=True,
         secure=False,
         samesite="lax",
-        max_age=604800,
+        max_age=604800,  # 7 days
         path="/",
     )
 
@@ -165,7 +165,7 @@ async def refresh_token(request: Request, response: Response):
             httponly=True,
             secure=False,
             samesite="lax",
-            max_age=900,
+            max_age=604800,  # 7 days
             path="/",
         )
         return {"message": "Token refreshed"}

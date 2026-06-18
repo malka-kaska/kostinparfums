@@ -998,6 +998,36 @@ textarea.form-input {
   display: flex;
   flex-direction: column;
   padding: 8px;
+
+/* Product Search Box */
+.product-search-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.product-search-box svg {
+  color: var(--text-light);
+}
+
+.product-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.product-search-input::placeholder {
+  color: var(--text-light);
+}
+
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: 6px;

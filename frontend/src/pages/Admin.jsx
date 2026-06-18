@@ -33,6 +33,7 @@ const Admin = () => {
   const [allProductsForSelection, setAllProductsForSelection] = useState([]);
   const [heroUploading, setHeroUploading] = useState(false);
   const [homepageSaving, setHomepageSaving] = useState(false);
+  const [featuredSearchQuery, setFeaturedSearchQuery] = useState('');
 
   // Multiple image upload handler
   const handleImageUpload = async (e) => {
@@ -995,10 +996,29 @@ const Admin = () => {
               {/* Product Selection */}
               <div className="product-selection">
                 <h4>{t('availableProducts') || 'Available Products'}</h4>
+                <div className="product-search-box">
+                  <Search size={16} />
+                  <input
+                    type="text"
+                    placeholder={t('searchProducts') || 'Search products...'}
+                    value={featuredSearchQuery || ''}
+                    onChange={(e) => setFeaturedSearchQuery(e.target.value)}
+                    className="product-search-input"
+                  />
+                </div>
                 <div className="product-selection-grid">
                   {allProductsForSelection
-                    .filter(p => p.is_visible && !featuredProductIds.includes(p.id))
-                    .slice(0, 50)
+                    .filter(p => {
+                      if (!p.is_visible) return false;
+                      if (featuredProductIds.includes(p.id)) return false;
+                      if (featuredSearchQuery) {
+                        const query = featuredSearchQuery.toLowerCase();
+                        return p.name.toLowerCase().includes(query) || 
+                               p.brand.toLowerCase().includes(query);
+                      }
+                      return true;
+                    })
+                    .slice(0, 100)
                     .map(product => (
                       <div 
                         key={product.id} 

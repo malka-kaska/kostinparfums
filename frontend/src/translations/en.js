@@ -346,4 +346,5 @@ export const en = {
   featuredProductsDesc: "Select products to display in the 'New Arrivals' section on the homepage.",
   selectedProducts: "Selected Products",
   availableProducts: "Available Products",
+  searchProducts: "Search products...",
 };

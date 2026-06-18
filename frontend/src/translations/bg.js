@@ -345,4 +345,5 @@ export const bg = {
   featuredProductsDesc: "Изберете продукти за показване в секция 'Ново в магазина' на началната страница.",
   selectedProducts: "Избрани продукти",
   availableProducts: "Налични продукти",
+  searchProducts: "Търси продукти...",
 };

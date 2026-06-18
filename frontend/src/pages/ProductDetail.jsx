@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -58,6 +59,7 @@ const ProductDetail = () => {
   const getDescription = () => {
     if (!product) return '';
     if (lang === 'bg' && product.description_bg) {
+      // Keep markdown but remove HTML
       return product.description_bg.replace(/<[^>]*>/g, '');
     }
     return product.description ? product.description.replace(/<[^>]*>/g, '') : '';
@@ -144,9 +146,9 @@ const ProductDetail = () => {
               )}
             </div>
 
-            <p className="body-regular mt-4" data-testid="product-description">
-              {getDescription()}
-            </p>
+            <div className="product-description mt-4" data-testid="product-description">
+              <ReactMarkdown>{getDescription()}</ReactMarkdown>
+            </div>
 
             <div className="product-actions mt-5">
               <div className="quantity-selector" data-testid="quantity-selector">

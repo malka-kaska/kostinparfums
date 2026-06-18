@@ -218,6 +218,54 @@
   border-top: 1px solid var(--border-light);
 }
 
+/* Product Description Markdown Styles */
+.product-description {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.product-description p {
+  margin-bottom: 16px;
+}
+
+.product-description strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.product-description h1,
+.product-description h2,
+.product-description h3 {
+  color: var(--text-primary);
+  margin-top: 24px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.product-description h1 {
+  font-size: 20px;
+}
+
+.product-description h2 {
+  font-size: 18px;
+}
+
+.product-description h3 {
+  font-size: 16px;
+}
+
+.product-description ul,
+.product-description ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.product-description li {
+  margin-bottom: 8px;
+}
+
+
 @media (max-width: 1024px) {
   .product-detail-grid {
     grid-template-columns: 1fr;

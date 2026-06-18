@@ -83,8 +83,10 @@ const ProductDetail = () => {
     );
   }
 
-  // Get all product images
-  const productImages = getProductImages(product.image);
+  // Get all product images - prefer images array, fallback to legacy image field
+  const productImages = (product.images && product.images.length > 0) 
+    ? product.images 
+    : getProductImages(product.image);
   const currentImage = imageError[selectedImageIndex] ? FALLBACK_IMAGE : productImages[selectedImageIndex];
 
   return (

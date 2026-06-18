@@ -39,7 +39,7 @@
 .product-detail-main-image {
   width: 100%;
   aspect-ratio: 1;
-  background: #f8f7f5;
+  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -65,7 +65,7 @@
   height: 80px;
   padding: 0;
   border: 2px solid var(--border-light);
-  background: #f8f7f5;
+  background: var(--bg-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
   overflow: hidden;

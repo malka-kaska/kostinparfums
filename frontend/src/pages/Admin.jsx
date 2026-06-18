@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff, Upload, Loader, GripVertical, Search, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Package, ShoppingBag, ChevronDown, Eye, EyeOff, Upload, Loader, GripVertical, Search, Filter, Home, Image } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Admin.css';
@@ -26,6 +26,13 @@ const Admin = () => {
   const [draggedIndex, setDraggedIndex] = useState(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  // Homepage management state
+  const [heroSlides, setHeroSlides] = useState([]);
+  const [featuredProductIds, setFeaturedProductIds] = useState([]);
+  const [allProductsForSelection, setAllProductsForSelection] = useState([]);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [homepageSaving, setHomepageSaving] = useState(false);
 
   // Multiple image upload handler
   const handleImageUpload = async (e) => {
@@ -108,6 +115,131 @@ const Admin = () => {
   const handleDragEnd = () => {
     setDraggedIndex(null);
   };
+
+  // ========== HOMEPAGE MANAGEMENT FUNCTIONS ==========
+  
+  // Fetch homepage settings
+  const fetchHomepageSettings = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/homepage/settings`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setHeroSlides(data.hero_slides || []);
+        setFeaturedProductIds(data.featured_product_ids || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch homepage settings:', err);
+    }
+  }, []);
+
+  // Upload hero image
+  const handleHeroImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setHeroUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+
+      const res = await fetch(`${API_URL}/api/upload/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formDataUpload,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setHeroSlides(prev => [...prev, { image: data.url, alt: '' }]);
+      } else {
+        alert('Upload failed');
+      }
+    } catch (err) {
+      alert('Upload error: ' + err.message);
+    } finally {
+      setHeroUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  // Remove hero slide
+  const handleRemoveHeroSlide = (index) => {
+    setHeroSlides(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Reorder hero slides
+  const moveHeroSlide = (fromIndex, toIndex) => {
+    const newSlides = [...heroSlides];
+    const [removed] = newSlides.splice(fromIndex, 1);
+    newSlides.splice(toIndex, 0, removed);
+    setHeroSlides(newSlides);
+  };
+
+  // Save hero slides
+  const saveHeroSlides = async () => {
+    setHomepageSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/homepage/hero-slides`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ slides: heroSlides }),
+      });
+      if (res.ok) {
+        alert(t('savedSuccessfully') || 'Saved successfully!');
+      } else {
+        alert('Save failed');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      setHomepageSaving(false);
+    }
+  };
+
+  // Toggle product in featured list
+  const toggleFeaturedProduct = (productId) => {
+    setFeaturedProductIds(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      } else {
+        return [...prev, productId];
+      }
+    });
+  };
+
+  // Move featured product up/down
+  const moveFeaturedProduct = (index, direction) => {
+    const newIds = [...featuredProductIds];
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= newIds.length) return;
+    [newIds[index], newIds[newIndex]] = [newIds[newIndex], newIds[index]];
+    setFeaturedProductIds(newIds);
+  };
+
+  // Save featured products
+  const saveFeaturedProducts = async () => {
+    setHomepageSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/homepage/featured-products`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ product_ids: featuredProductIds }),
+      });
+      if (res.ok) {
+        alert(t('savedSuccessfully') || 'Saved successfully!');
+      } else {
+        alert('Save failed');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      setHomepageSaving(false);
+    }
+  };
+
+  // ========== END HOMEPAGE MANAGEMENT ==========
 
   const CATEGORY_OPTIONS = [
     { id: 'perfumes', name: t('perfumes') },
@@ -196,6 +328,12 @@ const Admin = () => {
     if (user?.role === 'admin') {
       fetchProducts();
       fetchOrders();
+      fetchHomepageSettings();
+      // Also fetch all products for featured selection
+      fetch(`${API_URL}/api/products/admin/all?limit=500`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => setAllProductsForSelection(data.products || []))
+        .catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, page, filterVisibility, filterSort, filterSearch, filterCategory]);
@@ -341,6 +479,14 @@ const Admin = () => {
           >
             <Package size={18} />
             <span>{t('ordersTab')} ({orders.length})</span>
+          </button>
+          <button
+            className={`admin-tab ${activeTab === 'homepage' ? 'active' : ''}`}
+            onClick={() => setActiveTab('homepage')}
+            data-testid="admin-tab-homepage"
+          >
+            <Home size={18} />
+            <span>{t('homepageTab') || 'Homepage'}</span>
           </button>
         </div>
 
@@ -723,6 +869,150 @@ const Admin = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Homepage Management Tab */}
+        {activeTab === 'homepage' && (
+          <div className="homepage-management">
+            {/* Hero Slides Section */}
+            <div className="admin-section">
+              <div className="admin-section-header">
+                <h3>{t('heroSlides') || 'Hero Carousel Images'}</h3>
+                <div className="section-actions">
+                  <label className="btn-secondary upload-btn">
+                    <Upload size={16} />
+                    <span>{heroUploading ? (t('uploading') || 'Uploading...') : (t('addImage') || 'Add Image')}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleHeroImageUpload}
+                      disabled={heroUploading}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  <button 
+                    className="btn-primary" 
+                    onClick={saveHeroSlides}
+                    disabled={homepageSaving}
+                  >
+                    <Save size={16} />
+                    <span>{homepageSaving ? (t('saving') || 'Saving...') : (t('saveChanges') || 'Save Changes')}</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="hero-slides-grid">
+                {heroSlides.map((slide, index) => (
+                  <div key={index} className="hero-slide-card">
+                    <div className="hero-slide-image">
+                      <img src={slide.image} alt={slide.alt || `Slide ${index + 1}`} />
+                    </div>
+                    <div className="hero-slide-actions">
+                      <button 
+                        className="btn-icon"
+                        onClick={() => moveHeroSlide(index, -1)}
+                        disabled={index === 0}
+                        title="Move up"
+                      >
+                        ↑
+                      </button>
+                      <button 
+                        className="btn-icon"
+                        onClick={() => moveHeroSlide(index, 1)}
+                        disabled={index === heroSlides.length - 1}
+                        title="Move down"
+                      >
+                        ↓
+                      </button>
+                      <button 
+                        className="btn-icon btn-danger"
+                        onClick={() => handleRemoveHeroSlide(index)}
+                        title="Remove"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Image description (alt text)"
+                      value={slide.alt}
+                      onChange={(e) => {
+                        const newSlides = [...heroSlides];
+                        newSlides[index] = { ...slide, alt: e.target.value };
+                        setHeroSlides(newSlides);
+                      }}
+                      className="hero-slide-alt-input"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Featured Products Section */}
+            <div className="admin-section">
+              <div className="admin-section-header">
+                <h3>{t('featuredProducts') || 'Featured Products (Homepage)'}</h3>
+                <button 
+                  className="btn-primary" 
+                  onClick={saveFeaturedProducts}
+                  disabled={homepageSaving}
+                >
+                  <Save size={16} />
+                  <span>{homepageSaving ? (t('saving') || 'Saving...') : (t('saveChanges') || 'Save Changes')}</span>
+                </button>
+              </div>
+
+              <p className="section-description">
+                {t('featuredProductsDesc') || 'Select products to display in "New Arrivals" section on the homepage. Drag to reorder.'}
+              </p>
+
+              {/* Selected Featured Products */}
+              {featuredProductIds.length > 0 && (
+                <div className="featured-products-list">
+                  <h4>{t('selectedProducts') || 'Selected Products'} ({featuredProductIds.length})</h4>
+                  <div className="featured-items">
+                    {featuredProductIds.map((productId, index) => {
+                      const product = allProductsForSelection.find(p => p.id === productId);
+                      if (!product) return null;
+                      return (
+                        <div key={productId} className="featured-item">
+                          <span className="featured-order">{index + 1}</span>
+                          <img src={product.images?.[0] || product.image} alt={product.name} className="featured-thumb" />
+                          <span className="featured-name">{product.name}</span>
+                          <div className="featured-actions">
+                            <button onClick={() => moveFeaturedProduct(index, -1)} disabled={index === 0}>↑</button>
+                            <button onClick={() => moveFeaturedProduct(index, 1)} disabled={index === featuredProductIds.length - 1}>↓</button>
+                            <button onClick={() => toggleFeaturedProduct(productId)} className="btn-remove">✕</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Product Selection */}
+              <div className="product-selection">
+                <h4>{t('availableProducts') || 'Available Products'}</h4>
+                <div className="product-selection-grid">
+                  {allProductsForSelection
+                    .filter(p => p.is_visible && !featuredProductIds.includes(p.id))
+                    .slice(0, 50)
+                    .map(product => (
+                      <div 
+                        key={product.id} 
+                        className="product-select-card"
+                        onClick={() => toggleFeaturedProduct(product.id)}
+                      >
+                        <img src={product.images?.[0] || product.image} alt={product.name} />
+                        <span>{product.name}</span>
+                        <span className="product-brand">{product.brand}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

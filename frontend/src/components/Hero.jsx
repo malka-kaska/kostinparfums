@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import './Hero.css';
 
-// 3 luxury perfume hero images
-const HERO_SLIDES = [
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Default hero slides (fallback)
+const DEFAULT_SLIDES = [
   {
     image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=1920&q=80',
     alt: 'Luxury Perfume Collection'
@@ -22,20 +24,39 @@ const HERO_SLIDES = [
 const Hero = () => {
   const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [heroSlides, setHeroSlides] = useState(DEFAULT_SLIDES);
+
+  // Fetch hero slides from API
+  useEffect(() => {
+    const fetchHeroSlides = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/homepage/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.hero_slides && data.hero_slides.length > 0) {
+            setHeroSlides(data.hero_slides);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch hero slides:', err);
+      }
+    };
+    fetchHeroSlides();
+  }, []);
 
   // Auto-rotate slides every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [heroSlides.length]);
 
   return (
     <section className="hero" data-testid="hero-section">
       {/* Slides */}
       <div className="hero-slides">
-        {HERO_SLIDES.map((slide, index) => (
+        {heroSlides.map((slide, index) => (
           <div
             key={index}
             className={`hero-slide ${index === currentSlide ? 'active' : ''}`}
@@ -60,7 +81,7 @@ const Hero = () => {
 
       {/* Slide indicators */}
       <div className="hero-indicators">
-        {HERO_SLIDES.map((_, index) => (
+        {heroSlides.map((_, index) => (
           <button
             key={index}
             className={`hero-indicator ${index === currentSlide ? 'active' : ''}`}

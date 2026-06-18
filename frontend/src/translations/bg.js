@@ -332,4 +332,17 @@ export const bg = {
   loading: "Зареждане...",
   error: "Нещо се обърка",
   curatedBeautyEssentials: "СЕЛЕКЦИЯ ОТ ЛУКСОЗНИ АРОМАТИ",
+  
+  // Homepage Management
+  homepageTab: "Начална страница",
+  heroSlides: "Снимки на каруселa",
+  addImage: "Добави снимка",
+  saveChanges: "Запази промените",
+  savedSuccessfully: "Запазено успешно!",
+  saving: "Запазване...",
+  uploading: "Качване...",
+  featuredProducts: "Избрани продукти",
+  featuredProductsDesc: "Изберете продукти за показване в секция 'Ново в магазина' на началната страница.",
+  selectedProducts: "Избрани продукти",
+  availableProducts: "Налични продукти",
 };

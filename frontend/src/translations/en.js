@@ -333,4 +333,17 @@ export const en = {
   loading: "Loading...",
   error: "Something went wrong",
   curatedBeautyEssentials: "SELECTION OF LUXURY FRAGRANCES",
+  
+  // Homepage Management
+  homepageTab: "Homepage",
+  heroSlides: "Hero Carousel Images",
+  addImage: "Add Image",
+  saveChanges: "Save Changes",
+  savedSuccessfully: "Saved successfully!",
+  saving: "Saving...",
+  uploading: "Uploading...",
+  featuredProducts: "Featured Products",
+  featuredProductsDesc: "Select products to display in the 'New Arrivals' section on the homepage.",
+  selectedProducts: "Selected Products",
+  availableProducts: "Available Products",
 };

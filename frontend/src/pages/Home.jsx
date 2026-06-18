@@ -14,13 +14,24 @@ const GENDER_IMAGES = {
 };
 
 const Home = () => {
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const { t } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const prodRes = await fetch(`${API_URL}/api/products?limit=20`);
+        // Fetch featured products first
+        const featuredRes = await fetch(`${API_URL}/api/homepage/featured-products`);
+        if (featuredRes.ok) {
+          const featuredData = await featuredRes.json();
+          if (featuredData.length > 0) {
+            setFeaturedProducts(featuredData);
+          }
+        }
+        
+        // Fetch regular products for best sellers
+        const prodRes = await fetch(`${API_URL}/api/products?limit=16`);
         if (prodRes.ok) {
           const prodData = await prodRes.json();
           setProducts(prodData.products || []);
@@ -32,8 +43,9 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const newArrivals = products.slice(0, 8);
-  const bestSellers = products.slice(8, 16);
+  // Use featured products if available, otherwise use first 8 products
+  const newArrivals = featuredProducts.length > 0 ? featuredProducts.slice(0, 8) : products.slice(0, 8);
+  const bestSellers = products.slice(0, 8);
 
   return (
     <div className="home-page">

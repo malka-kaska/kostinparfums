@@ -31,8 +31,8 @@ export const bg = {
 
   // Products page
   allProducts: "\u0412\u0441\u0438\u0447\u043a\u0438 \u0430\u0440\u043e\u043c\u0430\u0442\u0438",
-  discoverCollection: "Разгледайте нашата колекция луксозни аромати",
-  discoverCollectionSingular: "Разгледайте нашата колекция луксозни аромати",
+  discoverCollection: "Разгледайте нашата колекция от луксозни аромати",
+  discoverCollectionSingular: "Разгледайте нашата колекция от луксозни аромати",
   filters: "\u0424\u0438\u043b\u0442\u0440\u0438",
   category: "\u041a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f",
   allProductsFilter: "\u0412\u0441\u0438\u0447\u043a\u0438 \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0438",

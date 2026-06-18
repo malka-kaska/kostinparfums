@@ -43,6 +43,14 @@ Build a luxury perfume e-commerce website named "KOSTIN" with the slogan "Сел
 - Cloudinary image upload with drag-and-drop reordering
 - Support for multiple images per product
 - Visibility toggle for each product
+- **Homepage Manager Tab**: Control hero carousel slides and featured/best-seller products
+
+### Homepage Best Sellers Feature (June 2026)
+- **Best Sellers Section**: Displays "НАЙ-ПРОДАВАНИ" (Best Sellers) on homepage
+- **Manual Selection**: Admin can select featured products via Homepage Manager
+- **Automatic Fallback**: If no manual selection, system aggregates from `orders` collection
+- **Two Endpoints**: `/api/homepage/featured-products` (admin-selected) + `/api/homepage/best-sellers` (sales-based)
+- **ProductDetail UI**: "Add to Cart" button repositioned above product description for better UX
 
 ### Code Quality Fixes (June 2026)
 - **XSS Fix**: Removed `dangerouslySetInnerHTML` from AboutUs.jsx, replaced with SafeText component
@@ -67,9 +75,10 @@ Build a luxury perfume e-commerce website named "KOSTIN" with the slogan "Сел
 
 ## Database Schema
 - `users`: {email, password_hash, name, role, created_at}
-- `products`: {sku, name, brand, category, price, description, description_bg, image, images: [], stock, is_active, is_visible, created_at}
+- `products`: {sku, name, brand, category, price, description, description_bg, image, images: [], stock, is_active, is_visible, gender: [], created_at}
 - `carts`: {user_id, items: [{product_id, quantity}], updated_at}
-- `orders`: {user_id, user_email, user_name, items, total, shipping_cost, status, payment_status, session_id, created_at}
+- `orders`: {user_id, user_email, user_name, items: [{product_id, quantity, ...}], total, shipping_cost, status, payment_status, session_id, created_at}
+- `settings`: {type: "homepage", hero_slides: [{image, alt}], featured_product_ids: [str]}
 
 ## API Endpoints
 - Auth: POST /api/auth/login, POST /api/auth/register, GET /api/auth/me, POST /api/auth/logout
@@ -124,4 +133,6 @@ Build a luxury perfume e-commerce website named "KOSTIN" with the slogan "Сел
 ├── migrations.py              # Auto-seeds DB on startup
 └── data/
     └── products_backup.json   # 7,347 products backup for deployment
+```
+ 7,347 products backup for deployment
 ```

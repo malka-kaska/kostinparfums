@@ -146,11 +146,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            <div className="product-description mt-4" data-testid="product-description">
-              <ReactMarkdown>{getDescription()}</ReactMarkdown>
-            </div>
-
-            <div className="product-actions mt-5">
+            <div className="product-actions mt-4">
               <div className="quantity-selector" data-testid="quantity-selector">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -185,6 +181,10 @@ const ProductDetail = () => {
               <button className="wishlist-button" aria-label="Add to wishlist" data-testid="wishlist-button">
                 <Heart size={20} />
               </button>
+            </div>
+
+            <div className="product-description mt-5" data-testid="product-description">
+              <ReactMarkdown>{getDescription()}</ReactMarkdown>
             </div>
 
             <div className="product-meta mt-5">

@@ -15,37 +15,35 @@ const GENDER_IMAGES = {
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
   const { t } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch featured products first
+        // Fetch admin-selected featured products (for "Best Sellers" section)
         const featuredRes = await fetch(`${API_URL}/api/homepage/featured-products`);
         if (featuredRes.ok) {
           const featuredData = await featuredRes.json();
-          if (featuredData.length > 0) {
-            setFeaturedProducts(featuredData);
-          }
+          setFeaturedProducts(featuredData);
         }
         
-        // Fetch regular products for best sellers
-        const prodRes = await fetch(`${API_URL}/api/products?limit=16`);
-        if (prodRes.ok) {
-          const prodData = await prodRes.json();
-          setProducts(prodData.products || []);
+        // Fetch real best sellers based on orders
+        const bestSellersRes = await fetch(`${API_URL}/api/homepage/best-sellers?limit=8`);
+        if (bestSellersRes.ok) {
+          const bestSellersData = await bestSellersRes.json();
+          setBestSellers(bestSellersData);
         }
       } catch {
-        setProducts([]);
+        setFeaturedProducts([]);
+        setBestSellers([]);
       }
     };
     fetchData();
   }, []);
 
-  // Use featured products if available, otherwise use first 8 products
-  const newArrivals = featuredProducts.length > 0 ? featuredProducts.slice(0, 8) : products.slice(0, 8);
-  const bestSellers = products.slice(0, 8);
+  // Use admin-selected featured products, or fall back to real best sellers
+  const displayedBestSellers = featuredProducts.length > 0 ? featuredProducts : bestSellers;
 
   return (
     <div className="home-page">
@@ -84,30 +82,20 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="section-padding-small">
-        <div className="container">
-          <h2 className="section-title">{t('newArrivals')}</h2>
-          <div className="grid-product-showcase" data-testid="new-arrivals-grid">
-            {newArrivals.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-          <div className="section-cta">
-            <Link to="/products" className="btn-secondary">
-              {t('viewAllProducts')}
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {bestSellers.length > 0 && (
-        <section className="section-padding-small best-sellers-section">
+      {/* Best Sellers Section - uses admin selected or real sales data */}
+      {displayedBestSellers.length > 0 && (
+        <section className="section-padding-small">
           <div className="container">
             <h2 className="section-title">{t('bestSellers')}</h2>
             <div className="grid-product-showcase" data-testid="best-sellers-grid">
-              {bestSellers.map(product => (
+              {displayedBestSellers.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
+            </div>
+            <div className="section-cta">
+              <Link to="/products" className="btn-secondary">
+                {t('viewAllProducts')}
+              </Link>
             </div>
           </div>
         </section>

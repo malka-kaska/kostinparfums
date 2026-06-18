@@ -143,3 +143,63 @@ async def get_featured_products(request: Request):
     # Convert to response format
     from routes.products import product_doc_to_response
     return [product_doc_to_response(p) for p in products]
+
+
+
+@router.get("/best-sellers")
+async def get_best_sellers(request: Request, limit: int = 8):
+    """Get best selling products based on actual order data"""
+    db = request.app.state.db
+    
+    # Aggregate orders to find most sold products
+    pipeline = [
+        {"$match": {"status": {"$in": ["completed", "shipped", "delivered", "paid"]}}},
+        {"$unwind": "$items"},
+        {"$group": {
+            "_id": "$items.product_id",
+            "total_sold": {"$sum": "$items.quantity"}
+        }},
+        {"$sort": {"total_sold": -1}},
+        {"$limit": limit * 2}  # Get more to filter visible ones
+    ]
+    
+    try:
+        sales_data = await db.orders.aggregate(pipeline).to_list(limit * 2)
+    except:
+        sales_data = []
+    
+    if not sales_data:
+        # Fallback to newest products if no orders
+        products = await db.products.find(
+            {"is_active": True, "is_visible": True}
+        ).sort("created_at", -1).limit(limit).to_list(limit)
+    else:
+        # Get products in order of sales
+        products = []
+        for item in sales_data:
+            if len(products) >= limit:
+                break
+            try:
+                product = await db.products.find_one({
+                    "_id": ObjectId(item["_id"]),
+                    "is_active": True,
+                    "is_visible": True
+                })
+                if product:
+                    product["total_sold"] = item["total_sold"]
+                    products.append(product)
+            except:
+                continue
+        
+        # If not enough products from orders, fill with newest
+        if len(products) < limit:
+            existing_ids = [p["_id"] for p in products]
+            fill_products = await db.products.find({
+                "_id": {"$nin": existing_ids},
+                "is_active": True,
+                "is_visible": True
+            }).sort("created_at", -1).limit(limit - len(products)).to_list(limit - len(products))
+            products.extend(fill_products)
+    
+    from routes.products import product_doc_to_response
+    return [product_doc_to_response(p) for p in products]

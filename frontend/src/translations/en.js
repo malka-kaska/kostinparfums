@@ -31,8 +31,8 @@ export const en = {
 
   // Products page
   allProducts: "All Fragrances",
-  discoverCollection: "Discover our curated collection of {count} luxury products",
-  discoverCollectionSingular: "Discover our curated collection of {count} luxury product",
+  discoverCollection: "Discover our collection of luxury fragrances",
+  discoverCollectionSingular: "Discover our collection of luxury fragrances",
   filters: "Filters",
   category: "Category",
   allProductsFilter: "All Products",
@@ -258,7 +258,7 @@ export const en = {
   aboutMission1: "KOSTIN is more than an online beauty store.",
   aboutMission2: "It is a trusted source for luxury skincare, branded cosmetics, and original perfumes.",
   aboutMissionTagline: "Because true luxury begins with authenticity.",
-  discoverCollection: "Discover our curated collection of {count} luxury products",
+  discoverCollection: "Discover our collection of luxury fragrances",
   aboutDiscoverTitle: "Discover Our Collection",
   aboutDiscoverText: "Explore our curated selection of authentic luxury beauty products",
   shopNow: "Shop Now",

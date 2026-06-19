@@ -179,16 +179,7 @@ const Auth = () => {
               </p>
             </div>
 
-            {isLogin && (
-              <div className="demo-credentials">
-                <p className="body-small" style={{ color: 'var(--text-secondary)' }}>
-                  {t('demoCredentials')}
-                </p>
-                <p className="body-small" style={{ marginTop: '8px' }}>
-                  <strong>{t('admin')}</strong> konstantin.kirchev.bs@gmail.com
-                </p>
-              </div>
-            )}
+            {/* Demo credentials removed for production */}
           </div>
 
           <div className="auth-image">

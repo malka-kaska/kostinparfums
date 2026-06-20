@@ -22,15 +22,11 @@ const Footer = () => {
             <div className="footer-contact">
               <div className="contact-item">
                 <Mail size={14} />
-                <span>contact@kostin.com</span>
-              </div>
-              <div className="contact-item">
-                <Phone size={14} />
-                <span>+32 (0) 123 456 789</span>
+                <span>contact@kostinparfums.com</span>
               </div>
               <div className="contact-item">
                 <MapPin size={14} />
-                <span>Brussels, Belgium</span>
+                <span>гр. Плевен</span>
               </div>
             </div>
           </div>

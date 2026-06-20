@@ -106,6 +106,20 @@ const AboutUs = () => {
             {t('shopNow')}
           </Link>
         </section>
+
+        <section className="about-legal">
+          <h2 className="section-heading">{t('legalInfo')}</h2>
+          <div className="legal-info-box">
+            <p><strong>{t('companyName')}:</strong> ГРИИН ПОТЕНШЪЛ ЕООД / GREEN POTENTIAL LTD</p>
+            <p><strong>{t('companyEik')}:</strong> 208341137</p>
+            <p><strong>{t('companyAddress')}:</strong> гр. Плевен 5800, бул. Чаталджа № 4, вх. А, ет. 4, ап. 10</p>
+            <p><strong>{t('companyManager')}:</strong> Константин Валериев Кирчев</p>
+            <p><strong>{t('companyActivity')}:</strong> {t('companyActivityDesc')}</p>
+            <p className="legal-link">
+              <Link to="/legal">{t('fullLegalInfo')} →</Link>
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   );

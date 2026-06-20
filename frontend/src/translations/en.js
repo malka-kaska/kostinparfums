@@ -347,4 +347,14 @@ export const en = {
   selectedProducts: "Selected Products",
   availableProducts: "Available Products",
   searchProducts: "Search products...",
+
+  // Legal Info
+  legalInfo: "Legal Information",
+  companyName: "Company",
+  companyEik: "Registration No.",
+  companyAddress: "Address",
+  companyManager: "Manager",
+  companyActivity: "Activity",
+  companyActivityDesc: "Retail trade in perfumery and cosmetic products (NACE 47.75)",
+  fullLegalInfo: "Full Legal Information",
 };

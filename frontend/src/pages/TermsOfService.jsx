@@ -4,9 +4,21 @@ import './Legal.css';
 
 const TermsEN = () => (
   <div className="legal-content">
+    <section className="legal-section company-info-section">
+      <h2>Company Information</h2>
+      <div className="company-details">
+        <p><strong>Company Name:</strong> GREEN POTENTIAL LTD (ГРИИН ПОТЕНШЪЛ ЕООД)</p>
+        <p><strong>Company Registration Number (EIK):</strong> 208341137</p>
+        <p><strong>Registered Address:</strong> Bulgaria, Pleven 5800, 4 Chataldzha Blvd., Entrance A, Floor 4, Apt. 10</p>
+        <p><strong>Manager:</strong> Konstantin Valeriev Kirchev</p>
+        <p><strong>Email:</strong> contact@kostinparfums.com</p>
+        <p><strong>Phone:</strong> +359 889 567 870</p>
+        <p><strong>Business Activity:</strong> Retail trade in perfumery and cosmetic products (NACE 47.75)</p>
+      </div>
+    </section>
     <section className="legal-section">
       <h2>1. General</h2>
-      <p>These Terms of Service ("Terms") govern your use of the KOSTIN website and online store. By accessing or using our website, you agree to be bound by these Terms. If you do not agree to all Terms, please do not use our website.</p>
+      <p>These Terms of Service ("Terms") govern your use of the KOSTIN website (kostinparfums.com) and online store, operated by GREEN POTENTIAL LTD. By accessing or using our website, you agree to be bound by these Terms. If you do not agree to all Terms, please do not use our website.</p>
     </section>
     <section className="legal-section">
       <h2>2. Products and Pricing</h2>
@@ -72,20 +84,37 @@ const TermsEN = () => (
     </section>
     <section className="legal-section">
       <h2>10. Governing Law</h2>
-      <p>These Terms are governed by and construed in accordance with the laws of Belgium and applicable EU regulations. Any disputes shall be subject to the exclusive jurisdiction of the courts of Brussels, Belgium.</p>
+      <p>These Terms are governed by and construed in accordance with the laws of the Republic of Bulgaria and applicable EU regulations. Any disputes shall be subject to the exclusive jurisdiction of the courts of Pleven, Bulgaria.</p>
     </section>
     <section className="legal-section">
       <h2>11. Contact</h2>
-      <p>For questions about these Terms: <a href="mailto:contact@kostin.com">contact@kostin.com</a></p>
+      <p>For questions about these Terms:</p>
+      <ul>
+        <li>Email: <a href="mailto:contact@kostinparfums.com">contact@kostinparfums.com</a></li>
+        <li>Phone: +359 889 567 870</li>
+        <li>Address: 4 Chataldzha Blvd., Entrance A, Floor 4, Apt. 10, Pleven 5800, Bulgaria</li>
+      </ul>
     </section>
   </div>
 );
 
 const TermsBG = () => (
   <div className="legal-content">
+    <section className="legal-section company-info-section">
+      <h2>Информация за търговеца</h2>
+      <div className="company-details">
+        <p><strong>Наименование:</strong> ГРИИН ПОТЕНШЪЛ ЕООД / GREEN POTENTIAL LTD</p>
+        <p><strong>ЕИК:</strong> 208341137</p>
+        <p><strong>Седалище и адрес на управление:</strong> България, гр. Плевен 5800, бул. Чаталджа № 4, вх. А, ет. 4, ап. 10</p>
+        <p><strong>Управител:</strong> Константин Валериев Кирчев</p>
+        <p><strong>Имейл:</strong> contact@kostinparfums.com</p>
+        <p><strong>Телефон:</strong> +359 889 567 870</p>
+        <p><strong>Дейност:</strong> Търговия на дребно с парфюмерийни и козметични стоки (КИД 47.75)</p>
+      </div>
+    </section>
     <section className="legal-section">
       <h2>1. Общи положения</h2>
-      <p>Тези Условия за ползване ("Условия") уреждат използването на уебсайта и онлайн магазина KOSTIN. С достъпа или използването на нашия уебсайт, вие се съгласявате да бъдете обвързани с тези Условия. Ако не сте съгласни с всички Условия, моля не използвайте нашия уебсайт.</p>
+      <p>Тези Условия за ползване ("Условия") уреждат използването на уебсайта KOSTIN (kostinparfums.com) и онлайн магазина, управляван от ГРИИН ПОТЕНШЪЛ ЕООД. С достъпа или използването на нашия уебсайт, вие се съгласявате да бъдете обвързани с тези Условия. Ако не сте съгласни с всички Условия, моля не използвайте нашия уебсайт.</p>
     </section>
     <section className="legal-section">
       <h2>2. Продукти и цени</h2>
@@ -151,11 +180,16 @@ const TermsBG = () => (
     </section>
     <section className="legal-section">
       <h2>10. Приложимо право</h2>
-      <p>Тези Условия се уреждат и тълкуват в съответствие със законите на Белгия и приложимите регулации на ЕС. Всякакви спорове подлежат на изключителната юрисдикция на съдилищата в Брюксел, Белгия.</p>
+      <p>Тези Условия се уреждат и тълкуват в съответствие със законите на Република България и приложимите регулации на ЕС. Всякакви спорове подлежат на изключителната юрисдикция на съдилищата в гр. Плевен, България.</p>
     </section>
     <section className="legal-section">
       <h2>11. Контакт</h2>
-      <p>За въпроси относно тези Условия: <a href="mailto:contact@kostin.com">contact@kostin.com</a></p>
+      <p>За въпроси относно тези Условия:</p>
+      <ul>
+        <li>Имейл: <a href="mailto:contact@kostinparfums.com">contact@kostinparfums.com</a></li>
+        <li>Телефон: +359 889 567 870</li>
+        <li>Адрес: бул. Чаталджа № 4, вх. А, ет. 4, ап. 10, гр. Плевен 5800, България</li>
+      </ul>
     </section>
   </div>
 );

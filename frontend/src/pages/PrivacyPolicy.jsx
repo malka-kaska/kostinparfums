@@ -4,17 +4,29 @@ import './Legal.css';
 
 const PrivacyPolicyEN = () => (
   <div className="legal-content">
+    <section className="legal-section company-info-section">
+      <h2>Data Controller Information</h2>
+      <div className="company-details">
+        <p><strong>Company Name:</strong> GREEN POTENTIAL LTD (ГРИИН ПОТЕНШЪЛ ЕООД)</p>
+        <p><strong>Company Registration Number (EIK):</strong> 208341137</p>
+        <p><strong>Registered Address:</strong> Bulgaria, Pleven 5800, 4 Chataldzha Blvd., Entrance A, Floor 4, Apt. 10</p>
+        <p><strong>Manager:</strong> Konstantin Valeriev Kirchev</p>
+        <p><strong>Email:</strong> contact@kostinparfums.com</p>
+        <p><strong>Phone:</strong> +359 889 567 870</p>
+      </div>
+    </section>
     <section className="legal-section">
       <h2>1. Introduction</h2>
-      <p>KOSTIN ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and make purchases from our online store.</p>
-      <p>We comply with the General Data Protection Regulation (GDPR) and other applicable European data protection laws.</p>
+      <p>GREEN POTENTIAL LTD, operating under the brand KOSTIN ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website (kostinparfums.com) and make purchases from our online store.</p>
+      <p>We comply with the General Data Protection Regulation (GDPR), the Bulgarian Personal Data Protection Act, and other applicable European data protection laws.</p>
     </section>
     <section className="legal-section">
       <h2>2. Data Controller</h2>
-      <p>KOSTIN is the data controller responsible for your personal data. If you have any questions about this Privacy Policy, please contact us at:</p>
+      <p>GREEN POTENTIAL LTD (ГРИИН ПОТЕНШЪЛ ЕООД), EIK 208341137, is the data controller responsible for your personal data. If you have any questions about this Privacy Policy, please contact us at:</p>
       <ul>
-        <li>Email: privacy@kostin.com</li>
-        <li>Address: Brussels, Belgium</li>
+        <li>Email: contact@kostinparfums.com</li>
+        <li>Phone: +359 889 567 870</li>
+        <li>Address: 4 Chataldzha Blvd., Entrance A, Floor 4, Apt. 10, Pleven 5800, Bulgaria</li>
       </ul>
     </section>
     <section className="legal-section">
@@ -80,7 +92,7 @@ const PrivacyPolicyEN = () => (
         <li>Object to processing</li>
         <li>Withdraw consent at any time</li>
       </ul>
-      <p>To exercise these rights, contact us at privacy@kostin.com.</p>
+      <p>To exercise these rights, contact us at contact@kostinparfums.com.</p>
     </section>
     <section className="legal-section">
       <h2>8. Cookies</h2>
@@ -92,24 +104,41 @@ const PrivacyPolicyEN = () => (
     </section>
     <section className="legal-section">
       <h2>10. Contact</h2>
-      <p>For privacy-related inquiries: <a href="mailto:privacy@kostin.com">privacy@kostin.com</a></p>
+      <p>For privacy-related inquiries:</p>
+      <ul>
+        <li>Email: <a href="mailto:contact@kostinparfums.com">contact@kostinparfums.com</a></li>
+        <li>Phone: +359 889 567 870</li>
+        <li>Address: 4 Chataldzha Blvd., Entrance A, Floor 4, Apt. 10, Pleven 5800, Bulgaria</li>
+      </ul>
     </section>
   </div>
 );
 
 const PrivacyPolicyBG = () => (
   <div className="legal-content">
+    <section className="legal-section company-info-section">
+      <h2>Информация за администратора на данни</h2>
+      <div className="company-details">
+        <p><strong>Наименование:</strong> ГРИИН ПОТЕНШЪЛ ЕООД / GREEN POTENTIAL LTD</p>
+        <p><strong>ЕИК:</strong> 208341137</p>
+        <p><strong>Седалище и адрес на управление:</strong> България, гр. Плевен 5800, бул. Чаталджа № 4, вх. А, ет. 4, ап. 10</p>
+        <p><strong>Управител:</strong> Константин Валериев Кирчев</p>
+        <p><strong>Имейл:</strong> contact@kostinparfums.com</p>
+        <p><strong>Телефон:</strong> +359 889 567 870</p>
+      </div>
+    </section>
     <section className="legal-section">
       <h2>1. Въведение</h2>
-      <p>KOSTIN ("ние" или "нас") се ангажира да защитава вашата поверителност. Тази Политика за поверителност обяснява как събираме, използваме, разкриваме и защитаваме вашата информация, когато посещавате нашия уебсайт и правите покупки от нашия онлайн магазин.</p>
-      <p>Ние спазваме Общия регламент за защита на данните (GDPR) и другите приложими европейски закони за защита на данните.</p>
+      <p>ГРИИН ПОТЕНШЪЛ ЕООД, оперираща под марката KOSTIN ("ние" или "нас") се ангажира да защитава вашата поверителност. Тази Политика за поверителност обяснява как събираме, използваме, разкриваме и защитаваме вашата информация, когато посещавате нашия уебсайт (kostinparfums.com) и правите покупки от нашия онлайн магазин.</p>
+      <p>Ние спазваме Общия регламент за защита на данните (GDPR), Закона за защита на личните данни на Република България и другите приложими европейски закони за защита на данните.</p>
     </section>
     <section className="legal-section">
       <h2>2. Администратор на данни</h2>
-      <p>KOSTIN е администраторът на данни, отговорен за вашите лични данни. Ако имате въпроси относно тази Политика за поверителност, моля свържете се с нас на:</p>
+      <p>ГРИИН ПОТЕНШЪЛ ЕООД, ЕИК 208341137, е администраторът на данни, отговорен за вашите лични данни. Ако имате въпроси относно тази Политика за поверителност, моля свържете се с нас на:</p>
       <ul>
-        <li>Имейл: privacy@kostin.com</li>
-        <li>Адрес: Брюксел, Белгия</li>
+        <li>Имейл: contact@kostinparfums.com</li>
+        <li>Телефон: +359 889 567 870</li>
+        <li>Адрес: бул. Чаталджа № 4, вх. А, ет. 4, ап. 10, гр. Плевен 5800, България</li>
       </ul>
     </section>
     <section className="legal-section">
@@ -187,7 +216,12 @@ const PrivacyPolicyBG = () => (
     </section>
     <section className="legal-section">
       <h2>10. Контакт</h2>
-      <p>За запитвания свързани с поверителност: <a href="mailto:privacy@kostin.com">privacy@kostin.com</a></p>
+      <p>За запитвания свързани с поверителност:</p>
+      <ul>
+        <li>Имейл: <a href="mailto:contact@kostinparfums.com">contact@kostinparfums.com</a></li>
+        <li>Телефон: +359 889 567 870</li>
+        <li>Адрес: бул. Чаталджа № 4, вх. А, ет. 4, ап. 10, гр. Плевен 5800, България</li>
+      </ul>
     </section>
   </div>
 );

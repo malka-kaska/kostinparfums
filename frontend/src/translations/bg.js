@@ -346,4 +346,14 @@ export const bg = {
   selectedProducts: "Избрани продукти",
   availableProducts: "Налични продукти",
   searchProducts: "Търси продукти...",
+
+  // Legal Info
+  legalInfo: "Правна информация",
+  companyName: "Фирма",
+  companyEik: "ЕИК",
+  companyAddress: "Адрес",
+  companyManager: "Управител",
+  companyActivity: "Дейност",
+  companyActivityDesc: "Търговия на дребно с парфюмерийни и козметични стоки (КИД 47.75)",
+  fullLegalInfo: "Пълна правна информация",
 };

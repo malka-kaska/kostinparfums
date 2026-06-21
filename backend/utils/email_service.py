@@ -51,7 +51,7 @@ def get_email_footer(lang: str = "bg"):
     if lang == "bg":
         return """
         <div style="border-top: 1px solid #eee; padding-top: 30px; margin-top: 40px; text-align: center; color: #999; font-size: 12px;">
-            <p style="margin: 5px 0;">ГРИИН ПОТЕНШЪЛ ЕООД | ЕИК: 208341137</p>
+            <p style="margin: 5px 0;">ГРИИН ПОТЕНШЪЛ ЕООД</p>
             <p style="margin: 5px 0;">гр. Плевен 5800, бул. Чаталджа № 4</p>
             <p style="margin: 5px 0;">Тел: +359 889 567 870</p>
             <p style="margin: 15px 0 5px 0;">&copy; 2025 KOSTIN. Всички права запазени.</p>
@@ -60,7 +60,7 @@ def get_email_footer(lang: str = "bg"):
     else:
         return """
         <div style="border-top: 1px solid #eee; padding-top: 30px; margin-top: 40px; text-align: center; color: #999; font-size: 12px;">
-            <p style="margin: 5px 0;">GREEN POTENTIAL LTD | EIK: 208341137</p>
+            <p style="margin: 5px 0;">GREEN POTENTIAL LTD</p>
             <p style="margin: 5px 0;">Pleven 5800, 4 Chataldzha Blvd., Bulgaria</p>
             <p style="margin: 5px 0;">Phone: +359 889 567 870</p>
             <p style="margin: 15px 0 5px 0;">&copy; 2025 KOSTIN. All rights reserved.</p>

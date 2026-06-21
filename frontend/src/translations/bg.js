@@ -48,10 +48,12 @@ export const bg = {
   targetAudience: "Целева аудитория",
   genderHint: "Изберете и двете за унисекс продукти",
   sortBy: "Сортирай по:",
-  sortName: "Име",
-  sortPriceLow: "\u0426\u0435\u043d\u0430: \u043d\u0438\u0441\u043a\u0430 \u043a\u044a\u043c \u0432\u0438\u0441\u043e\u043a\u0430",
-  sortPriceHigh: "\u0426\u0435\u043d\u0430: \u0432\u0438\u0441\u043e\u043a\u0430 \u043a\u044a\u043c \u043d\u0438\u0441\u043a\u0430",
-  loadingProducts: "\u0417\u0430\u0440\u0435\u0436\u0434\u0430\u043d\u0435 \u043d\u0430 \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0438...",
+  sortPopular: "Популярни",
+  sortNewest: "Най-нови",
+  sortName: "Име (А-Я)",
+  sortPriceLow: "Цена: ниска към висока",
+  sortPriceHigh: "Цена: висока към ниска",
+  loadingProducts: "Зареждане на продукти...",
   noProductsFound: "\u041d\u0435 \u0441\u0430 \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u0438 \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0438, \u043e\u0442\u0433\u043e\u0432\u0430\u0440\u044f\u0449\u0438 \u043d\u0430 \u0432\u0430\u0448\u0438\u0442\u0435 \u0444\u0438\u043b\u0442\u0440\u0438.",
 
   // Product Detail

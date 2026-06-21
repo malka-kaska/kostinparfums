@@ -16,7 +16,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [selectedBrands, setSelectedBrands] = useState([]); // Multiple brands support
   const [selectedGender, setSelectedGender] = useState(searchParams.get('gender') || 'all');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -252,6 +252,8 @@ const Products = () => {
                   className="sort-select"
                   data-testid="sort-select"
                 >
+                  <option value="popular">{t('sortPopular')}</option>
+                  <option value="newest">{t('sortNewest')}</option>
                   <option value="name">{t('sortName')}</option>
                   <option value="price-low">{t('sortPriceLow')}</option>
                   <option value="price-high">{t('sortPriceHigh')}</option>

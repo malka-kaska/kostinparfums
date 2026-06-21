@@ -57,7 +57,7 @@ async def get_products(
     brands: Optional[str] = None,  # Comma-separated list of brands for multi-select
     gender: Optional[str] = None,  # "men" or "women" - filters products that include this gender
     search: Optional[str] = None,
-    sort: Optional[str] = "name",
+    sort: Optional[str] = "popular",  # Default to popular/best sellers
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     page: int = Query(1, ge=1),
@@ -95,23 +95,66 @@ async def get_products(
         query["price"] = query.get("price", {})
         query["price"]["$lte"] = max_price
 
-    # Sort
-    sort_field = "name"
-    sort_dir = 1
-    if sort == "price-low":
-        sort_field = "price"
-        sort_dir = 1
-    elif sort == "price-high":
-        sort_field = "price"
-        sort_dir = -1
-    elif sort == "newest":
-        sort_field = "created_at"
-        sort_dir = -1
-
     skip = (page - 1) * limit
     total = await db.products.count_documents(query)
-    cursor = db.products.find(query).sort(sort_field, sort_dir).skip(skip).limit(limit)
-    products = await cursor.to_list(limit)
+
+    # Handle "popular" sort by aggregating from orders
+    if sort == "popular":
+        # Get best-selling product IDs from orders
+        sales_pipeline = [
+            {"$match": {"status": {"$in": ["completed", "shipped", "delivered", "paid", "pending"]}}},
+            {"$unwind": "$items"},
+            {"$group": {
+                "_id": "$items.product_id",
+                "total_sold": {"$sum": "$items.quantity"}
+            }},
+            {"$sort": {"total_sold": -1}}
+        ]
+        
+        try:
+            sales_data = await db.orders.aggregate(sales_pipeline).to_list(10000)
+            # Create a map of product_id -> rank
+            sales_rank = {item["_id"]: idx for idx, item in enumerate(sales_data)}
+        except:
+            sales_rank = {}
+        
+        # Fetch all matching products
+        cursor = db.products.find(query).limit(limit * 10)  # Get more to sort
+        all_products = await cursor.to_list(limit * 10)
+        
+        # Sort by sales rank (products not in orders go to the end, sorted by newest)
+        def get_sort_key(p):
+            pid = str(p["_id"])
+            if pid in sales_rank:
+                return (0, sales_rank[pid])  # Has sales, sort by rank
+            else:
+                # No sales - sort by created_at (newest first)
+                created = p.get("created_at", "")
+                return (1, created if isinstance(created, str) else "")
+        
+        all_products.sort(key=get_sort_key)
+        
+        # Apply pagination
+        products = all_products[skip:skip + limit]
+    else:
+        # Standard sorting
+        sort_field = "name"
+        sort_dir = 1
+        if sort == "price-low":
+            sort_field = "price"
+            sort_dir = 1
+        elif sort == "price-high":
+            sort_field = "price"
+            sort_dir = -1
+        elif sort == "newest":
+            sort_field = "created_at"
+            sort_dir = -1
+        elif sort == "name":
+            sort_field = "name"
+            sort_dir = 1
+
+        cursor = db.products.find(query).sort(sort_field, sort_dir).skip(skip).limit(limit)
+        products = await cursor.to_list(limit)
 
     return {
         "products": [product_doc_to_response(p) for p in products],

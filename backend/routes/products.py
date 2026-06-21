@@ -11,6 +11,158 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
+# Global popularity scores based on market research
+# Higher score = more popular (scale 1-100)
+POPULARITY_SCORES = {
+    # TOP TIER - Globally best-selling fragrances (90-100)
+    "dior sauvage": 100,
+    "sauvage": 100,
+    "bleu de chanel": 98,
+    "chanel bleu": 98,
+    "creed aventus": 97,
+    "aventus": 97,
+    "versace eros": 95,
+    "eros": 93,
+    "la vie est belle": 94,
+    "acqua di gio": 93,
+    "acqua di gioia": 85,
+    "ysl libre": 92,
+    "libre": 92,
+    "black opium": 91,
+    "miss dior": 90,
+    "jadore": 90,
+    "j'adore": 90,
+    
+    # HIGH TIER - Very popular fragrances (80-89)
+    "1 million": 89,
+    "one million": 89,
+    "invictus": 88,
+    "armani code": 87,
+    "tom ford": 86,
+    "tobacco vanille": 86,
+    "oud wood": 85,
+    "black orchid": 85,
+    "chance": 85,
+    "chanel chance": 85,
+    "coco mademoiselle": 88,
+    "good girl": 84,
+    "phantom": 83,
+    "stronger with you": 82,
+    "my way": 82,
+    "si": 81,
+    "armani si": 81,
+    "dolce gabbana the one": 80,
+    "the one": 80,
+    "lancome idole": 80,
+    "idole": 80,
+    
+    # MID-HIGH TIER - Popular fragrances (70-79)
+    "valentino": 79,
+    "born in roma": 79,
+    "uomo": 78,
+    "prada luna rossa": 78,
+    "luna rossa": 78,
+    "prada paradoxe": 77,
+    "paradoxe": 77,
+    "gucci bloom": 76,
+    "gucci guilty": 75,
+    "bamboo": 74,
+    "burberry": 73,
+    "hugo boss": 72,
+    "boss bottled": 72,
+    "jean paul gaultier": 75,
+    "le male": 76,
+    "scandal": 74,
+    "divine": 73,
+    "hypnose": 72,
+    "narciso rodriguez": 71,
+    "for her": 71,
+    "bvlgari man": 70,
+    "omnia": 70,
+    "bright crystal": 74,
+    "dylan blue": 73,
+    "fahrenheit": 72,
+    "terre d hermes": 75,
+    "hermes": 74,
+    "guerlain": 73,
+    "shalimar": 72,
+    "l'homme ideal": 71,
+    "givenchy gentleman": 70,
+    
+    # MID TIER - Known fragrances (60-69)
+    "carolina herrera": 68,
+    "212": 67,
+    "bad boy": 66,
+    "spicebomb": 69,
+    "viktor rolf": 68,
+    "xerjoff": 67,
+    "erba pura": 67,
+    "naxos": 66,
+    "initio": 65,
+    "parfums de marly": 68,
+    "delina": 68,
+    "kilian": 67,
+    "angels share": 67,
+    "montale": 64,
+    "intense cafe": 65,
+    "mancera": 63,
+    
+    # NICHE/ARABIAN - Growing popularity (50-59)
+    "lattafa": 58,
+    "khamrah": 59,
+    "asad": 57,
+    "yara": 56,
+    "armaf": 55,
+    "club de nuit": 60,  # Very popular clone
+    "afnan": 52,
+    "9 pm": 54,
+    "supremacy": 51,
+    "al haramain": 50,
+    "rasasi": 49,
+    "ajmal": 48,
+    "ahmed al maghribi": 47,
+}
+
+def get_popularity_score(product_name: str, brand: str) -> int:
+    """Calculate popularity score for a product based on name and brand"""
+    name_lower = product_name.lower()
+    brand_lower = brand.lower()
+    
+    best_score = 30  # Default score for unknown products
+    
+    # Check product name against known popular fragrances
+    for keyword, score in POPULARITY_SCORES.items():
+        if keyword in name_lower or keyword in brand_lower:
+            if score > best_score:
+                best_score = score
+    
+    # Brand bonuses for luxury houses
+    luxury_brands = {
+        "chanel": 10,
+        "christian dior": 10,
+        "dior": 10,
+        "tom ford": 8,
+        "creed": 8,
+        "hermes": 7,
+        "guerlain": 6,
+        "yves saint laurent": 6,
+        "armani": 5,
+        "prada": 5,
+        "gucci": 5,
+        "versace": 4,
+        "dolce & gabbana": 4,
+        "paco rabanne": 4,
+        "lancome": 4,
+        "bvlgari": 4,
+    }
+    
+    for luxury_brand, bonus in luxury_brands.items():
+        if luxury_brand in brand_lower:
+            best_score = min(100, best_score + bonus)
+            break
+    
+    return best_score
+
 
 def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict:
     # Handle images - support both legacy 'image' field and new 'images' array
@@ -98,7 +250,7 @@ async def get_products(
     skip = (page - 1) * limit
     total = await db.products.count_documents(query)
 
-    # Handle "popular" sort by aggregating from orders
+    # Handle "popular" sort - first try sales data, then use market popularity scores
     if sort == "popular":
         # Get best-selling product IDs from orders
         sales_pipeline = [
@@ -118,19 +270,23 @@ async def get_products(
         except:
             sales_rank = {}
         
-        # Fetch all matching products
-        cursor = db.products.find(query).limit(limit * 10)  # Get more to sort
-        all_products = await cursor.to_list(limit * 10)
+        # Fetch all matching products (need more for proper sorting)
+        cursor = db.products.find(query)
+        all_products = await cursor.to_list(5000)
         
-        # Sort by sales rank (products not in orders go to the end, sorted by newest)
+        # Sort by: 1) sales rank (if has sales), 2) market popularity score
         def get_sort_key(p):
             pid = str(p["_id"])
-            if pid in sales_rank:
-                return (0, sales_rank[pid])  # Has sales, sort by rank
+            if sales_rank and pid in sales_rank:
+                # Has actual sales - prioritize by sales rank
+                return (0, sales_rank[pid], 0)
             else:
-                # No sales - sort by created_at (newest first)
-                created = p.get("created_at", "")
-                return (1, created if isinstance(created, str) else "")
+                # No sales data - use market popularity score
+                name = p.get("name", "")
+                brand = p.get("brand", "")
+                popularity = get_popularity_score(name, brand)
+                # Return tuple: (1 = no sales, negative popularity for desc sort, name for tie-breaker)
+                return (1, -popularity, name.lower())
         
         all_products.sort(key=get_sort_key)
         

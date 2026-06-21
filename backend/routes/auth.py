@@ -11,7 +11,7 @@ from utils.auth import (
     get_jwt_secret,
     JWT_ALGORITHM,
 )
-from utils.email_service import send_registration_email
+from utils.email_service import send_registration_email, send_email_verification
 from models.schemas import UserRegister, UserLogin, UserResponse, ResetPasswordRequest, ResetPasswordConfirm
 import jwt
 import logging
@@ -66,30 +66,65 @@ async def register(request: Request, response: Response, data: UserRegister):
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
     hashed = hash_password(data.password)
+    
+    # Generate email verification token
+    verification_token = secrets.token_urlsafe(32)
+    
     user_doc = {
         "email": email,
         "password_hash": hashed,
         "name": data.name.strip(),
         "role": "customer",
+        "email_verified": False,  # User must verify email
+        "verification_token": verification_token,
+        "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     result = await db.users.insert_one(user_doc)
     user_id = str(result.inserted_id)
 
-    access_token = create_access_token(user_id, email)
-    refresh_token = create_refresh_token(user_id)
-    set_auth_cookies(response, access_token, refresh_token)
+    # Send email verification (non-blocking)
+    asyncio.create_task(send_email_verification(email, data.name.strip(), verification_token, "bg"))
 
-    # Send registration confirmation email (non-blocking)
-    asyncio.create_task(send_registration_email(email, data.name.strip(), "bg"))
-
-    logger.info(f"New user registered: {email}")
+    logger.info(f"New user registered (pending verification): {email}")
     return {
         "id": user_id,
         "email": email,
         "name": data.name.strip(),
         "role": "customer",
+        "email_verified": False,
+        "message": "Please check your email to verify your account"
     }
+
+
+@router.get("/verify-email")
+async def verify_email(request: Request, token: str):
+    """Verify user email with token"""
+    db = request.app.state.db
+    
+    user = await db.users.find_one({"verification_token": token})
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+    
+    # Check if token expired
+    expires = user.get("verification_expires", "")
+    if expires and datetime.now(timezone.utc).isoformat() > expires:
+        raise HTTPException(status_code=400, detail="Verification token has expired. Please register again.")
+    
+    # Mark email as verified
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"email_verified": True},
+            "$unset": {"verification_token": "", "verification_expires": ""}
+        }
+    )
+    
+    # Send welcome email after verification
+    asyncio.create_task(send_registration_email(user["email"], user.get("name", ""), "bg"))
+    
+    logger.info(f"Email verified for user: {user['email']}")
+    return {"message": "Email verified successfully! You can now log in.", "verified": True}
 
 
 @router.post("/login")
@@ -123,6 +158,22 @@ async def login(request: Request, response: Response, data: UserLogin):
             upsert=True,
         )
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # Check if email is verified (skip for admin users)
+    if user.get("role") != "admin" and not user.get("email_verified", True):
+        # Resend verification email
+        verification_token = user.get("verification_token")
+        if not verification_token:
+            verification_token = secrets.token_urlsafe(32)
+            await db.users.update_one(
+                {"_id": user["_id"]},
+                {"$set": {
+                    "verification_token": verification_token,
+                    "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+                }}
+            )
+        asyncio.create_task(send_email_verification(email, user.get("name", ""), verification_token, "bg"))
+        raise HTTPException(status_code=403, detail="Please verify your email first. A new verification email has been sent.")
 
     # Clear failed attempts on success
     await db.login_attempts.delete_one({"identifier": identifier})

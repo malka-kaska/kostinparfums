@@ -21,6 +21,8 @@ import TermsOfService from "./pages/TermsOfService";
 import LegalInfo from "./pages/LegalInfo";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import AboutUs from "./pages/AboutUs";
+import VerifyEmail from "./pages/VerifyEmail";
+import VerifyOrder from "./pages/VerifyOrder";
 
 function App() {
   return (
@@ -46,6 +48,8 @@ function App() {
           <Route path="/legal" element={<LegalInfo />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-order" element={<VerifyOrder />} />
         </Routes>
         <Footer />
         </AuthProvider>

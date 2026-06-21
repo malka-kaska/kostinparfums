@@ -359,4 +359,33 @@ export const en = {
   companyActivity: "Activity",
   companyActivityDesc: "Retail trade in perfumery and cosmetic products (NACE 47.75)",
   fullLegalInfo: "Full Legal Information",
+
+  // Email Verification
+  verifyingEmail: "Verifying email...",
+  pleaseWait: "Please wait...",
+  emailVerifiedTitle: "Email Verified!",
+  emailVerified: "Your email address has been successfully verified.",
+  verificationFailedTitle: "Verification Failed",
+  verificationFailed: "The link is invalid or has expired.",
+  verificationError: "An error occurred. Please try again.",
+  invalidVerificationLink: "Invalid verification link.",
+  loginNow: "LOG IN NOW",
+  tryAgain: "TRY AGAIN",
+
+  // Order Verification
+  verifyingOrder: "Verifying order...",
+  orderConfirmedTitle: "Order Confirmed!",
+  orderVerified: "Your order has been successfully confirmed.",
+  orderVerificationFailedTitle: "Verification Failed",
+  orderVerificationFailed: "The link is invalid or has expired.",
+  orderNumber: "Order Number",
+  orderConfirmationSent: "You will receive an email with final confirmation and shipping information.",
+  viewOrders: "MY ORDERS",
+  continueShopping: "CONTINUE SHOPPING",
+  contactSupport: "Contact us",
+  backToHome: "BACK TO HOME",
+
+  // Registration messages
+  checkEmailToVerify: "Please check your email to verify your registration.",
+  verifyEmailFirst: "Please verify your email first. We have sent a new verification link.",
 };

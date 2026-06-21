@@ -358,4 +358,33 @@ export const bg = {
   companyActivity: "Дейност",
   companyActivityDesc: "Търговия на дребно с парфюмерийни и козметични стоки (КИД 47.75)",
   fullLegalInfo: "Пълна правна информация",
+
+  // Email Verification
+  verifyingEmail: "Потвърждаване на имейл...",
+  pleaseWait: "Моля, изчакайте...",
+  emailVerifiedTitle: "Имейлът е потвърден!",
+  emailVerified: "Имейл адресът Ви беше успешно потвърден.",
+  verificationFailedTitle: "Неуспешно потвърждение",
+  verificationFailed: "Линкът е невалиден или е изтекъл.",
+  verificationError: "Възникна грешка. Моля, опитайте отново.",
+  invalidVerificationLink: "Невалиден линк за потвърждение.",
+  loginNow: "ВЛЕЗТЕ СЕГА",
+  tryAgain: "ОПИТАЙТЕ ОТНОВО",
+
+  // Order Verification
+  verifyingOrder: "Потвърждаване на поръчка...",
+  orderConfirmedTitle: "Поръчката е потвърдена!",
+  orderVerified: "Поръчката Ви беше успешно потвърдена.",
+  orderVerificationFailedTitle: "Неуспешно потвърждение",
+  orderVerificationFailed: "Линкът е невалиден или е изтекъл.",
+  orderNumber: "Номер на поръчка",
+  orderConfirmationSent: "Ще получите имейл с финално потвърждение и информация за доставката.",
+  viewOrders: "МОИТЕ ПОРЪЧКИ",
+  continueShopping: "ПРОДЪЛЖИ ПАЗАРУВАНЕТО",
+  contactSupport: "Свържете се с нас",
+  backToHome: "КЪМ НАЧАЛОТО",
+
+  // Registration messages
+  checkEmailToVerify: "Моля, проверете имейла си, за да потвърдите регистрацията.",
+  verifyEmailFirst: "Моля, първо потвърдете имейла си. Изпратихме нов линк за потвърждение.",
 };

@@ -12,6 +12,7 @@ const Auth = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [subscribeNewsletter, setSubscribeNewsletter] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, register, user } = useAuth();
@@ -28,6 +29,7 @@ const Auth = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setIsLoading(true);
 
     try {
@@ -45,14 +47,28 @@ const Auth = () => {
           setIsLoading(false);
           return;
         }
-        await register(email, password, name);
+        const result = await register(email, password, name);
         if (subscribeNewsletter) {
           localStorage.setItem('newsletterSubscribed', 'true');
         }
-        navigate('/');
+        // Show verification message instead of navigating
+        if (result && result.email_verified === false) {
+          setSuccessMessage(t('checkEmailToVerify'));
+          setEmail('');
+          setPassword('');
+          setName('');
+          setAgreeTerms(false);
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
-      setError(err.message || t('error'));
+      // Check if it's an email verification error
+      if (err.message && err.message.includes('verify your email')) {
+        setError(t('verifyEmailFirst'));
+      } else {
+        setError(err.message || t('error'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -73,6 +89,20 @@ const Auth = () => {
             {error && (
               <div className="auth-error" data-testid="auth-error">
                 {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="auth-success" data-testid="auth-success" style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                color: '#166534',
+                padding: '15px 20px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                textAlign: 'center'
+              }}>
+                {successMessage}
               </div>
             )}
 

@@ -12,7 +12,7 @@ import sys
 import logging
 import uuid
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Dict
 from emergentintegrations.payments.stripe.checkout import (
@@ -32,7 +32,7 @@ from routes.orders import router as orders_router
 from routes.upload import router as upload_router
 from routes.homepage import router as homepage_router
 from utils.auth import seed_admin
-from utils.email_service import send_order_confirmation_email
+from utils.email_service import send_order_confirmation_email, send_order_verification_email
 from migrations import run_migrations
 
 # MongoDB connection
@@ -255,7 +255,7 @@ async def stripe_webhook(request: Request):
                 }
             )
 
-            # Create order on successful payment
+            # Create order on successful payment - pending user verification
             if webhook_response.payment_status == "paid":
                 transaction = await db.payment_transactions.find_one(
                     {"session_id": webhook_response.session_id}
@@ -277,7 +277,11 @@ async def stripe_webhook(request: Request):
                         total = transaction.get("amount", 0)
                         shipping = 0 if total >= 100 else 9.95
                         
-                        # Create order
+                        # Generate order verification token
+                        import secrets
+                        verification_token = secrets.token_urlsafe(32)
+                        
+                        # Create order with pending_verification status
                         order_result = await db.orders.insert_one({
                             "user_id": transaction.get("user_id", ""),
                             "user_email": transaction.get("user_email", ""),
@@ -285,32 +289,35 @@ async def stripe_webhook(request: Request):
                             "items": order_items,
                             "total": round(total + shipping, 2),
                             "shipping_cost": shipping,
-                            "status": "confirmed",
+                            "status": "pending_verification",  # Requires email confirmation
                             "payment_status": "paid",
                             "session_id": webhook_response.session_id,
+                            "verification_token": verification_token,
+                            "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
                             "created_at": datetime.now(timezone.utc).isoformat(),
                             "updated_at": datetime.now(timezone.utc).isoformat(),
                         })
                         
                         order_id = str(order_result.inserted_id)
-                        logger.info(f"Order created for session {webhook_response.session_id}")
+                        logger.info(f"Order created (pending verification) for session {webhook_response.session_id}")
                         
-                        # Send order confirmation email (non-blocking)
+                        # Send order verification email (non-blocking)
                         user_email = transaction.get("user_email", "")
                         user_name = transaction.get("user_name", "Customer")
                         if user_email:
                             asyncio.create_task(
-                                send_order_confirmation_email(
+                                send_order_verification_email(
                                     to_email=user_email,
                                     user_name=user_name,
                                     order_id=order_id,
+                                    verification_token=verification_token,
                                     items=order_items,
                                     total=round(total + shipping, 2),
                                     shipping_cost=shipping,
                                     lang="bg"
                                 )
                             )
-                            logger.info(f"Order confirmation email queued for {user_email}")
+                            logger.info(f"Order verification email queued for {user_email}")
 
             logger.info(f"Webhook received: {webhook_response.event_type} for session {webhook_response.session_id}")
 
@@ -319,6 +326,52 @@ async def stripe_webhook(request: Request):
     except Exception as e:
         logger.error(f"Webhook error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.get("/orders/verify")
+async def verify_order(token: str):
+    """Verify order via email token"""
+    order = await db.orders.find_one({"verification_token": token})
+    if not order:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+    
+    # Check if token expired
+    expires = order.get("verification_expires", "")
+    if expires and datetime.now(timezone.utc).isoformat() > expires:
+        raise HTTPException(status_code=400, detail="Verification token has expired. Please contact support.")
+    
+    # Update order status to confirmed
+    await db.orders.update_one(
+        {"_id": order["_id"]},
+        {
+            "$set": {
+                "status": "confirmed",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$unset": {"verification_token": "", "verification_expires": ""}
+        }
+    )
+    
+    order_id = str(order["_id"])
+    
+    # Send final confirmation email
+    user_email = order.get("user_email", "")
+    user_name = order.get("user_name", "Customer")
+    if user_email:
+        asyncio.create_task(
+            send_order_confirmation_email(
+                to_email=user_email,
+                user_name=user_name,
+                order_id=order_id,
+                items=order.get("items", []),
+                total=order.get("total", 0),
+                shipping_cost=order.get("shipping_cost", 0),
+                lang="bg"
+            )
+        )
+    
+    logger.info(f"Order {order_id} verified by user")
+    return {"message": "Order confirmed successfully!", "order_id": order_id, "verified": True}
 
 
 # Include routers

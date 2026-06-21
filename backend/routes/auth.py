@@ -11,9 +11,11 @@ from utils.auth import (
     get_jwt_secret,
     JWT_ALGORITHM,
 )
+from utils.email_service import send_registration_email
 from models.schemas import UserRegister, UserLogin, UserResponse, ResetPasswordRequest, ResetPasswordConfirm
 import jwt
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,9 @@ async def register(request: Request, response: Response, data: UserRegister):
     access_token = create_access_token(user_id, email)
     refresh_token = create_refresh_token(user_id)
     set_auth_cookies(response, access_token, refresh_token)
+
+    # Send registration confirmation email (non-blocking)
+    asyncio.create_task(send_registration_email(email, data.name.strip(), "bg"))
 
     logger.info(f"New user registered: {email}")
     return {

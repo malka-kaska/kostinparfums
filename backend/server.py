@@ -11,6 +11,7 @@ import os
 import sys
 import logging
 import uuid
+import asyncio
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Dict
@@ -31,6 +32,7 @@ from routes.orders import router as orders_router
 from routes.upload import router as upload_router
 from routes.homepage import router as homepage_router
 from utils.auth import seed_admin
+from utils.email_service import send_order_confirmation_email
 from migrations import run_migrations
 
 # MongoDB connection
@@ -268,12 +270,15 @@ async def stripe_webhook(request: Request):
                             order_items.append({
                                 "product_id": str(item.get("id", "")),
                                 "name": item.get("name", ""),
+                                "brand": item.get("brand", ""),
                                 "price": float(item.get("price", 0)),
                                 "quantity": int(item.get("quantity", 1)),
                             })
                         total = transaction.get("amount", 0)
                         shipping = 0 if total >= 100 else 9.95
-                        await db.orders.insert_one({
+                        
+                        # Create order
+                        order_result = await db.orders.insert_one({
                             "user_id": transaction.get("user_id", ""),
                             "user_email": transaction.get("user_email", ""),
                             "user_name": transaction.get("user_name", ""),
@@ -286,7 +291,26 @@ async def stripe_webhook(request: Request):
                             "created_at": datetime.now(timezone.utc).isoformat(),
                             "updated_at": datetime.now(timezone.utc).isoformat(),
                         })
+                        
+                        order_id = str(order_result.inserted_id)
                         logger.info(f"Order created for session {webhook_response.session_id}")
+                        
+                        # Send order confirmation email (non-blocking)
+                        user_email = transaction.get("user_email", "")
+                        user_name = transaction.get("user_name", "Customer")
+                        if user_email:
+                            asyncio.create_task(
+                                send_order_confirmation_email(
+                                    to_email=user_email,
+                                    user_name=user_name,
+                                    order_id=order_id,
+                                    items=order_items,
+                                    total=round(total + shipping, 2),
+                                    shipping_cost=shipping,
+                                    lang="bg"
+                                )
+                            )
+                            logger.info(f"Order confirmation email queued for {user_email}")
 
             logger.info(f"Webhook received: {webhook_response.event_type} for session {webhook_response.session_id}")
 

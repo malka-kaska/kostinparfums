@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
@@ -29,54 +29,50 @@ const DubaiPerfumes = () => {
     gender: true,
     brand: true,
   });
+  const [availableBrands, setAvailableBrands] = useState([]);
 
   // Get filter values from URL
   const selectedGender = searchParams.get('gender') || '';
-  const selectedBrands = searchParams.get('brands')?.split(',').filter(Boolean) || [];
+  const selectedBrandsParam = searchParams.get('brands') || '';
+  const selectedBrands = selectedBrandsParam ? selectedBrandsParam.split(',').filter(Boolean) : [];
   const sortBy = searchParams.get('sort') || 'popular';
-  const searchQuery = searchParams.get('search') || '';
-
-  // Available brands from Dubai brands only
-  const [availableBrands, setAvailableBrands] = useState([]);
-
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Fetch all Dubai brand products
-      const brandsParam = selectedBrands.length > 0 
-        ? selectedBrands.join(',') 
-        : DUBAI_BRANDS.join(',');
-      
-      let url = `${API_URL}/api/products?brands=${encodeURIComponent(brandsParam)}&sort=${sortBy}&limit=200`;
-      
-      if (selectedGender) {
-        url += `&gender=${selectedGender}`;
-      }
-      if (searchQuery) {
-        url += `&search=${encodeURIComponent(searchQuery)}`;
-      }
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch products');
-      const data = await response.json();
-      
-      setProducts(data.products || []);
-      
-      // Extract available brands from results
-      const brandsInResults = [...new Set(data.products.map(p => p.brand))].filter(b => DUBAI_BRANDS.includes(b));
-      setAvailableBrands(brandsInResults.sort());
-      
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedGender, selectedBrands, sortBy, searchQuery]);
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Use selected brands or all Dubai brands
+        const brandsParam = selectedBrands.length > 0 
+          ? selectedBrands.join(',') 
+          : DUBAI_BRANDS.join(',');
+        
+        let url = `${API_URL}/api/products?brands=${encodeURIComponent(brandsParam)}&sort=${sortBy}&limit=200`;
+        
+        if (selectedGender) {
+          url += `&gender=${selectedGender}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch products');
+        const data = await response.json();
+        
+        setProducts(data.products || []);
+        
+        // Extract available brands from results
+        const brandsInResults = [...new Set(data.products.map(p => p.brand))].filter(b => DUBAI_BRANDS.includes(b));
+        setAvailableBrands(brandsInResults.sort());
+        
+      } catch (err) {
+        setError(err.message);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProducts();
-  }, [fetchProducts]);
+  }, [selectedGender, selectedBrandsParam, sortBy]);
 
   const updateFilters = (key, value) => {
     const newParams = new URLSearchParams(searchParams);

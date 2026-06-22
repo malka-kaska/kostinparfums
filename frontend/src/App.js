@@ -23,6 +23,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import AboutUs from "./pages/AboutUs";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOrder from "./pages/VerifyOrder";
+import DubaiPerfumes from "./pages/DubaiPerfumes";
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verify-order" element={<VerifyOrder />} />
+          <Route path="/dubai-perfumes" element={<DubaiPerfumes />} />
         </Routes>
         <Footer />
         </AuthProvider>

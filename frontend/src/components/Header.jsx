@@ -130,6 +130,9 @@ const Header = () => {
             <Link to="/products?category=perfumes&gender=men" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               {t('mensFragrances')}
             </Link>
+            <Link to="/dubai-perfumes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+              {t('dubaiFragrances')}
+            </Link>
           </nav>
           
           {/* Search Bar */}

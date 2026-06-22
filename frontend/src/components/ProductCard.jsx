@@ -4,12 +4,16 @@ import { ShoppingCart, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getMainImage, FALLBACK_IMAGE } from '../utils/imageUtils';
+import parseProductName from '../utils/parseProductName';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
   const { t } = useLanguage();
   const { addToCart } = useAuth();
   const [imgError, setImgError] = useState(false);
+
+  // Parse product name to extract clean name and details
+  const { name: cleanName, details } = parseProductName(product.name);
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
@@ -48,7 +52,8 @@ const ProductCard = ({ product }) => {
       </div>
       <div className="product-details">
         <p className="product-brand">{product.brand}</p>
-        <h3 className="product-name">{product.name}</h3>
+        <h3 className="product-name">{cleanName}</h3>
+        {details && <p className="product-variant">{details}</p>}
         <div className="product-rating">
           {[...Array(5)].map((_, i) => (
             <Star 

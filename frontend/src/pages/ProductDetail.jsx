@@ -6,6 +6,7 @@ import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getProductImages, FALLBACK_IMAGE } from '../utils/imageUtils';
+import parseProductName from '../utils/parseProductName';
 import './ProductDetail.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -133,7 +134,15 @@ const ProductDetail = () => {
 
           <div className="product-detail-info">
             <p className="product-detail-brand" data-testid="product-brand">{product.brand}</p>
-            <h1 className="heading-1 mt-2" data-testid="product-name">{product.name}</h1>
+            {(() => {
+              const { name: cleanName, details } = parseProductName(product.name);
+              return (
+                <>
+                  <h1 className="heading-1 mt-2" data-testid="product-name">{cleanName}</h1>
+                  {details && <p className="product-detail-variant">{details}</p>}
+                </>
+              );
+            })()}
             <p className="product-detail-price" data-testid="product-price">&euro;{product.price.toFixed(2)}</p>
             
             <div className="product-detail-stock">

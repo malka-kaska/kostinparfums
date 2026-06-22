@@ -265,7 +265,7 @@ const DubaiPerfumes = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid-product" data-testid="products-grid">
+              <div className="grid-product-showcase" data-testid="products-grid">
                 {products.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}

@@ -395,4 +395,7 @@ export const bg = {
   // Registration messages
   checkEmailToVerify: "Моля, проверете имейла си, за да потвърдите регистрацията.",
   verifyEmailFirst: "Моля, първо потвърдете имейла си. Изпратихме нов линк за потвърждение.",
+
+  // Recently Viewed
+  recentlyViewed: "НАСКОРО РАЗГЛЕДАНИ",
 };

@@ -396,4 +396,7 @@ export const en = {
   // Registration messages
   checkEmailToVerify: "Please check your email to verify your registration.",
   verifyEmailFirst: "Please verify your email first. We have sent a new verification link.",
+
+  // Recently Viewed
+  recentlyViewed: "RECENTLY VIEWED",
 };

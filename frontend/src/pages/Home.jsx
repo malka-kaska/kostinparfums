@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
+import RecentlyViewed from '../components/RecentlyViewed';
 import { useLanguage } from '../context/LanguageContext';
 import './Home.css';
 
@@ -81,6 +82,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Recently Viewed Section - above Best Sellers */}
+      <RecentlyViewed />
 
       {/* Best Sellers Section - uses admin selected or real sales data */}
       {displayedBestSellers.length > 0 && (

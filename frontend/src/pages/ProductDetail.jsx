@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getProductImages, FALLBACK_IMAGE } from '../utils/imageUtils';
 import parseProductName from '../utils/parseProductName';
+import { addToRecentlyViewed } from '../utils/recentlyViewed';
 import './ProductDetail.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -31,6 +32,10 @@ const ProductDetail = () => {
         if (res.ok) {
           const data = await res.json();
           setProduct(data);
+          
+          // Add to recently viewed
+          addToRecentlyViewed(data);
+          
           const relRes = await fetch(`${API_URL}/api/products?category=${data.category}&limit=5`);
           if (relRes.ok) {
             const relData = await relRes.json();

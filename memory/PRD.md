@@ -23,6 +23,7 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] Shopping cart with quantity management
 - [x] Stripe checkout integration
 - [x] Best Sellers section (popularity-based)
+- [x] **Recently Viewed section** (localStorage, 7-day expiry, up to 8 products)
 - [x] Rotating hero carousel
 - [x] Dark/Light mode toggle
 - [x] Bilingual support (BG/EN)
@@ -34,7 +35,7 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 ## Technical Stack
 - **Frontend**: React 18, React Router, Lucide Icons
-- **Backend**: FastAPI, Motor (async MongoDB)
+- **Backend**: FastAPI, Motor (MongoDB Async)
 - **Database**: MongoDB
 - **Email**: Resend API (via Emergent Integrations)
 - **Payments**: Stripe
@@ -56,7 +57,12 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - `users`: email, password_hash, is_admin, email_verified, verification_token, token_expires
 - `orders`: user_id, items, total, status, order_token, created_at
 
-## Completed Tasks (December 2025)
+## Recently Implemented (December 2025)
+- [x] **Recently Viewed section** on Home page
+  - Stores up to 8 products in localStorage
+  - Data expires after 7 days
+  - Shows above Best Sellers
+  - Hidden when no products viewed
 - [x] Fixed Dubai Fragrances page CSS grid layout (4 products per row)
 - [x] Fixed infinite re-render loop in DubaiPerfumes.jsx
 - [x] Implemented parseProductName.js utility for clean product display
@@ -74,3 +80,22 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9
 - Demo User: test_verify@example.com / test12345
+
+## File Structure
+```
+/app/frontend/src/
+├── components/
+│   ├── RecentlyViewed.jsx    # Recently Viewed section component
+│   └── ProductCard.jsx
+├── utils/
+│   ├── recentlyViewed.js     # localStorage utility (7-day expiry)
+│   └── parseProductName.js   # Product name parsing
+├── pages/
+│   ├── Home.jsx              # Includes RecentlyViewed
+│   ├── ProductDetail.jsx     # Adds to recentlyViewed on view
+│   ├── DubaiPerfumes.jsx     # Dubai fragrances page
+│   └── Products.jsx          # Main shop page
+└── translations/
+    ├── bg.js                 # Bulgarian translations
+    └── en.js                 # English translations
+```

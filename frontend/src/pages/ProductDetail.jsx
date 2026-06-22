@@ -205,12 +205,6 @@ const ProductDetail = () => {
                 <span className="meta-label">{t('brandLabel')}</span>
                 <span className="meta-value">{product.brand}</span>
               </div>
-              {product.sku && (
-                <div className="meta-item">
-                  <span className="meta-label">{t('skuLabel')}</span>
-                  <span className="meta-value">{product.sku}</span>
-                </div>
-              )}
             </div>
           </div>
         </div>

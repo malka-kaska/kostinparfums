@@ -110,6 +110,7 @@ async def run_migrations(db):
     
     try:
         await migrate_products_from_backup(db)
+        await migrate_collections(db)
     except Exception as e:
         logger.error(f"Migration failed: {e}")
         import traceback
@@ -117,3 +118,114 @@ async def run_migrations(db):
     
     logger.info("Migration check complete")
     logger.info("=" * 50)
+
+
+# Dubai/Arabian perfume brands
+DUBAI_BRANDS = [
+    'Afnan',
+    'Ahmed Al Maghribi',
+    'Ajmal',
+    'Al Haramain',
+    'Armaf',
+    'Lattafa',
+    'Rasasi',
+]
+
+
+async def migrate_collections(db):
+    """
+    Create system collections and assign products to collections.
+    - all_products: Default collection for all non-Dubai products
+    - dubai: Dubai/Arabian fragrances
+    """
+    migration_name = "collections_v1"
+    
+    # Check if migration already done
+    existing = await db[MIGRATIONS_COLLECTION].find_one({"name": migration_name})
+    if existing:
+        logger.info(f"Collections migration already applied")
+        return
+    
+    logger.info("Starting collections migration...")
+    
+    # Create system collections if they don't exist
+    system_collections = [
+        {
+            "name": "Всички парфюми",
+            "name_en": "All Fragrances",
+            "slug": "all_products",
+            "description": "Всички налични парфюми",
+            "description_en": "All available fragrances",
+            "is_system": True,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        },
+        {
+            "name": "Дубайски аромати",
+            "name_en": "Dubai Fragrances",
+            "slug": "dubai",
+            "description": "Екзотични ориенталски аромати от престижни арабски парфюмерийни къщи",
+            "description_en": "Exotic oriental fragrances from prestigious Arabian perfume houses",
+            "is_system": True,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        },
+    ]
+    
+    for col in system_collections:
+        existing_col = await db.collections.find_one({"slug": col["slug"]})
+        if not existing_col:
+            await db.collections.insert_one(col)
+            logger.info(f"Created system collection: {col['name']} ({col['slug']})")
+        else:
+            logger.info(f"System collection already exists: {col['slug']}")
+    
+    # Assign products to collections
+    # 1. Dubai brands -> "dubai" collection only
+    # 2. All other products -> "all_products" collection
+    
+    dubai_count = 0
+    all_products_count = 0
+    
+    # Update Dubai brand products
+    for brand in DUBAI_BRANDS:
+        result = await db.products.update_many(
+            {"brand": brand, "collections": {"$exists": False}},
+            {"$set": {"collections": ["dubai"]}}
+        )
+        dubai_count += result.modified_count
+        
+        # Also update products that might have empty collections array
+        result2 = await db.products.update_many(
+            {"brand": brand, "collections": []},
+            {"$set": {"collections": ["dubai"]}}
+        )
+        dubai_count += result2.modified_count
+    
+    logger.info(f"Assigned {dubai_count} products to 'dubai' collection")
+    
+    # Update all other products to "all_products"
+    result = await db.products.update_many(
+        {
+            "brand": {"$nin": DUBAI_BRANDS},
+            "$or": [
+                {"collections": {"$exists": False}},
+                {"collections": []},
+                {"collections": None}
+            ]
+        },
+        {"$set": {"collections": ["all_products"]}}
+    )
+    all_products_count = result.modified_count
+    
+    logger.info(f"Assigned {all_products_count} products to 'all_products' collection")
+    
+    # Mark migration as done
+    await db[MIGRATIONS_COLLECTION].insert_one({
+        "name": migration_name,
+        "applied_at": datetime.now(timezone.utc).isoformat(),
+        "dubai_products": dubai_count,
+        "all_products": all_products_count
+    })
+    
+    logger.info("Collections migration complete")

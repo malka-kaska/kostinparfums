@@ -88,6 +88,16 @@ async def get_current_user_optional(request: Request, db) -> dict | None:
         return None
 
 
+async def get_current_admin(request: Request) -> dict:
+    """Get current user and verify they are an admin"""
+    from fastapi import Request as FastAPIRequest
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
 async def seed_admin(db):
     admin_email = os.environ.get("ADMIN_EMAIL")
     admin_password = os.environ.get("ADMIN_PASSWORD")

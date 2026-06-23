@@ -21,11 +21,17 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', brand: '', category: '', price: '', description: '', description_bg: '', images: [], stock: '', gender: []
+    name: '', brand: '', category: '', price: '', description: '', description_bg: '', images: [], stock: '', gender: [], collections: ['all_products']
   });
   const [draggedIndex, setDraggedIndex] = useState(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  // Collections state
+  const [collections, setCollections] = useState([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [newCollection, setNewCollection] = useState({ name: '', name_en: '', slug: '', description: '', description_en: '' });
+  const [creatingCollection, setCreatingCollection] = useState(false);
 
   // Homepage management state
   const [heroSlides, setHeroSlides] = useState([]);
@@ -320,6 +326,21 @@ const Admin = () => {
     }
   }, []);
 
+  const fetchCollections = useCallback(async () => {
+    setCollectionsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/collections/all`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setCollections(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch collections:', err);
+    } finally {
+      setCollectionsLoading(false);
+    }
+  }, []);
+
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
@@ -329,6 +350,7 @@ const Admin = () => {
     if (user?.role === 'admin') {
       fetchProducts();
       fetchOrders();
+      fetchCollections();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, page, filterVisibility, filterSort, filterSearch, filterCategory]);
@@ -363,7 +385,8 @@ const Admin = () => {
       price: product.price.toString(), description: product.description || '',
       description_bg: product.description_bg || '',
       images: images, stock: product.stock.toString(),
-      gender: product.gender || []
+      gender: product.gender || [],
+      collections: product.collections || ['all_products']
     });
   };
 
@@ -375,7 +398,8 @@ const Admin = () => {
       price: '', description: '', description_bg: '',
       images: [],
       stock: '',
-      gender: []
+      gender: [],
+      collections: ['all_products']
     });
   };
 
@@ -390,6 +414,7 @@ const Admin = () => {
         images: formData.images,  // New field - all images in order
         stock: parseInt(formData.stock) || 0,
         gender: formData.gender || [],
+        collections: formData.collections || ['all_products'],
       };
 
       if (isCreating) {
@@ -492,6 +517,14 @@ const Admin = () => {
           >
             <Package size={18} />
             <span>{t('ordersTab')} ({orders.length})</span>
+          </button>
+          <button
+            className={`admin-tab ${activeTab === 'collections' ? 'active' : ''}`}
+            onClick={() => setActiveTab('collections')}
+            data-testid="admin-tab-collections"
+          >
+            <Filter size={18} />
+            <span>{t('collectionsTab') || 'Колекции'} ({collections.length})</span>
           </button>
           <button
             className={`admin-tab ${activeTab === 'homepage' ? 'active' : ''}`}
@@ -727,6 +760,39 @@ const Admin = () => {
                       <p className="form-hint">{t('genderHint') || 'Select both for unisex products'}</p>
                     </div>
                     <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="form-label">{t('collections') || 'Колекции/Страници'}</label>
+                      <div className="collections-checkboxes">
+                        {collections.map(col => (
+                          <label key={col.slug} className="collection-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={formData.collections?.includes(col.slug)}
+                              onChange={(e) => {
+                                let newCollections = [...(formData.collections || [])];
+                                if (e.target.checked) {
+                                  if (!newCollections.includes(col.slug)) {
+                                    newCollections.push(col.slug);
+                                  }
+                                  // If selecting a non-all_products collection, can remove all_products
+                                } else {
+                                  newCollections = newCollections.filter(c => c !== col.slug);
+                                  // If removing all collections, ensure all_products is selected
+                                  if (newCollections.length === 0) {
+                                    newCollections = ['all_products'];
+                                  }
+                                }
+                                setFormData({ ...formData, collections: newCollections });
+                              }}
+                              data-testid={`collection-${col.slug}-checkbox`}
+                            />
+                            <span>{col.name}</span>
+                            <span className="collection-count">({col.product_count})</span>
+                          </label>
+                        ))}
+                      </div>
+                      <p className="form-hint">{t('collectionsHint') || 'Изберете на кои страници да се показва продуктът'}</p>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                       <label className="form-label">{t('description')} (EN)</label>
                       <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="form-input" rows="3" data-testid="product-description-input" />
                     </div>
@@ -882,6 +948,191 @@ const Admin = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Collections Management Tab */}
+        {activeTab === 'collections' && (
+          <div className="collections-management" data-testid="collections-management">
+            <div className="admin-section">
+              <div className="admin-section-header">
+                <h3>{t('manageCollections') || 'Управление на колекции'}</h3>
+                <p className="body-regular" style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>
+                  {t('collectionsDescription') || 'Създавайте колекции за да организирате продуктите по страници и кампании.'}
+                </p>
+              </div>
+
+              {/* Create new collection form */}
+              <div className="new-collection-form" style={{ marginBottom: '24px', padding: '20px', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                <h4 style={{ marginBottom: '16px' }}>{t('createNewCollection') || 'Създай нова колекция'}</h4>
+                <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">{t('collectionName') || 'Име (BG)'} *</label>
+                    <input
+                      type="text"
+                      value={newCollection.name}
+                      onChange={(e) => setNewCollection({ ...newCollection, name: e.target.value })}
+                      className="form-input"
+                      placeholder="напр. Лятна Колекция"
+                      data-testid="new-collection-name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">{t('collectionNameEn') || 'Име (EN)'}</label>
+                    <input
+                      type="text"
+                      value={newCollection.name_en}
+                      onChange={(e) => setNewCollection({ ...newCollection, name_en: e.target.value })}
+                      className="form-input"
+                      placeholder="e.g. Summer Collection"
+                      data-testid="new-collection-name-en"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">{t('collectionSlug') || 'Slug (URL)'} *</label>
+                    <input
+                      type="text"
+                      value={newCollection.slug}
+                      onChange={(e) => setNewCollection({ ...newCollection, slug: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+                      className="form-input"
+                      placeholder="summer_collection"
+                      data-testid="new-collection-slug"
+                    />
+                  </div>
+                </div>
+                <div className="form-group" style={{ marginTop: '16px' }}>
+                  <label className="form-label">{t('collectionDescription') || 'Описание (BG)'}</label>
+                  <input
+                    type="text"
+                    value={newCollection.description}
+                    onChange={(e) => setNewCollection({ ...newCollection, description: e.target.value })}
+                    className="form-input"
+                    placeholder="Кратко описание на колекцията"
+                  />
+                </div>
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: '16px' }}
+                  disabled={!newCollection.name || !newCollection.slug || creatingCollection}
+                  onClick={async () => {
+                    setCreatingCollection(true);
+                    try {
+                      const res = await fetch(`${API_URL}/api/collections`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(newCollection),
+                      });
+                      if (res.ok) {
+                        setNewCollection({ name: '', name_en: '', slug: '', description: '', description_en: '' });
+                        fetchCollections();
+                      } else {
+                        const err = await res.json();
+                        alert(err.detail || 'Failed to create collection');
+                      }
+                    } catch (err) {
+                      alert('Network error: ' + err.message);
+                    } finally {
+                      setCreatingCollection(false);
+                    }
+                  }}
+                  data-testid="create-collection-button"
+                >
+                  <Plus size={18} style={{ marginRight: '8px' }} />
+                  {creatingCollection ? (t('creating') || 'Създаване...') : (t('createCollection') || 'Създай колекция')}
+                </button>
+              </div>
+
+              {/* Collections list */}
+              <div className="collections-list">
+                {collectionsLoading ? (
+                  <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <Loader size={24} className="spin" />
+                  </div>
+                ) : collections.length === 0 ? (
+                  <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    {t('noCollections') || 'Няма създадени колекции'}
+                  </p>
+                ) : (
+                  <table className="collections-table">
+                    <thead>
+                      <tr>
+                        <th>{t('collectionName') || 'Име'}</th>
+                        <th>Slug</th>
+                        <th>{t('productsCount') || 'Продукти'}</th>
+                        <th>{t('type') || 'Тип'}</th>
+                        <th>{t('status') || 'Статус'}</th>
+                        <th>{t('actions') || 'Действия'}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {collections.map(col => (
+                        <tr key={col.id} data-testid={`collection-row-${col.slug}`}>
+                          <td>
+                            <strong>{col.name}</strong>
+                            {col.name_en && <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '12px' }}>{col.name_en}</span>}
+                          </td>
+                          <td><code>{col.slug}</code></td>
+                          <td>{col.product_count}</td>
+                          <td>
+                            {col.is_system ? (
+                              <span className="badge badge-system">{t('system') || 'Системна'}</span>
+                            ) : (
+                              <span className="badge badge-custom">{t('custom') || 'Потребителска'}</span>
+                            )}
+                          </td>
+                          <td>
+                            <span className={`badge ${col.is_active ? 'badge-active' : 'badge-inactive'}`}>
+                              {col.is_active ? (t('active') || 'Активна') : (t('inactive') || 'Неактивна')}
+                            </span>
+                          </td>
+                          <td>
+                            {!col.is_system && (
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  className="action-button"
+                                  onClick={async () => {
+                                    const res = await fetch(`${API_URL}/api/collections/${col.id}/toggle`, {
+                                      method: 'POST',
+                                      credentials: 'include',
+                                    });
+                                    if (res.ok) fetchCollections();
+                                  }}
+                                  title={col.is_active ? 'Деактивирай' : 'Активирай'}
+                                >
+                                  {col.is_active ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                                <button
+                                  className="action-button delete"
+                                  onClick={async () => {
+                                    if (!window.confirm(t('confirmDeleteCollection') || 'Сигурни ли сте, че искате да изтриете тази колекция?')) return;
+                                    const res = await fetch(`${API_URL}/api/collections/${col.id}`, {
+                                      method: 'DELETE',
+                                      credentials: 'include',
+                                    });
+                                    if (res.ok) fetchCollections();
+                                    else {
+                                      const err = await res.json();
+                                      alert(err.detail || 'Failed to delete');
+                                    }
+                                  }}
+                                  title="Изтрий"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            )}
+                            {col.is_system && (
+                              <span style={{ color: 'var(--text-light)', fontSize: '12px' }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

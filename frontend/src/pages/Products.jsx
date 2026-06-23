@@ -7,17 +7,6 @@ import './Products.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Dubai/Arabian perfume brands to exclude from main products page
-const DUBAI_BRANDS = [
-  'Afnan',
-  'Ahmed Al Maghribi',
-  'Ajmal',
-  'Al Haramain',
-  'Armaf',
-  'Lattafa',
-  'Rasasi',
-];
-
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
@@ -107,17 +96,16 @@ const Products = () => {
         if (selectedGender !== 'all') params.set('gender', selectedGender);
         if (searchQuery) params.set('search', searchQuery);
         if (sortBy) params.set('sort', sortBy);
+        
+        // Filter by "all_products" collection (excludes Dubai products by default)
+        params.set('collection', 'all_products');
         params.set('limit', '200');
 
         const res = await fetch(`${API_URL}/api/products?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
-          // Filter out Dubai brands from main products page
-          const filteredProducts = data.products.filter(
-            product => !DUBAI_BRANDS.includes(product.brand)
-          );
-          setProducts(filteredProducts);
-          setTotalProducts(filteredProducts.length);
+          setProducts(data.products);
+          setTotalProducts(data.total);
         } else {
           setProducts([]);
           setTotalProducts(0);

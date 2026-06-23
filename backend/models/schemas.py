@@ -44,6 +44,7 @@ class ProductCreate(BaseModel):
     is_active: bool = True
     is_visible: bool = True
     gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
+    collections: Optional[List[str]] = None  # Collection slugs: ["all_products", "dubai", "campaign_xyz"]
 
 
 class ProductUpdate(BaseModel):
@@ -59,6 +60,7 @@ class ProductUpdate(BaseModel):
     is_active: Optional[bool] = None
     is_visible: Optional[bool] = None
     gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
+    collections: Optional[List[str]] = None  # Collection slugs
 
 
 class ProductVisibilityUpdate(BaseModel):
@@ -97,3 +99,35 @@ class CategoryResponse(BaseModel):
 class CheckoutRequest(BaseModel):
     origin_url: str
     items: list
+
+
+# Collection schemas
+class CollectionCreate(BaseModel):
+    name: str  # Display name: "Дубайски аромати"
+    name_en: Optional[str] = None  # English name: "Dubai Fragrances"
+    slug: str  # URL-friendly identifier: "dubai"
+    description: Optional[str] = None
+    description_en: Optional[str] = None
+    is_system: bool = False  # System collections can't be deleted (all_products, dubai)
+    is_active: bool = True
+
+
+class CollectionUpdate(BaseModel):
+    name: Optional[str] = None
+    name_en: Optional[str] = None
+    description: Optional[str] = None
+    description_en: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class CollectionResponse(BaseModel):
+    id: str
+    name: str
+    name_en: Optional[str] = None
+    slug: str
+    description: Optional[str] = None
+    description_en: Optional[str] = None
+    is_system: bool = False
+    is_active: bool = True
+    product_count: Optional[int] = 0
+    created_at: Optional[str] = None

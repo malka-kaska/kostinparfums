@@ -7,17 +7,6 @@ import './Products.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Dubai/Arabian perfume brands
-const DUBAI_BRANDS = [
-  'Afnan',
-  'Ahmed Al Maghribi',
-  'Ajmal',
-  'Al Haramain',
-  'Armaf',
-  'Lattafa',
-  'Rasasi',
-];
-
 const DubaiPerfumes = () => {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,16 +31,20 @@ const DubaiPerfumes = () => {
       setLoading(true);
       setError(null);
       try {
-        // Use selected brands or all Dubai brands
-        const brandsParam = selectedBrands.length > 0 
-          ? selectedBrands.join(',') 
-          : DUBAI_BRANDS.join(',');
+        // Fetch from "dubai" collection
+        const params = new URLSearchParams();
+        params.set('collection', 'dubai');
+        params.set('sort', sortBy);
+        params.set('limit', '200');
         
-        let url = `${API_URL}/api/products?brands=${encodeURIComponent(brandsParam)}&sort=${sortBy}&limit=200`;
-        
-        if (selectedGender) {
-          url += `&gender=${selectedGender}`;
+        if (selectedBrands.length > 0) {
+          params.set('brands', selectedBrands.join(','));
         }
+        if (selectedGender) {
+          params.set('gender', selectedGender);
+        }
+        
+        const url = `${API_URL}/api/products?${params.toString()}`;
 
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch products');
@@ -60,7 +53,7 @@ const DubaiPerfumes = () => {
         setProducts(data.products || []);
         
         // Extract available brands from results
-        const brandsInResults = [...new Set(data.products.map(p => p.brand))].filter(b => DUBAI_BRANDS.includes(b));
+        const brandsInResults = [...new Set(data.products.map(p => p.brand))];
         setAvailableBrands(brandsInResults.sort());
         
       } catch (err) {
@@ -72,7 +65,7 @@ const DubaiPerfumes = () => {
     };
 
     fetchProducts();
-  }, [selectedGender, selectedBrandsParam, sortBy]);
+  }, [selectedGender, selectedBrandsParam, sortBy, selectedBrands]);
 
   const updateFilters = (key, value) => {
     const newParams = new URLSearchParams(searchParams);

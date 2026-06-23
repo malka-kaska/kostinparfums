@@ -8,22 +8,6 @@ import './SmartSearch.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Dubai/Arabian perfume brands - must match DubaiPerfumes.jsx
-const DUBAI_BRANDS = [
-  'Afnan',
-  'Ahmed Al Maghribi',
-  'Ajmal',
-  'Al Haramain',
-  'Armaf',
-  'Lattafa',
-  'Rasasi',
-];
-
-// Check if a brand is a Dubai brand (case-insensitive)
-const isDubaiBrand = (brandName) => {
-  return DUBAI_BRANDS.some(db => db.toLowerCase() === brandName.toLowerCase());
-};
-
 const SmartSearch = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -32,6 +16,7 @@ const SmartSearch = ({ isOpen, onClose }) => {
   
   const [query, setQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState(null);
+  const [selectedBrandCollections, setSelectedBrandCollections] = useState([]);
   const [brands, setBrands] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -137,6 +122,7 @@ const SmartSearch = ({ isOpen, onClose }) => {
 
   const handleBrandSelect = (brand) => {
     setSelectedBrand(brand.name);
+    // Store collections info for this brand (we'll get it from products)
     setQuery('');
     setBrands([]);
     inputRef.current?.focus();
@@ -146,17 +132,25 @@ const SmartSearch = ({ isOpen, onClose }) => {
     setShowDropdown(false);
     setQuery('');
     setSelectedBrand(null);
+    setSelectedBrandCollections([]);
     onClose();
     navigate(`/product/${product.id}`);
   };
 
   const handleBrandClear = () => {
     setSelectedBrand(null);
+    setSelectedBrandCollections([]);
     setQuery('');
     setBrands([]);
     setProducts([]);
     inputRef.current?.focus();
   };
+
+  // Check if brand belongs to Dubai collection based on product collections
+  const isBrandInDubaiCollection = useCallback((brandProducts) => {
+    // Check if any product from this brand is in "dubai" collection
+    return brandProducts.some(p => p.collections?.includes('dubai'));
+  }, []);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
@@ -167,8 +161,9 @@ const SmartSearch = ({ isOpen, onClose }) => {
       setShowDropdown(false);
       onClose();
       if (selectedBrand) {
-        // If selected brand is a Dubai brand, navigate to Dubai page
-        if (isDubaiBrand(selectedBrand)) {
+        // Check if products belong to Dubai collection
+        const isDubai = isBrandInDubaiCollection(products);
+        if (isDubai) {
           navigate(`/dubai-perfumes?brands=${encodeURIComponent(selectedBrand)}&search=${encodeURIComponent(query)}`);
         } else {
           navigate(`/products?brands=${encodeURIComponent(selectedBrand)}&search=${encodeURIComponent(query)}`);
@@ -179,16 +174,28 @@ const SmartSearch = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleViewAllBrand = (brandName) => {
+  const handleViewAllBrand = async (brandName) => {
     setShowDropdown(false);
     setQuery('');
     setSelectedBrand(null);
+    setSelectedBrandCollections([]);
     onClose();
     
-    // If it's a Dubai brand, navigate to Dubai Fragrances page
-    if (isDubaiBrand(brandName)) {
-      navigate(`/dubai-perfumes?brands=${encodeURIComponent(brandName)}`);
-    } else {
+    // Check if this brand has products in Dubai collection
+    try {
+      const res = await fetch(`${API_URL}/api/search/products?brand=${encodeURIComponent(brandName)}&limit=1`);
+      if (res.ok) {
+        const data = await res.json();
+        const isDubai = data.products?.[0]?.collections?.includes('dubai');
+        if (isDubai) {
+          navigate(`/dubai-perfumes?brands=${encodeURIComponent(brandName)}`);
+        } else {
+          navigate(`/products?brands=${encodeURIComponent(brandName)}`);
+        }
+      } else {
+        navigate(`/products?brands=${encodeURIComponent(brandName)}`);
+      }
+    } catch {
       navigate(`/products?brands=${encodeURIComponent(brandName)}`);
     }
   };

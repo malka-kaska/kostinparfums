@@ -298,6 +298,7 @@ async def search_products(
             "price": product.get("price", 0),
             "image": main_image,
             "stock": product.get("stock", 0),
+            "collections": product.get("collections", ["all_products"]),
         })
     
     return {

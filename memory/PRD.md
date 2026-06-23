@@ -12,23 +12,28 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] Admin panel access control
 
 ### Product Management
-- [x] Dynamic product catalog with filtering (gender, brand)
+- [x] Dynamic product catalog with filtering (gender, brand, **collection**)
+- [x] **Collections/Pages system** - assign products to multiple pages/campaigns
 - [x] Sorting options: popularity, newest, name, price
 - [x] Product name parsing (Brand + Main Name | Variant)
 - [x] Cloudinary image uploads via Admin Panel
 - [x] Drag-and-drop product reordering (Admin)
 - [x] Product visibility toggle (Admin)
 
-### **Smart Autocomplete Search (NEW)**
+### **Collections System (NEW)**
+- [x] System collections: "Всички парфюми" (all_products), "Дубайски аромати" (dubai)
+- [x] Custom collections for campaigns (create/edit/delete from Admin)
+- [x] Multi-select: products can belong to multiple collections
+- [x] Auto-migration: Dubai brands auto-assigned to "dubai" collection
+- [x] Default behavior: products without collection go to "all_products"
+- [x] Collection management tab in Admin panel
+
+### Smart Autocomplete Search
 - [x] Two-level search: Brand suggestions → Product suggestions
-- [x] Brand alias support (YSL → Yves Saint Laurent, JPG → Jean Paul Gaultier, Paco → Paco Rabanne)
-- [x] After brand selection, filter products within that brand
+- [x] Brand alias support (YSL, JPG, Paco, etc.)
+- [x] Collection-aware navigation (Dubai brands → Dubai page)
 - [x] Max 4-5 results per section
-- [x] Sorted by relevance and popularity
-- [x] Brand tag with X to clear selection
 - [x] Mobile-responsive dropdown
-- [x] "No results found" message
-- [x] Click outside to close
 
 ### Shopping Experience
 - [x] Shopping cart with quantity management
@@ -40,7 +45,8 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] Bilingual support (BG/EN)
 
 ### Special Pages
-- [x] Dubai Fragrances - dedicated page for Arabian brands
+- [x] Dubai Fragrances - filtered by "dubai" collection
+- [x] All Fragrances - filtered by "all_products" collection
 - [x] Legal pages (About Us, Terms, Privacy Policy, Legal Info)
 - [x] Responsive design for mobile/tablet/desktop
 
@@ -54,35 +60,31 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - **Auth**: JWT tokens, bcrypt hashing
 
 ## API Endpoints
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/verify-email?token=` - Email verification
-- `GET /api/products` - Product listing with filters
-- `GET /api/products/brands` - Available brands
-- `POST /api/orders` - Create order
-- `GET /api/orders/verify-order?token=` - Order verification
-- `POST /api/upload/image` - Cloudinary upload (Admin)
-- **NEW** `GET /api/search/brands?q=` - Search brands
-- **NEW** `GET /api/search/products?q=&brand=` - Search products with brand filter
-- **NEW** `GET /api/search/suggestions?q=` - Combined brand + product suggestions
+- `GET /api/collections` - List all active collections
+- `GET /api/collections/all` - List all collections (Admin)
+- `POST /api/collections` - Create collection (Admin)
+- `PUT /api/collections/{id}` - Update collection (Admin)
+- `DELETE /api/collections/{id}` - Delete collection (Admin)
+- `GET /api/products?collection=slug` - Filter products by collection
+- `PATCH /api/products/{id}/collections` - Update product collections (Admin)
 
 ## Database Schema
-- `products`: name, brand, price, image_url, gender, category, description, visibility, popularity_score
-- `users`: email, password_hash, is_admin, email_verified, verification_token, token_expires
-- `orders`: user_id, items, total, status, order_token, created_at
+- `products`: name, brand, price, ..., **collections** (array of slugs)
+- `collections`: name, name_en, slug, description, is_system, is_active
+- `users`: email, password_hash, is_admin, email_verified
+- `orders`: user_id, items, total, status, order_token
 
 ## Recently Implemented (December 2025)
-- [x] **Smart Autocomplete Search** with two-level suggestions
-- [x] Brand alias support (YSL, JPG, Paco, etc.)
-- [x] Product search within selected brand
-- [x] Recently Viewed section on Home page
-- [x] Fixed Dubai Fragrances page CSS grid layout
-- [x] Email verification flow (registration)
-- [x] Order confirmation emails
+- [x] **Collections system** - manage which pages products appear on
+- [x] Admin UI for creating/managing collections
+- [x] Product multi-select for collections in Admin
+- [x] Auto-migration for existing Dubai brand products
+- [x] Collection-based filtering in Products.jsx and DubaiPerfumes.jsx
+- [x] Smart Search collection-aware navigation
 
 ## Backlog
 - [ ] Dropshipping API integration (awaiting supplier API details)
-- [ ] Refactor Admin.jsx (>1000 lines) into smaller components
+- [ ] Refactor Admin.jsx into smaller components
 - [ ] Extract email HTML templates to separate files
 
 ## Test Credentials
@@ -91,25 +93,19 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 ## File Structure
 ```
-/app/frontend/src/
-├── components/
-│   ├── SmartSearch.jsx       # Smart autocomplete search
-│   ├── SmartSearch.css       # Search styles
-│   ├── RecentlyViewed.jsx    # Recently Viewed section
-│   └── Header.jsx            # Includes SmartSearch
-├── utils/
-│   ├── recentlyViewed.js     # localStorage utility (7-day expiry)
-│   └── parseProductName.js   # Product name parsing
-├── pages/
-│   ├── Home.jsx              # Includes RecentlyViewed
-│   ├── ProductDetail.jsx     # Adds to recentlyViewed
-│   └── Products.jsx          # Main shop page
-└── translations/
-    ├── bg.js                 # Bulgarian translations
-    └── en.js                 # English translations
+/app/backend/
+├── routes/
+│   ├── collections.py    # Collections CRUD API
+│   ├── products.py       # Products with collection filter
+│   └── search.py         # Smart search with collections
+├── models/schemas.py     # CollectionCreate, CollectionUpdate schemas
+└── migrations.py         # Auto-creates system collections
 
-/app/backend/routes/
-├── search.py                 # Smart search API endpoints
-├── products.py               # Product CRUD
-└── auth.py                   # Authentication
+/app/frontend/src/
+├── pages/
+│   ├── Admin.jsx         # Collections tab, product collection selector
+│   ├── Products.jsx      # Uses collection=all_products filter
+│   └── DubaiPerfumes.jsx # Uses collection=dubai filter
+└── components/
+    └── SmartSearch.jsx   # Collection-aware brand navigation
 ```

@@ -194,6 +194,7 @@ def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict
         "is_active": doc.get("is_active", True),
         "is_visible": doc.get("is_visible", True),
         "gender": doc.get("gender", []),  # New field - ["men"], ["women"], or both
+        "collections": doc.get("collections", ["all_products"]),  # Collection slugs
         "created_at": doc.get("created_at"),
     }
     if doc.get("description_bg"):
@@ -208,6 +209,7 @@ async def get_products(
     brand: Optional[str] = None,
     brands: Optional[str] = None,  # Comma-separated list of brands for multi-select
     gender: Optional[str] = None,  # "men" or "women" - filters products that include this gender
+    collection: Optional[str] = None,  # Filter by collection slug
     search: Optional[str] = None,
     sort: Optional[str] = "popular",  # Default to popular/best sellers
     min_price: Optional[float] = None,
@@ -233,6 +235,10 @@ async def get_products(
     # Gender filter - show products that include this gender in their gender array
     if gender:
         query["gender"] = {"$in": [gender]}
+    
+    # Collection filter - filter by collection slug
+    if collection:
+        query["collections"] = collection
     
     if search:
         query["$or"] = [
@@ -527,4 +533,44 @@ async def toggle_product_visibility(request: Request, product_id: str, data: Pro
         raise HTTPException(status_code=404, detail="Product not found")
 
     logger.info(f"Product {product_id} visibility set to {data.is_visible}")
+    return product_doc_to_response(result)
+
+
+@router.patch("/{product_id}/collections")
+async def update_product_collections(request: Request, product_id: str):
+    """Update product collections - Admin only"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    body = await request.json()
+    collections = body.get("collections", [])
+    
+    # Validate: if no other collection, must have "all_products"
+    if not collections or len(collections) == 0:
+        collections = ["all_products"]
+    
+    # If only "all_products" is being removed and there's no other collection, keep it
+    if "all_products" not in collections and len(collections) == 0:
+        collections = ["all_products"]
+
+    try:
+        result = await db.products.find_one_and_update(
+            {"_id": ObjectId(product_id)},
+            {
+                "$set": {
+                    "collections": collections,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            },
+            return_document=True,
+        )
+    except Exception:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    logger.info(f"Product {product_id} collections updated to {collections}")
     return product_doc_to_response(result)

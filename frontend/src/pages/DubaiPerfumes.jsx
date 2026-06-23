@@ -37,8 +37,9 @@ const DubaiPerfumes = () => {
         params.set('sort', sortBy);
         params.set('limit', '200');
         
-        if (selectedBrands.length > 0) {
-          params.set('brands', selectedBrands.join(','));
+        // Use selectedBrandsParam directly to avoid dependency on array
+        if (selectedBrandsParam) {
+          params.set('brands', selectedBrandsParam);
         }
         if (selectedGender) {
           params.set('gender', selectedGender);
@@ -65,7 +66,7 @@ const DubaiPerfumes = () => {
     };
 
     fetchProducts();
-  }, [selectedGender, selectedBrandsParam, sortBy, selectedBrands]);
+  }, [selectedGender, selectedBrandsParam, sortBy]);
 
   const updateFilters = (key, value) => {
     const newParams = new URLSearchParams(searchParams);

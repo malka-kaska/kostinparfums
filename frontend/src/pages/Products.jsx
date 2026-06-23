@@ -70,17 +70,24 @@ const Products = () => {
   // Refetch brands when gender changes
   useEffect(() => {
     fetchBrands(selectedGender);
-    // Reset selected brands when gender changes
-    setSelectedBrands([]);
+    // Only reset selected brands if NOT coming from URL
+    // (URL brands are handled in the other useEffect)
   }, [selectedGender]);
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category') || 'all';
     const searchFromUrl = searchParams.get('search') || '';
     const genderFromUrl = searchParams.get('gender') || 'all';
+    const brandsFromUrl = searchParams.get('brands');
+    
     setSelectedCategory(categoryFromUrl);
     setSearchQuery(searchFromUrl);
     setSelectedGender(genderFromUrl);
+    
+    // Set brands from URL if present
+    if (brandsFromUrl) {
+      setSelectedBrands(brandsFromUrl.split(',').filter(Boolean));
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -89,7 +96,14 @@ const Products = () => {
       try {
         const params = new URLSearchParams();
         if (selectedCategory !== 'all') params.set('category', selectedCategory);
-        if (selectedBrands.length > 0) params.set('brands', selectedBrands.join(','));
+        
+        // Read brands from URL directly to avoid race condition
+        const brandsFromUrl = searchParams.get('brands');
+        const brandsToUse = brandsFromUrl 
+          ? brandsFromUrl.split(',').filter(Boolean) 
+          : selectedBrands;
+        
+        if (brandsToUse.length > 0) params.set('brands', brandsToUse.join(','));
         if (selectedGender !== 'all') params.set('gender', selectedGender);
         if (searchQuery) params.set('search', searchQuery);
         if (sortBy) params.set('sort', sortBy);
@@ -119,7 +133,7 @@ const Products = () => {
 
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, selectedBrands, selectedGender, sortBy, searchQuery]);
+  }, [selectedCategory, selectedBrands, selectedGender, sortBy, searchQuery, searchParams]);
 
   const categoryNames = {
     perfumes: t('perfumes'),

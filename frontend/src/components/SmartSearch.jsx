@@ -8,6 +8,22 @@ import './SmartSearch.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Dubai/Arabian perfume brands - must match DubaiPerfumes.jsx
+const DUBAI_BRANDS = [
+  'Afnan',
+  'Ahmed Al Maghribi',
+  'Ajmal',
+  'Al Haramain',
+  'Armaf',
+  'Lattafa',
+  'Rasasi',
+];
+
+// Check if a brand is a Dubai brand (case-insensitive)
+const isDubaiBrand = (brandName) => {
+  return DUBAI_BRANDS.some(db => db.toLowerCase() === brandName.toLowerCase());
+};
+
 const SmartSearch = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -151,7 +167,12 @@ const SmartSearch = ({ isOpen, onClose }) => {
       setShowDropdown(false);
       onClose();
       if (selectedBrand) {
-        navigate(`/products?brands=${encodeURIComponent(selectedBrand)}&search=${encodeURIComponent(query)}`);
+        // If selected brand is a Dubai brand, navigate to Dubai page
+        if (isDubaiBrand(selectedBrand)) {
+          navigate(`/dubai-perfumes?brands=${encodeURIComponent(selectedBrand)}&search=${encodeURIComponent(query)}`);
+        } else {
+          navigate(`/products?brands=${encodeURIComponent(selectedBrand)}&search=${encodeURIComponent(query)}`);
+        }
       } else {
         navigate(`/products?search=${encodeURIComponent(query)}`);
       }
@@ -163,7 +184,13 @@ const SmartSearch = ({ isOpen, onClose }) => {
     setQuery('');
     setSelectedBrand(null);
     onClose();
-    navigate(`/products?brands=${encodeURIComponent(brandName)}`);
+    
+    // If it's a Dubai brand, navigate to Dubai Fragrances page
+    if (isDubaiBrand(brandName)) {
+      navigate(`/dubai-perfumes?brands=${encodeURIComponent(brandName)}`);
+    } else {
+      navigate(`/products?brands=${encodeURIComponent(brandName)}`);
+    }
   };
 
   if (!isOpen) return null;

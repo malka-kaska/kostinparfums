@@ -8,9 +8,17 @@ export const bg = {
   dubaiFragrances: "ДУБАЙСКИ АРОМАТИ",
   dubaiFragrancesSubtitle: "Открийте екзотични ориенталски аромати от най-престижните арабски парфюмерийни къщи",
   searchPlaceholder: "Търсене на аромати, марки...",
+  searchInBrand: "Търсене в марката...",
   myProfile: "Моят профил",
   adminPanel: "Админ панел",
   logout: "Изход",
+
+  // Smart Search
+  suggestedBrands: "ПРЕДЛОЖЕНИ МАРКИ",
+  suggestedProducts: "ПРЕДЛОЖЕНИ ПРОДУКТИ",
+  productsFrom: "Продукти от",
+  viewAllFromBrand: "Виж всички",
+  noSearchResults: "Няма намерени резултати",
 
   // Home / Hero
   heroTitle: "\u0421\u0415\u041b\u0415\u041a\u0426\u0418\u042f \u041e\u0422 \u041b\u0423\u041a\u0421\u041e\u0417\u041d\u0418 \u0410\u0420\u041e\u041c\u0410\u0422\u0418",

@@ -4,6 +4,7 @@ import { Search, ShoppingCart, User, Menu, X, Globe, Sun, Moon } from 'lucide-re
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import SmartSearch from './SmartSearch';
 import './Header.css';
 
 const Header = () => {
@@ -135,20 +136,12 @@ const Header = () => {
             </Link>
           </nav>
           
-          {/* Search Bar */}
+          {/* Smart Search Bar */}
           {searchOpen && (
             <div className="search-bar fade-in">
-              <input 
-                type="text" 
-                placeholder={t('searchPlaceholder')}
-                className="search-input"
-                data-testid="search-input"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.target.value) {
-                    navigate(`/products?search=${e.target.value}`);
-                    setSearchOpen(false);
-                  }
-                }}
+              <SmartSearch 
+                isOpen={searchOpen} 
+                onClose={() => setSearchOpen(false)} 
               />
             </div>
           )}

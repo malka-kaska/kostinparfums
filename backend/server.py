@@ -31,6 +31,7 @@ from routes.cart import router as cart_router
 from routes.orders import router as orders_router
 from routes.upload import router as upload_router
 from routes.homepage import router as homepage_router
+from routes.search import router as search_router
 from utils.auth import seed_admin
 from utils.email_service import send_order_confirmation_email, send_order_verification_email
 from migrations import run_migrations
@@ -382,6 +383,7 @@ app.include_router(cart_router)
 app.include_router(orders_router)
 app.include_router(upload_router)
 app.include_router(homepage_router)
+app.include_router(search_router)
 
 # CORS — must use explicit origin for credentials
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")

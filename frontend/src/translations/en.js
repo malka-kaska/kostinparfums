@@ -8,9 +8,17 @@ export const en = {
   dubaiFragrances: "DUBAI FRAGRANCES",
   dubaiFragrancesSubtitle: "Discover exotic oriental fragrances from the most prestigious Arabian perfume houses",
   searchPlaceholder: "Search fragrances, brands...",
+  searchInBrand: "Search within brand...",
   myProfile: "My Profile",
   adminPanel: "Admin Panel",
   logout: "Logout",
+
+  // Smart Search
+  suggestedBrands: "SUGGESTED BRANDS",
+  suggestedProducts: "SUGGESTED PRODUCTS",
+  productsFrom: "Products from",
+  viewAllFromBrand: "View all",
+  noSearchResults: "No results found",
 
   // Home / Hero
   heroTitle: "SELECTION OF LUXURY FRAGRANCES",

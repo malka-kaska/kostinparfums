@@ -1,0 +1,392 @@
+/* Smart Search Styles - Luxury Autocomplete */
+
+.smart-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.smart-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  padding: 12px 16px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.smart-search-bar:focus-within {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+}
+
+.smart-search-icon {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.smart-search-brand-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-gold);
+  color: #ffffff;
+  padding: 4px 8px 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.smart-search-brand-clear {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+}
+
+.smart-search-brand-clear:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.smart-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  min-width: 120px;
+}
+
+.smart-search-input::placeholder {
+  color: var(--text-light);
+}
+
+.smart-search-clear {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.smart-search-clear:hover {
+  color: var(--text-primary);
+}
+
+/* Dropdown */
+.smart-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  max-height: 480px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: dropdownFade 0.2s ease;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading */
+.smart-search-loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.smart-search-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--accent-gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sections */
+.smart-search-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.smart-search-section:last-child {
+  border-bottom: none;
+}
+
+.smart-search-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin: 0 0 12px 0;
+}
+
+/* Brand List */
+.smart-search-brand-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.smart-search-brand-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.smart-search-brand-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-align: left;
+  border-radius: 4px;
+}
+
+.smart-search-brand-button:hover {
+  background: var(--bg-secondary);
+}
+
+.smart-search-brand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.smart-search-brand-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.smart-search-brand-count {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.smart-search-brand-arrow {
+  color: var(--text-light);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.smart-search-brand-button:hover .smart-search-brand-arrow {
+  transform: translateX(4px);
+  color: var(--accent-gold);
+}
+
+.smart-search-brand-view-all {
+  background: none;
+  border: 1px solid var(--border-light);
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.smart-search-brand-view-all:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+/* Product List */
+.smart-search-product-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.smart-search-product-item {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.smart-search-product-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: none;
+  border: none;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-align: left;
+}
+
+.smart-search-product-button:hover {
+  background: var(--bg-secondary);
+}
+
+.smart-search-product-image {
+  width: 56px;
+  height: 56px;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.smart-search-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.smart-search-product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.smart-search-product-brand {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.smart-search-product-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smart-search-product-details {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.smart-search-product-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-gold);
+  margin-top: 2px;
+}
+
+/* No Results */
+.smart-search-no-results {
+  padding: 32px;
+  text-align: center;
+}
+
+.smart-search-no-results p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .smart-search-bar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  
+  .smart-search-brand-tag {
+    font-size: 11px;
+    padding: 3px 6px 3px 10px;
+  }
+  
+  .smart-search-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .smart-search-dropdown {
+    max-height: 60vh;
+  }
+  
+  .smart-search-section {
+    padding: 12px;
+  }
+  
+  .smart-search-brand-button {
+    padding: 10px 12px;
+  }
+  
+  .smart-search-brand-view-all {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+  
+  .smart-search-product-button {
+    padding: 10px;
+    gap: 12px;
+  }
+  
+  .smart-search-product-image {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .smart-search-product-name {
+    font-size: 12px;
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X, AlertTriangle, Shield } from 'lucide-react';
+import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X, AlertTriangle, Shield, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Profile.css';
@@ -20,6 +20,8 @@ const Profile = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
@@ -90,6 +92,42 @@ const Profile = () => {
       setDeleteError(language === 'bg' ? 'Грешка при свързване със сървъра' : 'Connection error');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    setExportSuccess(false);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/export-data`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Create and download JSON file
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `kostin_my_data_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        setExportSuccess(true);
+        setTimeout(() => setExportSuccess(false), 3000);
+      } else {
+        alert(language === 'bg' ? 'Грешка при експортиране на данните' : 'Error exporting data');
+      }
+    } catch (err) {
+      alert(language === 'bg' ? 'Грешка при свързване със сървъра' : 'Connection error');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -186,8 +224,8 @@ const Profile = () => {
                   <div className="gdpr-info-card">
                     <p className="gdpr-description">
                       {language === 'bg' 
-                        ? 'Съгласно GDPR (Общ регламент за защита на данните), имате право да изискате изтриване на вашите лични данни от нашата система.'
-                        : 'Under GDPR (General Data Protection Regulation), you have the right to request deletion of your personal data from our system.'
+                        ? 'Съгласно GDPR (Общ регламент за защита на данните), имате право да изтеглите или изтриете вашите лични данни от нашата система.'
+                        : 'Under GDPR (General Data Protection Regulation), you have the right to download or delete your personal data from our system.'
                       }
                     </p>
                     
@@ -198,7 +236,34 @@ const Profile = () => {
                       <a href="/terms" target="_blank" rel="noopener noreferrer">
                         {language === 'bg' ? 'Условия за ползване' : 'Terms of Service'} →
                       </a>
+                      <a href="/cookies" target="_blank" rel="noopener noreferrer">
+                        {language === 'bg' ? 'Политика за бисквитки' : 'Cookie Policy'} →
+                      </a>
                     </div>
+
+                    {/* Data Export Button */}
+                    <div className="gdpr-action-group">
+                      <button 
+                        className="btn-export-data"
+                        onClick={handleExportData}
+                        disabled={isExporting}
+                        data-testid="export-data-btn"
+                      >
+                        <Download size={16} />
+                        {isExporting 
+                          ? (language === 'bg' ? 'Експортиране...' : 'Exporting...') 
+                          : (language === 'bg' ? 'Изтегли моите данни' : 'Download My Data')
+                        }
+                      </button>
+                      {exportSuccess && (
+                        <span className="export-success">
+                          <Check size={16} />
+                          {language === 'bg' ? 'Данните са изтеглени!' : 'Data downloaded!'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="gdpr-divider"></div>
 
                     {!showDeleteConfirm ? (
                       <button 

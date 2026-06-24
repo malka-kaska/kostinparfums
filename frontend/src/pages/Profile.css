@@ -725,6 +725,60 @@ select.form-input {
   text-decoration: underline;
 }
 
+.gdpr-action-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.btn-export-data {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--accent-color);
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+
+.btn-export-data:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-export-data:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.export-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.gdpr-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 24px 0;
+}
+
 .btn-delete-account {
   display: inline-flex;
   align-items: center;

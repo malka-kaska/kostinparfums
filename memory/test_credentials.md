@@ -19,6 +19,7 @@
 - POST /api/auth/forgot-password
 - POST /api/auth/reset-password
 - DELETE /api/auth/delete-account (GDPR - Right to be Forgotten)
+- GET /api/auth/export-data (GDPR - Right of Access)
 
 ## Stripe Test Card
 - **Card:** 4242 4242 4242 4242

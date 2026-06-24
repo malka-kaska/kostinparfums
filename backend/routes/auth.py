@@ -421,3 +421,93 @@ async def delete_account(request: Request, response: Response):
     except Exception as e:
         logger.error(f"Error deleting user account: {e}")
         raise HTTPException(status_code=500, detail="Грешка при изтриване на акаунта. Моля, опитайте отново.")
+
+
+
+# GDPR: Right of Access - Export user data
+@router.get("/export-data")
+async def export_user_data(request: Request):
+    """
+    GDPR Article 15: Right of access
+    Allows users to download all their personal data in JSON format.
+    """
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Не сте влезли в системата")
+    
+    user_id = user["_id"]
+    user_email = user.get("email", "")
+    
+    try:
+        # Helper to safely convert datetime to ISO string
+        def to_iso(val):
+            if val is None:
+                return None
+            if isinstance(val, datetime):
+                return val.isoformat()
+            if isinstance(val, str):
+                return val  # Already a string
+            return str(val)
+        
+        # 1. Collect user profile data
+        profile_data = {
+            "email": user.get("email"),
+            "name": user.get("name"),
+            "role": user.get("role", "customer"),
+            "email_verified": user.get("email_verified", False),
+            "newsletter_subscribed": user.get("newsletter_subscribed", False),
+            "created_at": to_iso(user.get("created_at")),
+            "is_guest": user.get("is_guest", False),
+        }
+        
+        # 2. Collect order history
+        orders_cursor = db.orders.find(
+            {"user_id": user_id},
+            {"_id": 0}  # Exclude MongoDB _id
+        ).sort("created_at", -1)
+        
+        orders = []
+        async for order in orders_cursor:
+            # Convert datetime objects to ISO strings
+            order["created_at"] = to_iso(order.get("created_at"))
+            order["updated_at"] = to_iso(order.get("updated_at"))
+            orders.append(order)
+        
+        # 3. Collect cart data
+        cart = await db.carts.find_one({"user_id": user_id}, {"_id": 0})
+        cart_data = cart.get("items", []) if cart else []
+        
+        # 4. Collect saved addresses (if stored separately)
+        addresses_cursor = db.addresses.find({"user_id": user_id}, {"_id": 0})
+        addresses = []
+        async for addr in addresses_cursor:
+            addresses.append(addr)
+        
+        # 5. Compile all data
+        export_data = {
+            "export_info": {
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "user_email": user_email,
+                "data_controller": "GREEN POTENTIAL LTD (ГРИИН ПОТЕНШЪЛ ЕООД)",
+                "website": "kostinparfums.com"
+            },
+            "profile": profile_data,
+            "orders": orders,
+            "cart": cart_data,
+            "addresses": addresses,
+            "consent_records": {
+                "terms_accepted": True,
+                "privacy_policy_accepted": True,
+                "newsletter_subscribed": user.get("newsletter_subscribed", False)
+            }
+        }
+        
+        logger.info(f"User data exported (GDPR request): {user_email}")
+        
+        return export_data
+        
+    except Exception as e:
+        logger.error(f"Error exporting user data: {e}")
+        raise HTTPException(status_code=500, detail="Грешка при експортиране на данните. Моля, опитайте отново.")

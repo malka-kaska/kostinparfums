@@ -143,6 +143,7 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
   - **Checkout Integration**: Promo code field in order summary
   - Discount applied to both Card and COD payments
   - Usage tracking per order
+  - **Email Integration**: Discount shown in confirmation emails (subtotal, discount line, total)
 
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9

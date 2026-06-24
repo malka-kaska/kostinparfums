@@ -14,7 +14,7 @@ import uuid
 import asyncio
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Dict
+from typing import List, Dict, Optional
 from emergentintegrations.payments.stripe.checkout import (
     StripeCheckout,
     CheckoutSessionResponse,
@@ -80,6 +80,12 @@ class StatusCheckCreate(BaseModel):
 class CheckoutRequest(BaseModel):
     origin_url: str
     items: List[Dict]
+    shipping_address: Optional[Dict] = None
+    customer_email: Optional[str] = None
+    shipping_cost: Optional[float] = 0
+    shipping_method: Optional[str] = None
+    discount_code: Optional[str] = None
+    discount_amount: Optional[float] = 0
 
 
 class CheckoutResponse(BaseModel):
@@ -182,8 +188,13 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest):
             "payment_status": "initiated",
             "items": checkout_data.items,
             "user_id": user_id,
-            "user_email": user_email,
+            "user_email": user_email or checkout_data.customer_email,
             "user_name": user_name,
+            "shipping_address": checkout_data.shipping_address,
+            "shipping_cost": checkout_data.shipping_cost or 0,
+            "shipping_method": checkout_data.shipping_method,
+            "discount_code": checkout_data.discount_code,
+            "discount_amount": checkout_data.discount_amount or 0,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
@@ -279,7 +290,9 @@ async def stripe_webhook(request: Request):
                                 "quantity": int(item.get("quantity", 1)),
                             })
                         total = transaction.get("amount", 0)
-                        shipping = 0 if total >= 100 else 9.95
+                        shipping = transaction.get("shipping_cost", 0) if transaction.get("shipping_cost") else (0 if total >= 100 else 9.95)
+                        discount_code = transaction.get("discount_code")
+                        discount_amount = transaction.get("discount_amount", 0)
                         
                         # Generate order verification token
                         import secrets
@@ -291,10 +304,16 @@ async def stripe_webhook(request: Request):
                             "user_email": transaction.get("user_email", ""),
                             "user_name": transaction.get("user_name", ""),
                             "items": order_items,
+                            "subtotal": total,
+                            "discount_code": discount_code,
+                            "discount_amount": discount_amount,
                             "total": round(total + shipping, 2),
                             "shipping_cost": shipping,
+                            "shipping_address": transaction.get("shipping_address"),
+                            "shipping_method": transaction.get("shipping_method"),
                             "status": "pending_verification",  # Requires email confirmation
                             "payment_status": "paid",
+                            "payment_method": "card",
                             "session_id": webhook_response.session_id,
                             "verification_token": verification_token,
                             "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
@@ -322,6 +341,24 @@ async def stripe_webhook(request: Request):
                                 )
                             )
                             logger.info(f"Order verification email queued for {user_email}")
+                        
+                        # Apply discount code usage if present
+                        if discount_code:
+                            try:
+                                user_id_for_discount = transaction.get("user_id", "")
+                                update_ops = {
+                                    "$inc": {"times_used": 1},
+                                    "$set": {"last_used_at": datetime.now(timezone.utc)}
+                                }
+                                if user_id_for_discount:
+                                    update_ops["$push"] = {"used_by": user_id_for_discount}
+                                await db.discount_codes.update_one(
+                                    {"code": discount_code.upper()},
+                                    update_ops
+                                )
+                                logger.info(f"Discount code {discount_code} applied to order")
+                            except Exception as e:
+                                logger.error(f"Failed to update discount code usage: {e}")
 
             logger.info(f"Webhook received: {webhook_response.event_type} for session {webhook_response.session_id}")
 
@@ -370,6 +407,8 @@ async def verify_order(token: str):
                 items=order.get("items", []),
                 total=order.get("total", 0),
                 shipping_cost=order.get("shipping_cost", 0),
+                discount_code=order.get("discount_code"),
+                discount_amount=order.get("discount_amount", 0),
                 lang="bg"
             )
         )

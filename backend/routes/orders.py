@@ -275,7 +275,11 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
                 total=final_total,
                 shipping_address=order_doc["shipping_address"],
                 tracking_number=tracking_number,
-                tracking_url=tracking_url
+                tracking_url=tracking_url,
+                discount_code=discount_code,
+                discount_amount=discount_amount,
+                subtotal=total_amount,
+                shipping_cost=shipping_cost
             )
             logger.info(f"COD order confirmation email sent to {user_email}")
         except Exception as e:

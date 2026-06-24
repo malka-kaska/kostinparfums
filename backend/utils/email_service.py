@@ -159,12 +159,17 @@ async def send_order_confirmation_email(
     items: list,
     total: float,
     shipping_cost: float,
+    discount_code: str = None,
+    discount_amount: float = 0,
     lang: str = "bg"
 ):
-    """Send order confirmation email"""
+    """Send order confirmation email with optional discount info"""
     
     header = get_email_header(lang)
     footer = get_email_footer(lang)
+    
+    # Calculate subtotal (before discount and shipping)
+    subtotal = total - shipping_cost + discount_amount
     
     # Build items table
     items_html = ""
@@ -221,8 +226,9 @@ async def send_order_confirmation_email(
                     <table style="width: 100%;">
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Междинна сума:</td>
-                            <td style="text-align: right; color: #555;">{total - shipping_cost:.2f} лв.</td>
+                            <td style="text-align: right; color: #555;">{subtotal:.2f} лв.</td>
                         </tr>
+                        {"<tr><td style='padding: 5px 0; color: #16a34a;'>Отстъпка (" + discount_code + "):</td><td style='text-align: right; color: #16a34a;'>-" + f"{discount_amount:.2f}" + " лв.</td></tr>" if discount_code and discount_amount > 0 else ""}
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Доставка:</td>
                             <td style="text-align: right; color: #555;">{shipping_cost:.2f} лв.</td>
@@ -287,8 +293,9 @@ async def send_order_confirmation_email(
                     <table style="width: 100%;">
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Subtotal:</td>
-                            <td style="text-align: right; color: #555;">{total - shipping_cost:.2f} BGN</td>
+                            <td style="text-align: right; color: #555;">{subtotal:.2f} BGN</td>
                         </tr>
+                        {"<tr><td style='padding: 5px 0; color: #16a34a;'>Discount (" + discount_code + "):</td><td style='text-align: right; color: #16a34a;'>-" + f"{discount_amount:.2f}" + " BGN</td></tr>" if discount_code and discount_amount > 0 else ""}
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Shipping:</td>
                             <td style="text-align: right; color: #555;">{shipping_cost:.2f} BGN</td>
@@ -583,9 +590,17 @@ async def send_cod_order_confirmation(
     shipping_address: dict,
     tracking_number: str = None,
     tracking_url: str = None,
+    discount_code: str = None,
+    discount_amount: float = 0,
+    subtotal: float = None,
+    shipping_cost: float = 0,
     lang: str = "bg"
 ) -> dict:
-    """Send COD order confirmation email with optional tracking info"""
+    """Send COD order confirmation email with optional tracking info and discount"""
+    
+    # Calculate subtotal if not provided
+    if subtotal is None:
+        subtotal = total - shipping_cost + discount_amount
     
     # Build items HTML
     items_html = ""
@@ -707,8 +722,22 @@ async def send_cod_order_confirmation(
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
                     {items_html}
                     <tr>
-                        <td style="padding: 15px 0; font-weight: bold; color: #1a1a1a; font-size: 16px;">{total_label}</td>
-                        <td style="padding: 15px 0; text-align: right; font-weight: bold; color: #c9a86c; font-size: 20px;">€{total:.2f}</td>
+                        <td style="padding: 8px 0; color: #666; font-size: 14px;">{'Междинна сума' if lang == 'bg' else 'Subtotal'}</td>
+                        <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">€{subtotal:.2f}</td>
+                    </tr>
+                    {f'''<tr>
+                        <td style="padding: 8px 0; color: #16a34a; font-size: 14px;">
+                            {'Отстъпка' if lang == 'bg' else 'Discount'} ({discount_code})
+                        </td>
+                        <td style="padding: 8px 0; text-align: right; color: #16a34a; font-size: 14px;">-€{discount_amount:.2f}</td>
+                    </tr>''' if discount_code and discount_amount > 0 else ''}
+                    <tr>
+                        <td style="padding: 8px 0; color: #666; font-size: 14px;">{'Доставка' if lang == 'bg' else 'Shipping'}</td>
+                        <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">€{shipping_cost:.2f}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 15px 0; font-weight: bold; color: #1a1a1a; font-size: 16px; border-top: 2px solid #1a1a1a;">{total_label}</td>
+                        <td style="padding: 15px 0; text-align: right; font-weight: bold; color: #c9a86c; font-size: 20px; border-top: 2px solid #1a1a1a;">€{total:.2f}</td>
                     </tr>
                 </table>
                 

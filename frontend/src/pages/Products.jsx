@@ -7,6 +7,21 @@ import './Products.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Dubai/Arabic perfume brands - shown only on Dubai Perfumes page
+const DUBAI_BRANDS = [
+  'Lattafa',
+  'Afnan',
+  'Armaf',
+  'Rasasi',
+  'Swiss Arabian',
+  'Al Haramain',
+  'Ard Al Zaafaran',
+  'Ajmal',
+  'Maison Alhambra',
+  'Fragrance World',
+  'Paris Corner'
+];
+
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);

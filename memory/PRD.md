@@ -116,6 +116,7 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
   - Terms/Privacy checkbox on Checkout
   - Delete Account functionality (Right to be Forgotten)
   - DELETE /api/auth/delete-account endpoint
+  - Cookie Policy page (/cookies) with detailed cookie information
 
 ## Backlog
 - [ ] Dropshipping API integration (awaiting supplier API details)

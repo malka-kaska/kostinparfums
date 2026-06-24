@@ -218,7 +218,7 @@ const CookieBanner = () => {
           )}
         </div>
 
-        <a href="/privacy" className="cookie-privacy-link" target="_blank" rel="noopener noreferrer">
+        <a href="/cookies" className="cookie-privacy-link">
           {t.privacyLink} →
         </a>
       </div>

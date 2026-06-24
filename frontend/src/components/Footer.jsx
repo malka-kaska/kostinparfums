@@ -49,6 +49,7 @@ const Footer = () => {
               <li><Link to="/legal">{t('legalInfo')}</Link></li>
               <li><Link to="/privacy">{t('privacyPolicy')}</Link></li>
               <li><Link to="/terms">{t('termsOfService')}</Link></li>
+              <li><Link to="/cookies">{t('cookiePolicy')}</Link></li>
             </ul>
           </div>
           
@@ -70,6 +71,8 @@ const Footer = () => {
             <Link to="/privacy">{t('privacyPolicy')}</Link>
             <span className="separator">|</span>
             <Link to="/terms">{t('termsOfService')}</Link>
+            <span className="separator">|</span>
+            <Link to="/cookies">{t('cookiePolicy')}</Link>
           </div>
         </div>
       </div>

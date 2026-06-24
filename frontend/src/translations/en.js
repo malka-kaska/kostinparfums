@@ -129,6 +129,7 @@ export const en = {
   privacyPolicy: "Privacy Policy",
   and: "and",
   termsOfService: "Terms of Service",
+  cookiePolicy: "Cookie Policy",
   newsletterOptIn: "I want to receive news, offers and promotions via email",
   fillAllFields: "Please fill in all fields",
   agreeTermsError: "Please agree to the Privacy Policy and Terms of Service",

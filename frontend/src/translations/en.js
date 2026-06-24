@@ -143,6 +143,7 @@ export const en = {
   ordersTab: "Orders",
   collectionsTab: "Collections",
   homepageTab: "Homepage",
+  discountsTab: "Discounts",
   addressesTab: "Addresses",
   accountInfo: "Account Information",
   personalInfo: "Personal Information",

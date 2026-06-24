@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Package, Filter, Home } from 'lucide-react';
+import { ShoppingBag, Package, Filter, Home, Percent } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import ProductsManager from './components/ProductsManager';
 import OrdersManager from './components/OrdersManager';
 import CollectionsManager from './components/CollectionsManager';
 import HomepageManager from './components/HomepageManager';
+import DiscountCodesManager from './components/DiscountCodesManager';
 import '../Admin.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -18,6 +19,8 @@ const Admin = () => {
   const [collections, setCollections] = useState([]);
   const [collectionsLoading, setCollectionsLoading] = useState(false);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [discountCodesCount, setDiscountCodesCount] = useState(0);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -56,13 +59,26 @@ const Admin = () => {
 
   const fetchProductCount = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/products/admin/all?limit=1`, { credentials: 'include' });
+      const res = await fetch(`${API_URL}/api/products/admin/all?limit=200`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setTotalProducts(data.total);
+        setProducts(data.products || []);
       }
     } catch (err) {
       console.error('Failed to fetch product count:', err);
+    }
+  }, []);
+
+  const fetchDiscountCodesCount = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/discounts/admin/all`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setDiscountCodesCount(data.total || 0);
+      }
+    } catch (err) {
+      console.error('Failed to fetch discount codes count:', err);
     }
   }, []);
 
@@ -71,8 +87,9 @@ const Admin = () => {
       fetchOrders();
       fetchCollections();
       fetchProductCount();
+      fetchDiscountCodesCount();
     }
-  }, [user, fetchOrders, fetchCollections, fetchProductCount]);
+  }, [user, fetchOrders, fetchCollections, fetchProductCount, fetchDiscountCodesCount]);
 
   if (authLoading) return null;
 
@@ -118,6 +135,14 @@ const Admin = () => {
             <Home size={18} />
             <span>{t('homepageTab') || 'Homepage'}</span>
           </button>
+          <button
+            className={`admin-tab ${activeTab === 'discounts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('discounts')}
+            data-testid="admin-tab-discounts"
+          >
+            <Percent size={18} />
+            <span>{t('discountsTab') || 'Отстъпки'} ({discountCodesCount})</span>
+          </button>
         </div>
 
         {activeTab === 'products' && (
@@ -138,6 +163,10 @@ const Admin = () => {
 
         {activeTab === 'homepage' && (
           <HomepageManager />
+        )}
+
+        {activeTab === 'discounts' && (
+          <DiscountCodesManager products={products} collections={collections} />
         )}
       </div>
     </div>

@@ -143,6 +143,7 @@ export const bg = {
   ordersTab: "\u041f\u043e\u0440\u044a\u0447\u043a\u0438",
   collectionsTab: "Колекции",
   homepageTab: "Начална страница",
+  discountsTab: "Отстъпки",
   addressesTab: "\u0410\u0434\u0440\u0435\u0441\u0438",
   accountInfo: "\u0418\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f \u0437\u0430 \u0430\u043a\u0430\u0443\u043d\u0442\u0430",
   personalInfo: "\u041b\u0438\u0447\u043d\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",

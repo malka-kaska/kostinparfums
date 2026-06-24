@@ -121,8 +121,25 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 ## Backlog
 - [ ] Dropshipping API integration (awaiting supplier API details)
-- [ ] Refactor Admin.jsx into smaller components
+- [x] ~~Refactor Admin.jsx into smaller components~~ (DONE - June 2026)
 - [ ] Extract email HTML templates to separate files
+- [ ] Integrate discount codes in Checkout flow
+
+## Recently Added (June 2026)
+- [x] **Admin Panel Refactoring**
+  - Split Admin.jsx (1307 lines) into modular components
+  - ProductsManager.jsx, OrdersManager.jsx, CollectionsManager.jsx, HomepageManager.jsx, DiscountCodesManager.jsx
+  - Better maintainability and faster hot reload
+
+- [x] **Discount Codes System**
+  - Full CRUD for discount codes in Admin Panel
+  - Percentage or fixed amount discounts
+  - Scope: All products, specific product, category, collection, brand
+  - Single-use or multi-use with usage limits
+  - Per-user limits, min order amount, max discount cap
+  - Validity period (valid_from, valid_until)
+  - Auto-generate random codes
+  - API: /api/discounts/admin/*, /api/discounts/validate, /api/discounts/apply
 
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9

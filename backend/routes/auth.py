@@ -279,3 +279,79 @@ async def reset_password(request: Request, data: ResetPasswordConfirm):
     )
 
     return {"message": "Password reset successfully"}
+
+
+# Guest registration - create account after checkout
+from pydantic import BaseModel as PydanticBaseModel
+from typing import Optional as OptionalType
+
+class GuestRegisterRequest(PydanticBaseModel):
+    email: str
+    password: str
+    name: str
+    order_id: OptionalType[str] = None
+
+@router.post("/register-guest")
+async def register_guest(request: Request, data: GuestRegisterRequest):
+    """
+    Register a guest user after checkout.
+    Links the order to the new account.
+    """
+    db = request.app.state.db
+    
+    # Check if email already exists
+    existing = await db.users.find_one({"email": data.email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Този имейл вече е регистриран. Моля, влезте в акаунта си.")
+    
+    # Validate password
+    if len(data.password) < 8:
+        raise HTTPException(status_code=400, detail="Паролата трябва да е поне 8 символа")
+    
+    # Create user
+    hashed_password = hash_password(data.password)
+    
+    user_doc = {
+        "email": data.email.lower(),
+        "password_hash": hashed_password,
+        "name": data.name,
+        "role": "user",
+        "email_verified": True,  # Trust email since they just made an order with it
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "registered_from": "guest_checkout"
+    }
+    
+    result = await db.users.insert_one(user_doc)
+    user_id = str(result.inserted_id)
+    
+    logger.info(f"Guest user registered: {data.email}")
+    
+    # Link order to new user if order_id provided
+    if data.order_id:
+        try:
+            await db.orders.update_one(
+                {"_id": ObjectId(data.order_id)},
+                {
+                    "$set": {
+                        "user_id": user_id,
+                        "user_email": data.email.lower(),
+                        "user_name": data.name
+                    }
+                }
+            )
+            logger.info(f"Order {data.order_id} linked to new user {user_id}")
+        except Exception as e:
+            logger.error(f"Failed to link order to user: {e}")
+    
+    # Also link any other orders with this email
+    await db.orders.update_many(
+        {"user_email": data.email.lower(), "user_id": None},
+        {"$set": {"user_id": user_id, "user_name": data.name}}
+    )
+    
+    return {
+        "success": True,
+        "message": "Акаунтът е създаден успешно!",
+        "user_id": user_id
+    }
+

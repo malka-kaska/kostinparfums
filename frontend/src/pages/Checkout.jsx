@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CreditCard, Truck, ArrowLeft, Loader, CheckCircle } from 'lucide-react';
+import { CreditCard, Truck, ArrowLeft, Loader, CheckCircle, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import SpeedyShipping from '../components/SpeedyShipping';
@@ -8,6 +8,143 @@ import '../components/SpeedyShipping.css';
 import './Checkout.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Guest Account Creation Component
+const GuestAccountCreation = ({ email, name, orderId, language, t }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleCreateAccount = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (password.length < 8) {
+      setError(language === 'bg' ? 'Паролата трябва да е поне 8 символа' : 'Password must be at least 8 characters');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError(language === 'bg' ? 'Паролите не съвпадат' : 'Passwords do not match');
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register-guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          order_id: orderId
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(true);
+      } else {
+        setError(data.detail || (language === 'bg' ? 'Грешка при създаване на акаунт' : 'Failed to create account'));
+      }
+    } catch (err) {
+      setError(language === 'bg' ? 'Грешка при свързване със сървъра' : 'Connection error');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="guest-account-section success">
+        <CheckCircle size={24} />
+        <div>
+          <strong>{language === 'bg' ? 'Акаунтът е създаден!' : 'Account created!'}</strong>
+          <p>{language === 'bg' ? 'Вече можете да влезете и да проследявате поръчките си.' : 'You can now log in and track your orders.'}</p>
+          <Link to="/auth" className="btn-login-link">
+            {language === 'bg' ? 'Вход в акаунта' : 'Log in'} →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!showForm) {
+    return (
+      <div className="guest-account-section">
+        <User size={24} />
+        <div>
+          <strong>{language === 'bg' ? 'Създайте акаунт' : 'Create an account'}</strong>
+          <p>{language === 'bg' ? 'Запазете поръчката си и следете доставките лесно.' : 'Save your order and track deliveries easily.'}</p>
+        </div>
+        <button onClick={() => setShowForm(true)} className="btn-create-account">
+          {language === 'bg' ? 'Създай акаунт' : 'Create Account'}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="guest-account-section form-active">
+      <form onSubmit={handleCreateAccount} className="guest-account-form">
+        <h3>{language === 'bg' ? 'Създайте акаунт' : 'Create your account'}</h3>
+        <p className="form-subtitle">
+          {language === 'bg' ? `Email: ${email}` : `Email: ${email}`}
+        </p>
+
+        <div className="password-field">
+          <label>{language === 'bg' ? 'Парола' : 'Password'}</label>
+          <div className="password-input-wrapper">
+            <Lock size={18} />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={language === 'bg' ? 'Минимум 8 символа' : 'Minimum 8 characters'}
+              required
+            />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="toggle-password">
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="password-field">
+          <label>{language === 'bg' ? 'Потвърди парола' : 'Confirm Password'}</label>
+          <div className="password-input-wrapper">
+            <Lock size={18} />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder={language === 'bg' ? 'Повтори паролата' : 'Repeat password'}
+              required
+            />
+          </div>
+        </div>
+
+        {error && <p className="form-error-message">{error}</p>}
+
+        <div className="form-actions">
+          <button type="button" onClick={() => setShowForm(false)} className="btn-cancel">
+            {language === 'bg' ? 'Отказ' : 'Cancel'}
+          </button>
+          <button type="submit" disabled={isCreating} className="btn-submit">
+            {isCreating ? <Loader size={18} className="spinning" /> : null}
+            {language === 'bg' ? 'Създай' : 'Create'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -262,10 +399,33 @@ const Checkout = () => {
             <p className="success-message">
               {t('codSuccessMessage') || 'Благодарим за поръчката! Ще получите потвърждение по имейл. Плащането ще бъде извършено при доставка.'}
             </p>
+            
+            {/* Tracking info if available */}
+            {orderSuccess.tracking_number && (
+              <div className="success-tracking">
+                <p>{language === 'bg' ? 'Номер за проследяване:' : 'Tracking number:'} <strong>{orderSuccess.tracking_number}</strong></p>
+                <a href={orderSuccess.tracking_url} target="_blank" rel="noopener noreferrer" className="tracking-link">
+                  {language === 'bg' ? 'Проследи в Speedy' : 'Track on Speedy'} →
+                </a>
+              </div>
+            )}
+            
             <div className="success-total">
               <span>{t('totalToPay') || 'Сума за плащане при доставка'}:</span>
               <strong>€{orderSuccess.total.toFixed(2)}</strong>
             </div>
+            
+            {/* Create Account Section for Guests */}
+            {!user && contactForm.email && (
+              <GuestAccountCreation 
+                email={contactForm.email} 
+                name={contactForm.full_name}
+                orderId={orderSuccess.order_id}
+                language={language}
+                t={t}
+              />
+            )}
+            
             <div className="success-actions">
               <Link to="/products" className="btn-primary">
                 {t('continueShopping') || 'Продължи пазаруването'}

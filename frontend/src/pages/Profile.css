@@ -679,3 +679,199 @@ select.form-input {
     justify-content: center;
   }
 }
+
+/* GDPR Section Styles */
+.gdpr-section {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-light);
+}
+
+.gdpr-section .section-header-with-icon {
+  margin-bottom: 20px;
+}
+
+.gdpr-info-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.gdpr-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.gdpr-links {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.gdpr-links a {
+  font-size: 13px;
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.gdpr-links a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.btn-delete-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+
+.btn-delete-account:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.delete-confirm-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+}
+
+[data-theme="dark"] .delete-confirm-section {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.delete-warning {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  color: #dc2626;
+}
+
+.delete-warning strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.delete-warning p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .delete-warning p {
+  color: #fca5a5;
+}
+
+.delete-confirm-input {
+  margin-bottom: 16px;
+}
+
+.delete-confirm-input label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.delete-confirm-input input {
+  width: 100%;
+  max-width: 200px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.delete-confirm-input input:focus {
+  outline: none;
+  border-color: #dc2626;
+}
+
+.delete-error {
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-cancel-delete {
+  padding: 10px 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-cancel-delete:hover {
+  background: var(--hover-bg);
+}
+
+.btn-confirm-delete {
+  padding: 10px 20px;
+  background: #dc2626;
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-confirm-delete:hover {
+  background: #b91c1c;
+}
+
+.btn-confirm-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .gdpr-links {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .delete-confirm-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel-delete,
+  .btn-confirm-delete {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

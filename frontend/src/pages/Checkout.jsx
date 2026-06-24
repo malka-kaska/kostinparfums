@@ -173,6 +173,7 @@ const Checkout = () => {
     notes: '',
   });
   const [formErrors, setFormErrors] = useState({});
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
   const loadCart = useCallback(() => {
     const items = getCartItems();
@@ -205,6 +206,13 @@ const Checkout = () => {
     if (!contactForm.full_name.trim()) errors.full_name = t('requiredField') || 'Задължително поле';
     if (!contactForm.phone.trim()) errors.phone = t('requiredField') || 'Задължително поле';
     if (!user && !contactForm.email.trim()) errors.email = t('requiredField') || 'Задължително поле';
+    
+    // GDPR: Require terms agreement
+    if (!agreeTerms) {
+      errors.terms = language === 'bg' 
+        ? 'Моля, съгласете се с Общите условия и Политиката за поверителност'
+        : 'Please agree to the Terms of Service and Privacy Policy';
+    }
     
     // Validate Speedy selection
     if (!selectedCity) {
@@ -588,6 +596,36 @@ const Checkout = () => {
                   </div>
                 </label>
               </div>
+            </div>
+
+            {/* Terms and Privacy Agreement - GDPR Compliance */}
+            <div className="checkout-section terms-section">
+              <label className={`terms-checkbox-label ${formErrors.terms ? 'has-error' : ''}`} data-testid="terms-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => {
+                    setAgreeTerms(e.target.checked);
+                    if (formErrors.terms) {
+                      setFormErrors(prev => ({ ...prev, terms: '' }));
+                    }
+                  }}
+                  className="terms-checkbox"
+                  data-testid="checkout-terms-checkbox"
+                />
+                <span className="terms-text">
+                  {language === 'bg' ? (
+                    <>
+                      Съгласен/а съм с <a href="/terms" target="_blank" rel="noopener noreferrer">Общите условия</a> и <a href="/privacy" target="_blank" rel="noopener noreferrer">Политиката за поверителност</a> *
+                    </>
+                  ) : (
+                    <>
+                      I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> *
+                    </>
+                  )}
+                </span>
+              </label>
+              {formErrors.terms && <span className="form-error terms-error">{formErrors.terms}</span>}
             </div>
 
             {error && <div className="checkout-error">{error}</div>}

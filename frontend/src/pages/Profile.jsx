@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X } from 'lucide-react';
+import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X, AlertTriangle, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Profile.css';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Profile = () => {
   const { user, logout, loading } = useAuth();
@@ -14,8 +16,12 @@ const Profile = () => {
   const [newAddress, setNewAddress] = useState({
     label: '', street: '', city: '', postalCode: '', country: ''
   });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -41,7 +47,9 @@ const Profile = () => {
           const data = await res.json();
           setOrders(data.orders);
         }
-      } catch {}
+      } catch (err) {
+        // Silently handle order fetch errors
+      }
     };
     if (user) fetchOrders();
   }, [navigate, user, loading]);
@@ -49,6 +57,40 @@ const Profile = () => {
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmWord = language === 'bg' ? 'ИЗТРИЙ' : 'DELETE';
+    if (deleteConfirmText !== confirmWord) {
+      setDeleteError(language === 'bg' 
+        ? `Моля, напишете "${confirmWord}" за потвърждение`
+        : `Please type "${confirmWord}" to confirm`
+      );
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/delete-account`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        // Account deleted, redirect to home
+        await logout();
+        navigate('/');
+      } else {
+        const data = await response.json();
+        setDeleteError(data.detail || (language === 'bg' ? 'Грешка при изтриване' : 'Delete failed'));
+      }
+    } catch (err) {
+      setDeleteError(language === 'bg' ? 'Грешка при свързване със сървъра' : 'Connection error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleAddAddress = () => {
@@ -132,6 +174,102 @@ const Profile = () => {
                   <button className="action-button-logout" onClick={handleLogout}>
                     <LogOut size={16} /><span>{t('logout')}</span>
                   </button>
+                </div>
+
+                {/* GDPR Section - Privacy & Data */}
+                <div className="gdpr-section" data-testid="gdpr-section">
+                  <div className="section-header-with-icon">
+                    <Shield size={24} />
+                    <h2 className="heading-2">{language === 'bg' ? 'Поверителност и данни' : 'Privacy & Data'}</h2>
+                  </div>
+                  
+                  <div className="gdpr-info-card">
+                    <p className="gdpr-description">
+                      {language === 'bg' 
+                        ? 'Съгласно GDPR (Общ регламент за защита на данните), имате право да изискате изтриване на вашите лични данни от нашата система.'
+                        : 'Under GDPR (General Data Protection Regulation), you have the right to request deletion of your personal data from our system.'
+                      }
+                    </p>
+                    
+                    <div className="gdpr-links">
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                        {language === 'bg' ? 'Политика за поверителност' : 'Privacy Policy'} →
+                      </a>
+                      <a href="/terms" target="_blank" rel="noopener noreferrer">
+                        {language === 'bg' ? 'Условия за ползване' : 'Terms of Service'} →
+                      </a>
+                    </div>
+
+                    {!showDeleteConfirm ? (
+                      <button 
+                        className="btn-delete-account"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        data-testid="delete-account-btn"
+                      >
+                        <Trash2 size={16} />
+                        {language === 'bg' ? 'Изтрий акаунта ми' : 'Delete My Account'}
+                      </button>
+                    ) : (
+                      <div className="delete-confirm-section" data-testid="delete-confirm-section">
+                        <div className="delete-warning">
+                          <AlertTriangle size={20} />
+                          <div>
+                            <strong>{language === 'bg' ? 'Внимание!' : 'Warning!'}</strong>
+                            <p>
+                              {language === 'bg'
+                                ? 'Това действие е необратимо. Всички ваши данни, включително история на поръчките и запазени адреси, ще бъдат изтрити или анонимизирани.'
+                                : 'This action is irreversible. All your data, including order history and saved addresses, will be deleted or anonymized.'
+                              }
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="delete-confirm-input">
+                          <label>
+                            {language === 'bg' 
+                              ? 'За потвърждение, напишете "ИЗТРИЙ" по-долу:'
+                              : 'To confirm, type "DELETE" below:'
+                            }
+                          </label>
+                          <input
+                            type="text"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                            placeholder={language === 'bg' ? 'ИЗТРИЙ' : 'DELETE'}
+                            data-testid="delete-confirm-input"
+                          />
+                        </div>
+                        
+                        {deleteError && (
+                          <p className="delete-error">{deleteError}</p>
+                        )}
+                        
+                        <div className="delete-confirm-actions">
+                          <button 
+                            className="btn-cancel-delete"
+                            onClick={() => {
+                              setShowDeleteConfirm(false);
+                              setDeleteConfirmText('');
+                              setDeleteError('');
+                            }}
+                          >
+                            {language === 'bg' ? 'Отказ' : 'Cancel'}
+                          </button>
+                          <button 
+                            className="btn-confirm-delete"
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting}
+                            data-testid="confirm-delete-btn"
+                          >
+                            {isDeleting 
+                              ? (language === 'bg' ? 'Изтриване...' : 'Deleting...') 
+                              : (language === 'bg' ? 'Изтрий завинаги' : 'Delete Forever')
+                            }
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
             </div>

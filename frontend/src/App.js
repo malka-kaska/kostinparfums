@@ -25,6 +25,7 @@ import AboutUs from "./pages/AboutUs";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOrder from "./pages/VerifyOrder";
 import DubaiPerfumes from "./pages/DubaiPerfumes";
+import CookieBanner from "./components/CookieBanner";
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
           <Route path="/dubai-perfumes" element={<DubaiPerfumes />} />
         </Routes>
         <Footer />
+        <CookieBanner />
         </AuthProvider>
         </LanguageProvider>
         </ThemeProvider>

@@ -355,3 +355,71 @@ async def register_guest(request: Request, data: GuestRegisterRequest):
         "user_id": user_id
     }
 
+
+# GDPR: Right to be forgotten - Delete user account
+@router.delete("/delete-account")
+async def delete_account(request: Request, response: Response):
+    """
+    GDPR Article 17: Right to erasure (Right to be forgotten)
+    Permanently deletes the user's account and all associated personal data.
+    """
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Не сте влезли в системата")
+    
+    user_id = user["_id"]  # This is already a string from get_current_user
+    user_email = user.get("email", "")
+    
+    try:
+        # 1. Anonymize orders (keep for accounting purposes but remove personal data)
+        await db.orders.update_many(
+            {"user_id": user_id},
+            {
+                "$set": {
+                    "user_email": "deleted_user@anonymized.local",
+                    "user_name": "Изтрит потребител",
+                    "shipping_address.full_name": "Анонимизиран",
+                    "shipping_address.phone": "000000000",
+                    "shipping_address.email": "deleted@anonymized.local",
+                },
+                "$unset": {
+                    "user_id": ""
+                }
+            }
+        )
+        
+        # 2. Delete cart data
+        await db.carts.delete_many({"user_id": user_id})
+        
+        # 3. Delete login attempts
+        await db.login_attempts.delete_many({"identifier": {"$regex": user_email}})
+        
+        # 4. Delete password reset tokens
+        await db.password_reset_tokens.delete_many({"user_id": user_id})
+        
+        # 5. Delete the user account (convert string back to ObjectId)
+        result = await db.users.delete_one({"_id": ObjectId(user_id)})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=500, detail="Грешка при изтриване на акаунта")
+        
+        # 6. Clear auth cookies
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
+        
+        logger.info(f"User account deleted (GDPR request): {user_email}")
+        
+        return {
+            "success": True,
+            "message": "Акаунтът и всички свързани данни бяха успешно изтрити."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting user account: {e}")
+        raise HTTPException(status_code=500, detail="Грешка при изтриване на акаунта. Моля, опитайте отново.")
+        raise HTTPException(status_code=500, detail="Грешка при изтриване на акаунта. Моля, опитайте отново.")
+

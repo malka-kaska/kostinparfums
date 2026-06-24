@@ -751,3 +751,63 @@
     width: 100%;
   }
 }
+
+/* Terms Checkbox Section - GDPR */
+.terms-section {
+  padding-top: 0;
+  margin-top: -8px;
+}
+
+.terms-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.terms-checkbox-label:hover {
+  border-color: var(--text-secondary);
+}
+
+.terms-checkbox-label.has-error {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.03);
+}
+
+.terms-checkbox {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+.terms-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.terms-text a {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.terms-text a:hover {
+  text-decoration: underline;
+}
+
+.terms-error {
+  display: block;
+  margin-top: 8px;
+  color: #dc2626;
+  font-size: 13px;
+}
+

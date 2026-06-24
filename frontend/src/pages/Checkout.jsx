@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CreditCard, Truck, ArrowLeft, Loader, CheckCircle, User, Lock, Eye, EyeOff, Tag, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { formatDualPrice } from '../utils/currency';
 import SpeedyShipping from '../components/SpeedyShipping';
 import '../components/SpeedyShipping.css';
 import './Checkout.css';
@@ -499,7 +500,7 @@ const Checkout = () => {
             
             <div className="success-total">
               <span>{t('totalToPay') || 'Сума за плащане при доставка'}:</span>
-              <strong>€{orderSuccess.total.toFixed(2)}</strong>
+              <strong>{formatDualPrice(orderSuccess.total)}</strong>
             </div>
             
             {/* Create Account Section for Guests */}
@@ -724,7 +725,7 @@ const Checkout = () => {
                     </div>
                     <div className="order-item-details">
                       <span className="order-item-name">{item.name}</span>
-                      <span className="order-item-price">€{(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="order-item-price">{formatDualPrice(item.price * item.quantity)}</span>
                     </div>
                   </div>
                 ))}
@@ -735,7 +736,7 @@ const Checkout = () => {
                   <span>{t('subtotal') || 'Междинна сума'}</span>
                   <div className="checkout-price">
                     <span className="price-eur">€{total.toFixed(2)}</span>
-                    <span className="price-bgn">{(total * 1.95583).toFixed(2)} лв.</span>
+                    <span className="price-bgn">{formatDualPrice(total).split(' / ')[1]}</span>
                   </div>
                 </div>
                 
@@ -770,7 +771,7 @@ const Checkout = () => {
                       <div className="discount-applied-info">
                         <Tag size={16} />
                         <span className="discount-code-badge">{appliedDiscount.code}</span>
-                        <span className="discount-amount">-€{appliedDiscount.discount_amount.toFixed(2)}</span>
+                        <span className="discount-amount">-{formatDualPrice(appliedDiscount.discount_amount)}</span>
                       </div>
                       <button
                         type="button"
@@ -788,19 +789,19 @@ const Checkout = () => {
                 {appliedDiscount && (
                   <div className="order-total-row discount-row">
                     <span>{language === 'bg' ? 'Отстъпка' : 'Discount'}</span>
-                    <span className="discount-value">-€{appliedDiscount.discount_amount.toFixed(2)} / -{(appliedDiscount.discount_amount * 1.95583).toFixed(2)} лв.</span>
+                    <span className="discount-value">-{formatDualPrice(appliedDiscount.discount_amount)}</span>
                   </div>
                 )}
                 
                 <div className="order-total-row">
                   <span>{t('shipping') || 'Доставка'} ({deliveryType === 'OFFICE' ? (language === 'bg' ? 'офис' : 'office') : (language === 'bg' ? 'адрес' : 'address')})</span>
-                  <span>{shippingPrice ? `€${shippingPrice.eur.toFixed(2)} / ${(shippingPrice.eur * 1.95583).toFixed(2)} лв.` : '---'}</span>
+                  <span>{shippingPrice ? formatDualPrice(shippingPrice.eur) : '---'}</span>
                 </div>
                 <div className="order-total-row total">
                   <span>{t('total') || 'Общо'}</span>
                   <div className="checkout-price total-price">
                     <span className="price-eur">€{finalTotal.toFixed(2)}</span>
-                    <span className="price-bgn">{(finalTotal * 1.95583).toFixed(2)} лв.</span>
+                    <span className="price-bgn">{formatDualPrice(finalTotal).split(' / ')[1]}</span>
                   </div>
                 </div>
               </div>

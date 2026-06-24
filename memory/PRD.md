@@ -145,6 +145,18 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
   - Usage tracking per order
   - **Email Integration**: Discount shown in confirmation emails (subtotal, discount line, total)
 
+- [x] **Dual Currency Display (EUR/BGN)** (June 2026)
+  - Fixed exchange rate: 1 EUR = 1.95583 BGN (Bulgaria Euro adoption)
+  - New utility module: `/app/frontend/src/utils/currency.js`
+  - New component: `/app/frontend/src/components/PriceDisplay.jsx`
+  - All product prices show both EUR and BGN (e.g., €129.00 / 252.30 лв.)
+  - Cart page: dual currency display
+  - Checkout page: dual currency for items, subtotal, shipping, discounts, total
+  - Admin Products table: dual price column
+  - Admin Orders: dual prices for totals and items
+  - Email templates: `format_dual_price()` function in email_service.py
+  - Order confirmation, COD, verification emails all show dual currency
+
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9
 - Demo User: test_verify@example.com / test12345

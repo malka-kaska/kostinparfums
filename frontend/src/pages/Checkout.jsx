@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CreditCard, Truck, ArrowLeft, Loader, CheckCircle, User, Lock, Eye, EyeOff } from 'lucide-react';
+import { CreditCard, Truck, ArrowLeft, Loader, CheckCircle, User, Lock, Eye, EyeOff, Tag, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import SpeedyShipping from '../components/SpeedyShipping';
@@ -175,6 +175,12 @@ const Checkout = () => {
   const [formErrors, setFormErrors] = useState({});
   const [agreeTerms, setAgreeTerms] = useState(false);
 
+  // Discount code state
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountError, setDiscountError] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
+
   const loadCart = useCallback(() => {
     const items = getCartItems();
     setCart(items);
@@ -232,6 +238,73 @@ const Checkout = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // Discount code handlers
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return;
+    
+    setDiscountLoading(true);
+    setDiscountError('');
+
+    try {
+      // Prepare cart items for validation
+      const items = cart.map(item => ({
+        product_id: item.id,
+        category: item.category,
+        brand: item.brand,
+        collections: item.collections || [],
+        price: item.price,
+        quantity: item.quantity,
+      }));
+
+      const response = await fetch(`${API_URL}/api/discounts/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          code: discountCode.trim().toUpperCase(),
+          cart_total: total,
+          items,
+          user_id: user?.id || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.valid) {
+        setAppliedDiscount({
+          code: data.code,
+          discount_type: data.discount_type,
+          discount_value: data.discount_value,
+          discount_amount: data.discount_amount,
+          message: data.message,
+        });
+        setDiscountCode('');
+      } else {
+        setDiscountError(data.detail || (language === 'bg' ? 'Невалиден код' : 'Invalid code'));
+      }
+    } catch (err) {
+      setDiscountError(language === 'bg' ? 'Грешка при проверка на кода' : 'Error validating code');
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountError('');
+  };
+
+  // Calculate final total with discount
+  const getDiscountedTotal = () => {
+    if (!appliedDiscount) return total;
+    return Math.max(0, total - appliedDiscount.discount_amount);
+  };
+
+  const getFinalTotal = () => {
+    const discountedSubtotal = getDiscountedTotal();
+    return discountedSubtotal + (shippingPrice || 0);
+  };
+
   const handleCardCheckout = async () => {
     // Validate form first
     if (!validateForm()) return;
@@ -271,6 +344,8 @@ const Checkout = () => {
         email: contactForm.email,
         delivery_type: deliveryType,
         shipping_cost: shippingPrice?.eur || 0,
+        discount_code: appliedDiscount?.code || null,
+        discount_amount: appliedDiscount?.discount_amount || 0,
       }));
 
       const response = await fetch(`${API_URL}/api/payments/checkout`, {
@@ -284,6 +359,8 @@ const Checkout = () => {
           customer_email: contactForm.email,
           shipping_cost: shippingPrice?.eur || 0,
           shipping_method: deliveryType === 'OFFICE' ? 'speedy_office' : 'address',
+          discount_code: appliedDiscount?.code || null,
+          discount_amount: appliedDiscount?.discount_amount || 0,
         })
       });
 
@@ -346,6 +423,8 @@ const Checkout = () => {
           shipping_method: deliveryType === 'OFFICE' ? 'speedy_office' : 'address',
           shipping_cost: shippingPrice?.eur || 0,
           email: contactForm.email,
+          discount_code: appliedDiscount?.code || null,
+          discount_amount: appliedDiscount?.discount_amount || 0,
           speedy_data: {
             city_id: selectedCity?.id,
             city_name: selectedCity?.name,
@@ -391,7 +470,7 @@ const Checkout = () => {
     }
   };
 
-  const finalTotal = total + (shippingPrice?.eur || 0);
+  const finalTotal = getFinalTotal();
 
   // Order success view
   if (orderSuccess) {
@@ -656,6 +735,60 @@ const Checkout = () => {
                   <span>{t('subtotal') || 'Междинна сума'}</span>
                   <span>€{total.toFixed(2)}</span>
                 </div>
+                
+                {/* Discount Code Section */}
+                <div className="discount-code-section">
+                  {!appliedDiscount ? (
+                    <div className="discount-input-group">
+                      <div className="discount-input-wrapper">
+                        <Tag size={16} className="discount-icon" />
+                        <input
+                          type="text"
+                          value={discountCode}
+                          onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                          placeholder={language === 'bg' ? 'Код за отстъпка' : 'Discount code'}
+                          className="discount-input"
+                          onKeyDown={(e) => e.key === 'Enter' && handleApplyDiscount()}
+                          data-testid="discount-code-input"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="discount-apply-btn"
+                        onClick={handleApplyDiscount}
+                        disabled={discountLoading || !discountCode.trim()}
+                        data-testid="apply-discount-btn"
+                      >
+                        {discountLoading ? <Loader size={14} className="spinning" /> : (language === 'bg' ? 'Приложи' : 'Apply')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="discount-applied" data-testid="applied-discount">
+                      <div className="discount-applied-info">
+                        <Tag size={16} />
+                        <span className="discount-code-badge">{appliedDiscount.code}</span>
+                        <span className="discount-amount">-€{appliedDiscount.discount_amount.toFixed(2)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="discount-remove-btn"
+                        onClick={handleRemoveDiscount}
+                        title={language === 'bg' ? 'Премахни' : 'Remove'}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+                  {discountError && <span className="discount-error">{discountError}</span>}
+                </div>
+
+                {appliedDiscount && (
+                  <div className="order-total-row discount-row">
+                    <span>{language === 'bg' ? 'Отстъпка' : 'Discount'}</span>
+                    <span className="discount-value">-€{appliedDiscount.discount_amount.toFixed(2)}</span>
+                  </div>
+                )}
+                
                 <div className="order-total-row">
                   <span>{t('shipping') || 'Доставка'} ({deliveryType === 'OFFICE' ? (language === 'bg' ? 'офис' : 'office') : (language === 'bg' ? 'адрес' : 'address')})</span>
                   <span>{shippingPrice ? `€${shippingPrice.eur.toFixed(2)}` : '---'}</span>

@@ -130,6 +130,8 @@ class CODOrderRequest(BaseModel):
     shipping_cost: Optional[float] = 0.0
     email: Optional[str] = None  # For guest checkout
     speedy_data: Optional[SpeedyData] = None  # Speedy integration data
+    discount_code: Optional[str] = None  # Discount code applied
+    discount_amount: Optional[float] = 0.0  # Discount amount in EUR
 
 
 # Collection schemas

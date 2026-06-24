@@ -170,8 +170,14 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     shipping_cost = order_data.shipping_cost if order_data.shipping_cost else 0.0
     shipping_method = order_data.shipping_method if order_data.shipping_method else "speedy_office"
     
-    # Final total includes shipping
-    final_total = total_amount + shipping_cost
+    # Get discount info
+    discount_code = order_data.discount_code
+    discount_amount = order_data.discount_amount if order_data.discount_amount else 0.0
+    
+    # Final total includes shipping minus discount
+    final_total = total_amount + shipping_cost - discount_amount
+    if final_total < 0:
+        final_total = 0
     
     # Create order document
     order_doc = {
@@ -183,6 +189,8 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         "subtotal": total_amount,
         "shipping_cost": shipping_cost,
         "shipping_method": shipping_method,
+        "discount_code": discount_code,
+        "discount_amount": discount_amount,
         "total": final_total,
         "payment_method": "cod",
         "payment_status": "pending",
@@ -279,9 +287,26 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         "order_number": order_number,
         "subtotal": total_amount,
         "shipping_cost": shipping_cost,
+        "discount_code": discount_code,
+        "discount_amount": discount_amount,
         "total": final_total,
         "message": "Поръчката е приета успешно! Ще получите потвърждение по имейл."
     }
+    
+    # Apply discount code usage
+    if discount_code:
+        try:
+            await db.discount_codes.update_one(
+                {"code": discount_code.upper()},
+                {
+                    "$inc": {"times_used": 1},
+                    "$push": {"used_by": user_id} if user_id else {},
+                    "$set": {"last_used_at": datetime.now(timezone.utc)}
+                }
+            )
+            logger.info(f"Discount code {discount_code} applied to order {order_number}")
+        except Exception as e:
+            logger.error(f"Failed to update discount code usage: {e}")
     
     if tracking_number:
         response["tracking_number"] = tracking_number

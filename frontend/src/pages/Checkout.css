@@ -811,3 +811,149 @@
   font-size: 13px;
 }
 
+
+/* ===== DISCOUNT CODE SECTION ===== */
+.discount-code-section {
+  padding: 16px 0;
+  border-top: 1px dashed var(--border-color);
+  border-bottom: 1px dashed var(--border-color);
+  margin: 12px 0;
+}
+
+.discount-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.discount-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.discount-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-light);
+}
+
+.discount-input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: border-color 0.2s;
+}
+
+.discount-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.discount-input::placeholder {
+  text-transform: none;
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
+.discount-apply-btn {
+  padding: 10px 16px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.discount-apply-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.discount-apply-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.discount-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+}
+
+.discount-applied-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #10b981;
+}
+
+.discount-code-badge {
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.discount-amount {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.discount-remove-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.discount-remove-btn:hover {
+  color: #ef4444;
+}
+
+.discount-error {
+  display: block;
+  margin-top: 8px;
+  color: #ef4444;
+  font-size: 12px;
+}
+
+.order-total-row.discount-row {
+  color: #10b981;
+}
+
+.discount-value {
+  font-weight: 600;
+  color: #10b981;
+}
+
+@media (max-width: 480px) {
+  .discount-input-group {
+    flex-direction: column;
+  }
+  
+  .discount-apply-btn {
+    width: 100%;
+  }
+}

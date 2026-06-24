@@ -141,6 +141,8 @@ export const en = {
   profileSubtitle: "Manage your account information, view order history, and manage shipping addresses",
   profileTab: "Profile",
   ordersTab: "Orders",
+  collectionsTab: "Collections",
+  homepageTab: "Homepage",
   addressesTab: "Addresses",
   accountInfo: "Account Information",
   personalInfo: "Personal Information",

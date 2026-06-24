@@ -13,7 +13,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Auth from "./pages/Auth";
-import Admin from "./pages/Admin";
+import Admin from "./pages/admin/Admin";
 import FAQ from "./pages/FAQ";
 import ShippingReturns from "./pages/ShippingReturns";
 import Profile from "./pages/Profile";

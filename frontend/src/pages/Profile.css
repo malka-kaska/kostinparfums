@@ -590,3 +590,92 @@ select.form-input {
     justify-content: center;
   }
 }
+
+/* Order Tracking Section */
+.order-tracking {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(201, 168, 108, 0.1) 0%, rgba(201, 168, 108, 0.05) 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(201, 168, 108, 0.3);
+}
+
+.tracking-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.tracking-info svg {
+  color: var(--accent-color, #c9a86c);
+}
+
+.tracking-label {
+  font-weight: 500;
+}
+
+.tracking-number {
+  font-family: 'Monaco', 'Consolas', monospace;
+  background: var(--bg-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.btn-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--accent-color, #c9a86c);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-track:hover {
+  background: #b8975b;
+  transform: translateY(-1px);
+}
+
+/* Order status colors */
+.order-status.status-processing {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.order-status.status-shipped {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.order-status.status-delivered {
+  background: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+}
+
+@media (max-width: 600px) {
+  .order-tracking {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .tracking-info {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .btn-track {
+    justify-content: center;
+  }
+}

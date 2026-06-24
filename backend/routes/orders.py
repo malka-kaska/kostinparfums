@@ -227,6 +227,35 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         except Exception:
             pass
     
+    # Auto-create Speedy shipment if speedy_data is available
+    tracking_number = None
+    tracking_url = None
+    if order_data.speedy_data and order_data.speedy_data.city_id:
+        try:
+            from routes.speedy import create_shipment_for_order
+            shipment_result = await create_shipment_for_order(order_doc)
+            
+            if shipment_result and shipment_result.get("success"):
+                tracking_number = shipment_result.get("tracking_number")
+                tracking_url = shipment_result.get("tracking_url")
+                
+                # Update order with tracking info
+                await db.orders.update_one(
+                    {"_id": order_doc["_id"]},
+                    {
+                        "$set": {
+                            "tracking_number": tracking_number,
+                            "tracking_url": tracking_url,
+                            "shipment_id": shipment_result.get("shipment_id"),
+                            "shipment_created_at": datetime.now(timezone.utc).isoformat(),
+                            "status": "processing"  # Update status to processing
+                        }
+                    }
+                )
+                logger.info(f"Auto-created Speedy shipment for COD order {order_number}: {tracking_number}")
+        except Exception as e:
+            logger.error(f"Failed to auto-create Speedy shipment for order {order_number}: {e}")
+    
     # Send confirmation email
     if user_email:
         try:
@@ -235,14 +264,16 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
                 to_email=user_email,
                 order_number=order_number,
                 items=items_for_db,
-                total=total_amount,
-                shipping_address=order_doc["shipping_address"]
+                total=final_total,
+                shipping_address=order_doc["shipping_address"],
+                tracking_number=tracking_number,
+                tracking_url=tracking_url
             )
             logger.info(f"COD order confirmation email sent to {user_email}")
         except Exception as e:
             logger.error(f"Failed to send COD confirmation email: {e}")
     
-    return {
+    response = {
         "success": True,
         "order_id": str(order_doc["_id"]),
         "order_number": order_number,
@@ -251,4 +282,10 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         "total": final_total,
         "message": "Поръчката е приета успешно! Ще получите потвърждение по имейл."
     }
+    
+    if tracking_number:
+        response["tracking_number"] = tracking_number
+        response["tracking_url"] = tracking_url
+    
+    return response
 

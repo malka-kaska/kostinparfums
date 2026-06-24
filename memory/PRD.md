@@ -30,7 +30,10 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] **Dynamic price calculation** - real-time shipping cost from Speedy
 - [x] **Delivery types**: Office pickup (€3.32) / Address delivery (€4.46)
 - [x] **speedy_data** stored in orders (city_id, office_id, delivery_type)
-- [ ] Auto shipment creation (товарителница) - next phase
+- [x] **Auto shipment creation** - товарителница създадена автоматично при COD поръчка
+- [x] **COD with receipt** - касов бон при наложен платеж
+- [x] **Tracking in Profile** - номер и линк за проследяване в "Моите поръчки"
+- [x] **Manual shipment** - Admin може ръчно да създаде товарителница за поръчка
 
 ### Product Management
 - [x] Dynamic product catalog with filtering (gender, brand, collection)
@@ -100,6 +103,9 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] **Speedy Bulgaria API Integration** - city search, office selection, price calculation
 - [x] **SpeedyShipping.jsx component** - reusable shipping UI
 - [x] **speedy_data in orders** - city_id, office_id, delivery_type stored
+- [x] **Auto shipment creation** - товарителница автоматично при COD поръчка
+- [x] **COD with receipt (касов бон)** - важно за онлайн магазин!
+- [x] **Tracking in Profile** - клиентът вижда tracking номер и линк
 - [x] Two-step checkout with real-time pricing
 - [x] Cash on Delivery payment option
 - [x] Stripe Live keys updated (KOSTIN company)
@@ -107,8 +113,6 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] Smart autocomplete search
 
 ## Backlog
-- [ ] **Auto shipment creation** - create Speedy waybill on order confirmation
-- [ ] **Tracking integration** - show shipment status in user profile
 - [ ] Dropshipping API integration (awaiting supplier API details)
 - [ ] Refactor Admin.jsx into smaller components
 - [ ] Extract email HTML templates to separate files

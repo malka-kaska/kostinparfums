@@ -151,6 +151,8 @@ export const en = {
   memberSince: "Member Since",
   orderHistory: "Order History",
   noOrders: "No orders yet. Start shopping to see your order history here.",
+  trackingNumber: "Tracking Number",
+  trackShipment: "Track Shipment",
   savedAddresses: "Saved Addresses",
   myAddresses: "My Addresses",
   addAddress: "Add Address",

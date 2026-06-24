@@ -581,9 +581,11 @@ async def send_cod_order_confirmation(
     items: list,
     total: float,
     shipping_address: dict,
+    tracking_number: str = None,
+    tracking_url: str = None,
     lang: str = "bg"
 ) -> dict:
-    """Send COD order confirmation email"""
+    """Send COD order confirmation email with optional tracking info"""
     
     # Build items HTML
     items_html = ""
@@ -614,6 +616,34 @@ async def send_cod_order_confirmation(
     """
     if addr.get('notes'):
         address_html += f"<br><em>Бележки: {addr.get('notes')}</em>"
+    
+    # Tracking section HTML
+    tracking_html = ""
+    if tracking_number:
+        if lang == "bg":
+            tracking_html = f"""
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #4caf50;">
+                    <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 14px;">
+                        <strong>📦 Пратката е създадена!</strong>
+                    </p>
+                    <p style="margin: 0; color: #2e7d32; font-size: 14px;">
+                        Номер за проследяване: <strong>{tracking_number}</strong><br>
+                        <a href="{tracking_url}" style="color: #1b5e20; text-decoration: underline;">Проследи пратката в Speedy</a>
+                    </p>
+                </div>
+            """
+        else:
+            tracking_html = f"""
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #4caf50;">
+                    <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 14px;">
+                        <strong>📦 Shipment Created!</strong>
+                    </p>
+                    <p style="margin: 0; color: #2e7d32; font-size: 14px;">
+                        Tracking Number: <strong>{tracking_number}</strong><br>
+                        <a href="{tracking_url}" style="color: #1b5e20; text-decoration: underline;">Track on Speedy</a>
+                    </p>
+                </div>
+            """
     
     if lang == "bg":
         subject = f"Поръчка {order_number} - Наложен платеж | KOSTIN"
@@ -655,6 +685,8 @@ async def send_cod_order_confirmation(
                     <p style="margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">{order_label}</p>
                     <p style="margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 2px;">{order_number}</p>
                 </div>
+                
+                {tracking_html}
                 
                 <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #c9a86c;">
                     <p style="margin: 0; color: #856404; font-size: 14px;">

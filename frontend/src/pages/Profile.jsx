@@ -170,6 +170,26 @@ const Profile = () => {
                             </div>
                           ))}
                         </div>
+                        
+                        {/* Tracking Information */}
+                        {order.tracking_number && (
+                          <div className="order-tracking">
+                            <div className="tracking-info">
+                              <Package size={16} />
+                              <span className="tracking-label">{t('trackingNumber') || 'Проследяване'}:</span>
+                              <span className="tracking-number">{order.tracking_number}</span>
+                            </div>
+                            <a 
+                              href={order.tracking_url || `https://www.speedy.bg/bg/track-shipment?shipmentNumber=${order.tracking_number}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-track"
+                            >
+                              {t('trackShipment') || 'Проследи пратката'}
+                            </a>
+                          </div>
+                        )}
+                        
                         <div className="order-footer">
                           <span className="order-total-label">{t('total')}</span>
                           <span className="order-total">&euro;{(order.total || 0).toFixed(2)}</span>

@@ -468,6 +468,15 @@ const Checkout = () => {
                 </div>
               </div>
               
+              {/* Free Return Info */}
+              <div className="free-return-info">
+                <span className="return-icon">↩️</span>
+                <div className="return-text">
+                  <strong>{t('freeReturn') || 'Безплатно връщане до 14 дни'}</strong>
+                  <span>{t('freeReturnDesc') || 'При неразопакован продукт'}</span>
+                </div>
+              </div>
+              
               <button
                 className="btn-primary checkout-submit-btn"
                 onClick={handleCheckout}

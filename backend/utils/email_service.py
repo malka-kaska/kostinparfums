@@ -695,6 +695,14 @@ async def send_cod_order_confirmation(
                     </p>
                 </div>
                 
+                <!-- Free Return Policy -->
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #4caf50;">
+                    <p style="margin: 0; color: #2e7d32; font-size: 14px;">
+                        <strong>↩️ Безплатно връщане до 14 дни</strong><br>
+                        При неразопакован продукт можете да го върнете безплатно. Ваучерът за връщане е включен в пратката.
+                    </p>
+                </div>
+                
                 <h3 style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #c9a86c;">{items_label}</h3>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
                     {items_html}

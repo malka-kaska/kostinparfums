@@ -221,7 +221,7 @@ const SpeedyShipping = ({
             <Package size={20} />
             <div className="delivery-type-info">
               <span className="delivery-type-title">
-                {language === 'bg' ? 'До офис на Спиди' : 'Speedy Office'}
+                {language === 'bg' ? 'До офис на Спиди' : 'To Speedy Office'}
               </span>
               <span className="delivery-type-desc">
                 {language === 'bg' ? 'Вземете от офис' : 'Pick up from office'}

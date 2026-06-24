@@ -44,48 +44,8 @@ const Cart = () => {
     }
   };
 
-  const handleCheckout = async () => {
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const API_URL = process.env.REACT_APP_BACKEND_URL;
-      const originUrl = window.location.origin;
-
-      const items = cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity
-      }));
-
-      const response = await fetch(`${API_URL}/api/payments/checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ origin_url: originUrl, items })
-      });
-
-      if (!response.ok) {
-        let detail;
-        try {
-          const errorData = await response.clone().json();
-          detail = errorData.detail;
-        } catch {}
-        throw new Error(detail || 'Failed to create checkout session');
-      }
-
-      const data = await response.clone().json();
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (err) {
-      console.error('Checkout error:', err);
-      setError(err.message || 'Failed to initiate checkout. Please try again.');
-      setIsLoading(false);
-    }
+  const handleCheckout = () => {
+    navigate('/checkout');
   };
 
   if (cart.length === 0) {

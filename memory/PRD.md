@@ -6,81 +6,73 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 ## Core Features (Completed)
 
 ### Authentication & Email System
-- [x] JWT-based authentication with secure password hashing (bcrypt)
+- [x] JWT-based authentication with secure password hashing
 - [x] Email verification on registration (Resend API)
 - [x] Order confirmation emails (Resend API)
+- [x] COD order confirmation emails
 - [x] Admin panel access control
 
+### Payment Methods
+- [x] **Card Payment via Stripe** (Live keys configured)
+- [x] **Cash on Delivery (COD)** - NEW
+  - Full delivery address form (Name, Phone, Address, City, Postal Code, Notes)
+  - Email field for guest checkout
+  - Order confirmation email
+  - No minimum order amount
+  - No additional fees
+
 ### Product Management
-- [x] Dynamic product catalog with filtering (gender, brand, **collection**)
-- [x] **Collections/Pages system** - assign products to multiple pages/campaigns
+- [x] Dynamic product catalog with filtering (gender, brand, collection)
+- [x] Collections system - assign products to pages/campaigns
 - [x] Sorting options: popularity, newest, name, price
-- [x] Product name parsing (Brand + Main Name | Variant)
 - [x] Cloudinary image uploads via Admin Panel
 - [x] Drag-and-drop product reordering (Admin)
 - [x] Product visibility toggle (Admin)
 
-### **Collections System (NEW)**
-- [x] System collections: "Всички парфюми" (all_products), "Дубайски аромати" (dubai)
-- [x] Custom collections for campaigns (create/edit/delete from Admin)
-- [x] Multi-select: products can belong to multiple collections
-- [x] Auto-migration: Dubai brands auto-assigned to "dubai" collection
-- [x] Default behavior: products without collection go to "all_products"
-- [x] Collection management tab in Admin panel
-
-### Smart Autocomplete Search
-- [x] Two-level search: Brand suggestions → Product suggestions
-- [x] Brand alias support (YSL, JPG, Paco, etc.)
-- [x] Collection-aware navigation (Dubai brands → Dubai page)
-- [x] Max 4-5 results per section
-- [x] Mobile-responsive dropdown
+### Checkout Flow
+- [x] Dedicated `/checkout` page
+- [x] Payment method selection (Card or COD)
+- [x] Order summary sidebar
+- [x] Free shipping over €100
+- [x] Form validation
+- [x] Success confirmation page
 
 ### Shopping Experience
 - [x] Shopping cart with quantity management
-- [x] Stripe checkout integration
-- [x] Best Sellers section (popularity-based)
-- [x] Recently Viewed section (localStorage, 7-day expiry)
-- [x] Rotating hero carousel
+- [x] Best Sellers section
+- [x] Recently Viewed section
+- [x] Smart autocomplete search
 - [x] Dark/Light mode toggle
 - [x] Bilingual support (BG/EN)
-
-### Special Pages
-- [x] Dubai Fragrances - filtered by "dubai" collection
-- [x] All Fragrances - filtered by "all_products" collection
-- [x] Legal pages (About Us, Terms, Privacy Policy, Legal Info)
-- [x] Responsive design for mobile/tablet/desktop
 
 ## Technical Stack
 - **Frontend**: React 18, React Router, Lucide Icons
 - **Backend**: FastAPI, Motor (MongoDB Async)
 - **Database**: MongoDB
 - **Email**: Resend API (via Emergent Integrations)
-- **Payments**: Stripe
+- **Payments**: Stripe (Live mode)
 - **Image Hosting**: Cloudinary
 - **Auth**: JWT tokens, bcrypt hashing
 
 ## API Endpoints
-- `GET /api/collections` - List all active collections
-- `GET /api/collections/all` - List all collections (Admin)
-- `POST /api/collections` - Create collection (Admin)
-- `PUT /api/collections/{id}` - Update collection (Admin)
-- `DELETE /api/collections/{id}` - Delete collection (Admin)
-- `GET /api/products?collection=slug` - Filter products by collection
-- `PATCH /api/products/{id}/collections` - Update product collections (Admin)
+- `POST /api/payments/checkout` - Create Stripe checkout session
+- `POST /api/orders/cod` - Create Cash on Delivery order
+- `GET /api/collections` - List collections
+- `GET /api/products?collection=slug` - Filter by collection
 
 ## Database Schema
-- `products`: name, brand, price, ..., **collections** (array of slugs)
-- `collections`: name, name_en, slug, description, is_system, is_active
-- `users`: email, password_hash, is_admin, email_verified
-- `orders`: user_id, items, total, status, order_token
+- `orders`: order_number, items, total, payment_method (card/cod), shipping_address, status
+- `products`: name, brand, price, collections, visibility, popularity_score
+- `collections`: name, slug, is_system, is_active
 
 ## Recently Implemented (December 2025)
-- [x] **Collections system** - manage which pages products appear on
-- [x] Admin UI for creating/managing collections
-- [x] Product multi-select for collections in Admin
-- [x] Auto-migration for existing Dubai brand products
-- [x] Collection-based filtering in Products.jsx and DubaiPerfumes.jsx
-- [x] Smart Search collection-aware navigation
+- [x] **Cash on Delivery payment option**
+- [x] **Checkout page with payment method selection**
+- [x] **Delivery address form for COD**
+- [x] **COD order confirmation emails**
+- [x] **Stripe Live keys updated** (KOSTIN company)
+- [x] Collections system for product pages
+- [x] Smart autocomplete search
 
 ## Backlog
 - [ ] Dropshipping API integration (awaiting supplier API details)
@@ -91,21 +83,23 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9
 - Demo User: test_verify@example.com / test12345
 
+## Stripe Configuration
+- Account: KOSTIN (Bulgaria)
+- Mode: **LIVE** (real payments enabled)
+- Account ID: acct_1SwiPmC6hkyA8I5q
+
 ## File Structure
 ```
-/app/backend/
-├── routes/
-│   ├── collections.py    # Collections CRUD API
-│   ├── products.py       # Products with collection filter
-│   └── search.py         # Smart search with collections
-├── models/schemas.py     # CollectionCreate, CollectionUpdate schemas
-└── migrations.py         # Auto-creates system collections
+/app/frontend/src/pages/
+├── Checkout.jsx        # Payment method selection + COD form
+├── Checkout.css        # Checkout styles
+├── Cart.jsx            # Cart page (redirects to /checkout)
+└── CheckoutSuccess.jsx # Success page after payment
 
-/app/frontend/src/
-├── pages/
-│   ├── Admin.jsx         # Collections tab, product collection selector
-│   ├── Products.jsx      # Uses collection=all_products filter
-│   └── DubaiPerfumes.jsx # Uses collection=dubai filter
-└── components/
-    └── SmartSearch.jsx   # Collection-aware brand navigation
+/app/backend/routes/
+├── orders.py           # COD order endpoint (/api/orders/cod)
+└── collections.py      # Collections CRUD
+
+/app/backend/utils/
+└── email_service.py    # COD confirmation email function
 ```

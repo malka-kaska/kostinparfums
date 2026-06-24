@@ -101,6 +101,22 @@ class CheckoutRequest(BaseModel):
     items: list
 
 
+# Cash on Delivery (COD) Order
+class ShippingAddress(BaseModel):
+    full_name: str
+    phone: str
+    address: str
+    city: str
+    postal_code: str
+    notes: Optional[str] = None
+
+
+class CODOrderRequest(BaseModel):
+    items: list
+    shipping_address: ShippingAddress
+    email: Optional[str] = None  # For guest checkout
+
+
 # Collection schemas
 class CollectionCreate(BaseModel):
     name: str  # Display name: "Дубайски аромати"

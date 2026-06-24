@@ -407,4 +407,30 @@ export const en = {
 
   // Recently Viewed
   recentlyViewed: "RECENTLY VIEWED",
+
+  // Checkout Page
+  checkout: "Checkout",
+  backToCart: "Back to cart",
+  paymentMethod: "Payment Method",
+  payWithCard: "Pay with Card",
+  cardSecure: "Secure payment via Stripe",
+  cashOnDelivery: "Cash on Delivery",
+  codDesc: "Pay when you receive your order",
+  deliveryAddress: "Delivery Address",
+  fullName: "Full Name",
+  phone: "Phone",
+  address: "Address",
+  city: "City",
+  postalCode: "Postal Code",
+  deliveryNotes: "Delivery Notes",
+  deliveryNotesPlaceholder: "Additional instructions for the courier...",
+  requiredField: "Required field",
+  payNow: "Pay Now",
+  placeOrder: "Place Order",
+  processing: "Processing...",
+  secureStripe: "Secure payment via Stripe",
+  orderConfirmed: "Order Confirmed!",
+  codSuccessMessage: "Thank you for your order! You will receive a confirmation email. Payment will be collected upon delivery.",
+  totalToPay: "Amount to pay on delivery",
+  free: "Free",
 };

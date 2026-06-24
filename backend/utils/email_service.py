@@ -572,3 +572,118 @@ async def send_order_verification_email(
         """
     
     return await send_email(to_email, subject, html_content)
+
+
+
+async def send_cod_order_confirmation(
+    to_email: str,
+    order_number: str,
+    items: list,
+    total: float,
+    shipping_address: dict,
+    lang: str = "bg"
+) -> dict:
+    """Send COD order confirmation email"""
+    
+    # Build items HTML
+    items_html = ""
+    for item in items:
+        item_total = float(item.get('price', 0)) * int(item.get('quantity', 1))
+        items_html += f"""
+        <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
+                <strong style="color: #1a1a1a;">{item.get('name', 'Product')}</strong>
+                <br><span style="color: #888; font-size: 12px;">Количество: {item.get('quantity', 1)}</span>
+            </td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; color: #1a1a1a;">
+                €{item_total:.2f}
+            </td>
+        </tr>
+        """
+    
+    header = get_email_header(lang)
+    footer = get_email_footer(lang)
+    
+    # Address formatting
+    addr = shipping_address
+    address_html = f"""
+        <strong>{addr.get('full_name', '')}</strong><br>
+        {addr.get('address', '')}<br>
+        {addr.get('city', '')} {addr.get('postal_code', '')}<br>
+        Тел: {addr.get('phone', '')}
+    """
+    if addr.get('notes'):
+        address_html += f"<br><em>Бележки: {addr.get('notes')}</em>"
+    
+    if lang == "bg":
+        subject = f"Поръчка {order_number} - Наложен платеж | KOSTIN"
+        title = "Благодарим за поръчката!"
+        subtitle = "Вашата поръчка с наложен платеж е приета"
+        order_label = "Номер на поръчка"
+        items_label = "Поръчани продукти"
+        total_label = "Обща сума за плащане"
+        delivery_label = "Адрес за доставка"
+        payment_note = "Плащането ще бъде извършено при доставка на куриера."
+        contact_text = "Въпроси?"
+    else:
+        subject = f"Order {order_number} - Cash on Delivery | KOSTIN"
+        title = "Thank you for your order!"
+        subtitle = "Your Cash on Delivery order has been received"
+        order_label = "Order Number"
+        items_label = "Ordered Products"
+        total_label = "Total Amount Due"
+        delivery_label = "Delivery Address"
+        payment_note = "Payment will be collected upon delivery."
+        contact_text = "Questions?"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f8f8f8; font-family: Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+            {header}
+            
+            <div style="padding: 0 40px 40px 40px;">
+                <h2 style="color: #1a1a1a; font-size: 24px; font-weight: 600; margin: 0 0 10px 0; text-align: center;">{title}</h2>
+                <p style="color: #666; font-size: 14px; text-align: center; margin: 0 0 30px 0;">{subtitle}</p>
+                
+                <div style="background: linear-gradient(135deg, #c9a86c 0%, #d4a574 100%); color: #fff; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px;">
+                    <p style="margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">{order_label}</p>
+                    <p style="margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 2px;">{order_number}</p>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #c9a86c;">
+                    <p style="margin: 0; color: #856404; font-size: 14px;">
+                        <strong>💵 Наложен платеж</strong><br>
+                        {payment_note}
+                    </p>
+                </div>
+                
+                <h3 style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #c9a86c;">{items_label}</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                    {items_html}
+                    <tr>
+                        <td style="padding: 15px 0; font-weight: bold; color: #1a1a1a; font-size: 16px;">{total_label}</td>
+                        <td style="padding: 15px 0; text-align: right; font-weight: bold; color: #c9a86c; font-size: 20px;">€{total:.2f}</td>
+                    </tr>
+                </table>
+                
+                <h3 style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #c9a86c;">{delivery_label}</h3>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 25px; color: #1a1a1a; font-size: 14px; line-height: 1.6;">
+                    {address_html}
+                </div>
+                
+                <p style="color: #888; font-size: 13px; text-align: center;">{contact_text} <a href="mailto:contact@kostinparfums.com" style="color: #c9a86c;">contact@kostinparfums.com</a> | +359 889 567 870</p>
+            </div>
+            
+            {footer}
+        </div>
+    </body>
+    </html>
+    """
+    
+    return await send_email(to_email, subject, html_content)

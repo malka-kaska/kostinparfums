@@ -406,4 +406,30 @@ export const bg = {
 
   // Recently Viewed
   recentlyViewed: "НАСКОРО РАЗГЛЕДАНИ",
+
+  // Checkout Page
+  checkout: "Плащане",
+  backToCart: "Обратно към кошницата",
+  paymentMethod: "Метод на плащане",
+  payWithCard: "Плащане с карта",
+  cardSecure: "Сигурно плащане чрез Stripe",
+  cashOnDelivery: "Наложен платеж",
+  codDesc: "Плащане при доставка на куриера",
+  deliveryAddress: "Адрес за доставка",
+  fullName: "Име и фамилия",
+  phone: "Телефон",
+  address: "Адрес",
+  city: "Град",
+  postalCode: "Пощенски код",
+  deliveryNotes: "Бележки за доставка",
+  deliveryNotesPlaceholder: "Допълнителни инструкции за куриера...",
+  requiredField: "Задължително поле",
+  payNow: "Плати сега",
+  placeOrder: "Поръчай",
+  processing: "Обработка...",
+  secureStripe: "Сигурно плащане чрез Stripe",
+  orderConfirmed: "Поръчката е потвърдена!",
+  codSuccessMessage: "Благодарим за поръчката! Ще получите потвърждение по имейл. Плащането ще бъде извършено при доставка.",
+  totalToPay: "Сума за плащане при доставка",
+  free: "Безплатна",
 };

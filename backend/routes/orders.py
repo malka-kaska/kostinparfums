@@ -2,8 +2,10 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, Query
 from bson import ObjectId
 from typing import Optional
-from utils.auth import get_current_user
+from utils.auth import get_current_user, get_current_user_optional
+from models.schemas import CODOrderRequest
 import logging
+import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +15,7 @@ router = APIRouter(prefix="/api/orders", tags=["orders"])
 def order_doc_to_response(doc: dict) -> dict:
     order = {
         "id": str(doc["_id"]) if "_id" in doc else doc.get("id", ""),
+        "order_number": doc.get("order_number", ""),
         "user_id": doc.get("user_id", ""),
         "user_email": doc.get("user_email", ""),
         "user_name": doc.get("user_name", ""),
@@ -20,6 +23,7 @@ def order_doc_to_response(doc: dict) -> dict:
         "total": doc.get("total", 0),
         "shipping_cost": doc.get("shipping_cost", 0),
         "status": doc.get("status", "pending"),
+        "payment_method": doc.get("payment_method", "card"),
         "payment_status": doc.get("payment_status", "pending"),
         "session_id": doc.get("session_id", ""),
         "shipping_address": doc.get("shipping_address"),
@@ -110,3 +114,117 @@ async def update_order_status(request: Request, order_id: str):
 
     logger.info(f"Order {order_id} status updated to {new_status}")
     return order_doc_to_response(result)
+
+
+def generate_order_number() -> str:
+    """Generate a unique order number like KOS-240623-XXXX"""
+    date_part = datetime.now(timezone.utc).strftime("%y%m%d")
+    random_part = secrets.token_hex(2).upper()
+    return f"KOS-{date_part}-{random_part}"
+
+
+@router.post("/cod")
+async def create_cod_order(request: Request, order_data: CODOrderRequest):
+    """Create a Cash on Delivery order"""
+    db = request.app.state.db
+    
+    # Calculate total
+    total_amount = 0.0
+    items_for_db = []
+    
+    for item in order_data.items:
+        item_price = float(item.get('price', 0))
+        item_qty = int(item.get('quantity', 1))
+        item_total = item_price * item_qty
+        total_amount += item_total
+        
+        items_for_db.append({
+            "product_id": item.get('id', ''),
+            "name": item.get('name', ''),
+            "price": item_price,
+            "quantity": item_qty,
+            "image": item.get('image', ''),
+        })
+    
+    if total_amount <= 0:
+        raise HTTPException(status_code=400, detail="Invalid order total")
+    
+    # Try to get user info if authenticated
+    user_id = ""
+    user_email = order_data.email or ""
+    user_name = order_data.shipping_address.full_name
+    
+    try:
+        user = await get_current_user_optional(request, db)
+        if user:
+            user_id = user["_id"] if isinstance(user["_id"], str) else str(user["_id"])
+            user_email = user.get("email", user_email)
+            user_name = user.get("name", user_name)
+    except Exception:
+        pass
+    
+    # Generate order number
+    order_number = generate_order_number()
+    
+    # Create order document
+    order_doc = {
+        "order_number": order_number,
+        "user_id": user_id,
+        "user_email": user_email,
+        "user_name": user_name,
+        "items": items_for_db,
+        "total": total_amount,
+        "shipping_cost": 0,  # Free shipping for now
+        "payment_method": "cod",
+        "payment_status": "pending",
+        "status": "pending",
+        "shipping_address": {
+            "full_name": order_data.shipping_address.full_name,
+            "phone": order_data.shipping_address.phone,
+            "address": order_data.shipping_address.address,
+            "city": order_data.shipping_address.city,
+            "postal_code": order_data.shipping_address.postal_code,
+            "notes": order_data.shipping_address.notes or "",
+        },
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    result = await db.orders.insert_one(order_doc)
+    order_doc["_id"] = result.inserted_id
+    
+    logger.info(f"COD Order created: {order_number} for {user_email or 'guest'}")
+    
+    # Update product popularity scores
+    for item in items_for_db:
+        try:
+            await db.products.update_one(
+                {"_id": ObjectId(item["product_id"])},
+                {"$inc": {"popularity_score": item["quantity"]}}
+            )
+        except Exception:
+            pass
+    
+    # Send confirmation email
+    if user_email:
+        try:
+            from utils.email_service import send_cod_order_confirmation
+            await send_cod_order_confirmation(
+                to_email=user_email,
+                order_number=order_number,
+                items=items_for_db,
+                total=total_amount,
+                shipping_address=order_doc["shipping_address"]
+            )
+            logger.info(f"COD order confirmation email sent to {user_email}")
+        except Exception as e:
+            logger.error(f"Failed to send COD confirmation email: {e}")
+    
+    return {
+        "success": True,
+        "order_id": str(order_doc["_id"]),
+        "order_number": order_number,
+        "total": total_amount,
+        "message": "Поръчката е приета успешно! Ще получите потвърждение по имейл."
+    }
+

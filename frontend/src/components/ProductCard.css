@@ -122,6 +122,36 @@
   color: var(--text-secondary);
 }
 
+/* Sale/Discount Pricing */
+.product-price.on-sale {
+  gap: 4px;
+}
+
+.product-price .price-original {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.product-price .price-original-eur {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+.product-price .price-original-bgn {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+.product-price .price-eur.sale-price {
+  color: var(--accent-gold, #c9a86c);
+}
+
 .product-stock-low {
   font-size: 11px;
   color: #c9302c;

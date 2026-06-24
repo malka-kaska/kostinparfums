@@ -26,6 +26,9 @@ const ProductCard = ({ product }) => {
   
   // Get main image with fallback handling
   const mainImage = imgError ? FALLBACK_IMAGE : getMainImage(product.image);
+  
+  // Check if product is on sale
+  const isOnSale = product.original_price && product.original_price > product.price;
 
   return (
     <Link to={`/product/${product.id}`} className="product-card" data-testid={`product-card-${product.id}`}>
@@ -51,8 +54,14 @@ const ProductCard = ({ product }) => {
         <p className="product-brand">{product.brand}</p>
         <h3 className="product-name">{cleanName}</h3>
         {details && <p className="product-variant">{details}</p>}
-        <div className="product-price">
-          <span className="price-eur">&euro;{product.price.toFixed(2)}</span>
+        <div className={`product-price ${isOnSale ? 'on-sale' : ''}`}>
+          {isOnSale && (
+            <span className="price-original">
+              <span className="price-original-eur">&euro;{product.original_price.toFixed(2)}</span>
+              <span className="price-original-bgn">{(product.original_price * 1.95583).toFixed(2)} лв.</span>
+            </span>
+          )}
+          <span className={`price-eur ${isOnSale ? 'sale-price' : ''}`}>&euro;{product.price.toFixed(2)}</span>
           <span className="price-bgn">{(product.price * 1.95583).toFixed(2)} лв.</span>
         </div>
         {product.stock < 20 && product.stock > 0 && (

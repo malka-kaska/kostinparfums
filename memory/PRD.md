@@ -157,6 +157,19 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
   - Email templates: `format_dual_price()` function in email_service.py
   - Order confirmation, COD, verification emails all show dual currency
 
+- [x] **Mobile Grid Toggle** (June 2026)
+  - Toggle between 1 or 2 products per row on mobile devices
+  - Hidden on desktop (standard 4-column grid)
+  - Compact text styling for 2-column view
+
+- [x] **Product Discounts (Sale Prices)** (June 2026)
+  - New `original_price` field in product schema
+  - Admin Panel: "Original Price" input field with live discount % preview
+  - ProductCard: Old price (strikethrough gray) + New price (GOLD color)
+  - ProductDetail: Old price + Discount percentage badge (-XX%) + New price in GOLD
+  - Luxury styling: No red badges, only gold accent for elegance
+  - Admin table shows sale prices with original crossed out
+
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9
 - Demo User: test_verify@example.com / test12345

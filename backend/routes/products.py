@@ -187,6 +187,7 @@ def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict
         "brand": doc.get("brand", ""),
         "category": doc.get("category", ""),
         "price": doc.get("price", 0),
+        "original_price": doc.get("original_price"),  # Original price if on sale
         "description": doc.get("description", ""),
         "image": main_image,  # Legacy field - first image
         "images": images,  # New field - all images in order
@@ -468,7 +469,23 @@ async def update_product(request: Request, product_id: str, data: ProductUpdate)
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    # Build update data, handling original_price specially (can be explicitly set to None)
+    update_data = {}
+    data_dict = data.model_dump()
+    
+    for k, v in data_dict.items():
+        if k == "original_price":
+            # original_price can be explicitly set to None to remove discount
+            if v is not None or "original_price" in (request._body.decode() if hasattr(request, '_body') else ""):
+                update_data[k] = v
+        elif v is not None:
+            update_data[k] = v
+    
+    # Always allow original_price to be set/unset if it's in the request
+    raw_body = await request.body()
+    if b"original_price" in raw_body:
+        update_data["original_price"] = data_dict.get("original_price")
+    
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
 

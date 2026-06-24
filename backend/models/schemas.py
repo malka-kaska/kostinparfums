@@ -36,6 +36,7 @@ class ProductCreate(BaseModel):
     brand: str
     category: str
     price: float
+    original_price: Optional[float] = None  # Original price before discount (if on sale)
     description: str = ""
     description_bg: Optional[str] = None
     image: str = ""  # Legacy single image field
@@ -52,6 +53,7 @@ class ProductUpdate(BaseModel):
     brand: Optional[str] = None
     category: Optional[str] = None
     price: Optional[float] = None
+    original_price: Optional[float] = None  # Original price before discount (if on sale), set to None to remove discount
     description: Optional[str] = None
     description_bg: Optional[str] = None
     image: Optional[str] = None  # Legacy single image field

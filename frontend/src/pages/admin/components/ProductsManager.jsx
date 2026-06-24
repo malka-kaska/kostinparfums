@@ -17,7 +17,7 @@ const ProductsManager = ({ collections }) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', brand: '', category: '', price: '', description: '', description_bg: '', images: [], stock: '', gender: [], collections: ['all_products']
+    name: '', brand: '', category: '', price: '', original_price: '', description: '', description_bg: '', images: [], stock: '', gender: [], collections: ['all_products']
   });
   const [draggedIndex, setDraggedIndex] = useState(null);
 
@@ -135,7 +135,9 @@ const ProductsManager = ({ collections }) => {
     const images = product.images?.length > 0 ? product.images : (product.image ? [product.image] : []);
     setFormData({
       name: product.name, brand: product.brand, category: product.category,
-      price: product.price.toString(), description: product.description || '',
+      price: product.price.toString(), 
+      original_price: product.original_price ? product.original_price.toString() : '',
+      description: product.description || '',
       description_bg: product.description_bg || '', images, stock: product.stock.toString(),
       gender: product.gender || [], collections: product.collections || ['all_products']
     });
@@ -145,7 +147,7 @@ const ProductsManager = ({ collections }) => {
     setIsCreating(true);
     setEditingProduct(null);
     setFormData({
-      name: '', brand: '', category: 'perfumes', price: '', description: '', description_bg: '',
+      name: '', brand: '', category: 'perfumes', price: '', original_price: '', description: '', description_bg: '',
       images: [], stock: '', gender: [], collections: ['all_products']
     });
   };
@@ -161,6 +163,13 @@ const ProductsManager = ({ collections }) => {
         stock: parseInt(formData.stock) || 0, gender: formData.gender || [],
         collections: formData.collections || ['all_products'],
       };
+      
+      // Handle original_price for discounts
+      if (formData.original_price && parseFloat(formData.original_price) > 0) {
+        payload.original_price = parseFloat(formData.original_price);
+      } else {
+        payload.original_price = null; // Remove discount
+      }
 
       const url = isCreating ? `${API_URL}/api/products` : `${API_URL}/api/products/${editingProduct}`;
       const method = isCreating ? 'POST' : 'PUT';
@@ -281,6 +290,23 @@ const ProductsManager = ({ collections }) => {
                 <input type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} className="form-input" data-testid="product-price-input" />
               </div>
               <div className="form-group">
+                <label className="form-label">{t('originalPrice') || 'Оригинална цена (преди отстъпка)'}</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  value={formData.original_price} 
+                  onChange={(e) => setFormData({ ...formData, original_price: e.target.value })} 
+                  className="form-input" 
+                  placeholder={t('leaveEmptyForNoDiscount') || 'Остави празно ако няма отстъпка'}
+                  data-testid="product-original-price-input" 
+                />
+                {formData.original_price && parseFloat(formData.original_price) > parseFloat(formData.price) && (
+                  <span className="discount-preview">
+                    -{Math.round((1 - parseFloat(formData.price) / parseFloat(formData.original_price)) * 100)}% отстъпка
+                  </span>
+                )}
+              </div>
+              <div className="form-group">
                 <label className="form-label">{t('stock')}</label>
                 <input type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} className="form-input" data-testid="product-stock-input" />
               </div>
@@ -391,13 +417,24 @@ const ProductsManager = ({ collections }) => {
               </tr>
             </thead>
             <tbody>
-              {products.map(product => (
+              {products.map(product => {
+                const isOnSale = product.original_price && product.original_price > product.price;
+                return (
                 <tr key={product.id} className={!product.is_visible ? 'hidden-product' : ''}>
                   <td><img src={product.image} alt={product.name} className="table-image" /></td>
                   <td><div className="table-product-name">{product.name}</div></td>
                   <td>{product.brand}</td>
                   <td style={{ textTransform: 'capitalize' }}>{product.category}</td>
-                  <td>{formatDualPrice(product.price)}</td>
+                  <td>
+                    {isOnSale ? (
+                      <div className="table-price-sale">
+                        <span className="table-price-original">{formatDualPrice(product.original_price)}</span>
+                        <span className="table-price-current">{formatDualPrice(product.price)}</span>
+                      </div>
+                    ) : (
+                      formatDualPrice(product.price)
+                    )}
+                  </td>
                   <td><span className={`stock-badge ${product.stock < 20 ? 'low' : ''}`}>{product.stock}</span></td>
                   <td>
                     <button className={`visibility-toggle ${product.is_visible ? 'visible' : 'hidden'}`}
@@ -412,7 +449,7 @@ const ProductsManager = ({ collections }) => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         )}

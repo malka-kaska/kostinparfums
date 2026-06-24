@@ -148,10 +148,28 @@ const ProductDetail = () => {
                 </>
               );
             })()}
-            <div className="product-detail-price" data-testid="product-price">
-              <span className="price-eur">&euro;{product.price.toFixed(2)}</span>
-              <span className="price-bgn">{(product.price * 1.95583).toFixed(2)} лв.</span>
-            </div>
+            {(() => {
+              const isOnSale = product.original_price && product.original_price > product.price;
+              const discountPercent = isOnSale 
+                ? Math.round((1 - product.price / product.original_price) * 100)
+                : 0;
+              
+              return (
+                <div className={`product-detail-price ${isOnSale ? 'on-sale' : ''}`} data-testid="product-price">
+                  {isOnSale && (
+                    <>
+                      <div className="price-original-row">
+                        <span className="price-original-eur">&euro;{product.original_price.toFixed(2)}</span>
+                        <span className="price-original-bgn">{(product.original_price * 1.95583).toFixed(2)} лв.</span>
+                      </div>
+                      <span className="discount-badge">-{discountPercent}%</span>
+                    </>
+                  )}
+                  <span className={`price-eur ${isOnSale ? 'sale-price' : ''}`}>&euro;{product.price.toFixed(2)}</span>
+                  <span className="price-bgn">{(product.price * 1.95583).toFixed(2)} лв.</span>
+                </div>
+              );
+            })()}
             
             <div className="product-detail-stock">
               {product.stock > 20 ? (

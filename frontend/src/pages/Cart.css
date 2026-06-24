@@ -316,3 +316,62 @@
     align-items: center;
   }
 }
+/* Dual Currency Display */
+.cart-item-price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cart-item-price .price-eur {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cart-item-price .price-bgn {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.cart-item-subtotal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.cart-item-subtotal .subtotal-eur {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cart-item-subtotal .subtotal-bgn {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.summary-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.summary-price .price-eur {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.summary-price .price-bgn {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.summary-price.total-price .price-eur {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.summary-price.total-price .price-bgn {
+  font-size: 14px;
+}

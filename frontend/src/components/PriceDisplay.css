@@ -1,0 +1,74 @@
+/* Price Display Component Styles */
+.price-display {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.price-eur {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.price-bgn {
+  font-size: 0.75em;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Size variants */
+.price-display--sm .price-eur {
+  font-size: 14px;
+}
+.price-display--sm .price-bgn {
+  font-size: 11px;
+}
+
+.price-display--md .price-eur {
+  font-size: 16px;
+}
+.price-display--md .price-bgn {
+  font-size: 12px;
+}
+
+.price-display--lg .price-eur {
+  font-size: 20px;
+}
+.price-display--lg .price-bgn {
+  font-size: 14px;
+}
+
+.price-display--xl .price-eur {
+  font-size: 28px;
+}
+.price-display--xl .price-bgn {
+  font-size: 16px;
+}
+
+/* Inline variant for tables, lists */
+.price-display--inline {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.price-display--inline .price-bgn::before {
+  content: '/';
+  margin-right: 4px;
+  color: var(--text-light);
+}
+
+/* For accent colored prices */
+.price-display--accent .price-eur {
+  color: var(--accent-color);
+}
+
+/* For discount/sale prices */
+.price-display--discount .price-eur {
+  color: #16a34a;
+}
+
+.price-display--strikethrough .price-eur {
+  text-decoration: line-through;
+  color: var(--text-light);
+}

@@ -107,10 +107,22 @@
 }
 
 .product-detail-price {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.product-detail-price .price-eur {
   font-size: 32px;
   font-weight: 400;
   color: var(--text-primary);
-  margin-top: 16px;
+}
+
+.product-detail-price .price-bgn {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
 .product-detail-stock {

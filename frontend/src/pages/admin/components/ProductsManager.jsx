@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Eye, EyeOff, Upload, Loader, GripVertical, Search, Filter } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
+import { formatDualPrice } from '../../../utils/currency';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -396,7 +397,7 @@ const ProductsManager = ({ collections }) => {
                   <td><div className="table-product-name">{product.name}</div></td>
                   <td>{product.brand}</td>
                   <td style={{ textTransform: 'capitalize' }}>{product.category}</td>
-                  <td>&euro;{product.price.toFixed(2)}</td>
+                  <td>{formatDualPrice(product.price)}</td>
                   <td><span className={`stock-badge ${product.stock < 20 ? 'low' : ''}`}>{product.stock}</span></td>
                   <td>
                     <button className={`visibility-toggle ${product.is_visible ? 'visible' : 'hidden'}`}

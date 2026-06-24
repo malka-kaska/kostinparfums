@@ -90,7 +90,10 @@ const Cart = () => {
                     <p className="cart-item-brand">{item.brand}</p>
                     <h3>{item.name}</h3>
                   </Link>
-                  <p className="cart-item-price">&euro;{item.price.toFixed(2)}</p>
+                  <p className="cart-item-price">
+                    <span className="price-eur">&euro;{item.price.toFixed(2)}</span>
+                    <span className="price-bgn">{(item.price * 1.95583).toFixed(2)} лв.</span>
+                  </p>
                 </div>
 
                 <div className="cart-item-actions">
@@ -112,7 +115,8 @@ const Cart = () => {
                   </div>
 
                   <p className="cart-item-subtotal">
-                    &euro;{(item.price * item.quantity).toFixed(2)}
+                    <span className="subtotal-eur">&euro;{(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="subtotal-bgn">{(item.price * item.quantity * 1.95583).toFixed(2)} лв.</span>
                   </p>
 
                   <button 
@@ -132,7 +136,10 @@ const Cart = () => {
             
             <div className="summary-row">
               <span>{t('subtotal')} ({cart.reduce((sum, item) => sum + item.quantity, 0)} {t('items')})</span>
-              <span>&euro;{total.toFixed(2)}</span>
+              <div className="summary-price">
+                <span className="price-eur">&euro;{total.toFixed(2)}</span>
+                <span className="price-bgn">{(total * 1.95583).toFixed(2)} лв.</span>
+              </div>
             </div>
             
             <div className="summary-row">
@@ -150,7 +157,10 @@ const Cart = () => {
             
             <div className="summary-row summary-total">
               <span>{t('total')}</span>
-              <span>&euro;{(total >= 100 ? total : total + 9.95).toFixed(2)}</span>
+              <div className="summary-price total-price">
+                <span className="price-eur">&euro;{(total >= 100 ? total : total + 9.95).toFixed(2)}</span>
+                <span className="price-bgn">{((total >= 100 ? total : total + 9.95) * 1.95583).toFixed(2)} лв.</span>
+              </div>
             </div>
 
             {error && <div className="checkout-error">{error}</div>}

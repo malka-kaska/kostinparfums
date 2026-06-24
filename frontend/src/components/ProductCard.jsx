@@ -4,6 +4,7 @@ import { ShoppingCart, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getMainImage, FALLBACK_IMAGE } from '../utils/imageUtils';
+import { formatDualPrice } from '../utils/currency';
 import parseProductName from '../utils/parseProductName';
 import './ProductCard.css';
 
@@ -65,9 +66,10 @@ const ProductCard = ({ product }) => {
           ))}
           <span className="review-count">({reviewCount})</span>
         </div>
-        <p className="product-price">
-          &euro;{product.price.toFixed(2)}
-        </p>
+        <div className="product-price">
+          <span className="price-eur">&euro;{product.price.toFixed(2)}</span>
+          <span className="price-bgn">{(product.price * 1.95583).toFixed(2)} лв.</span>
+        </div>
         {product.stock < 20 && product.stock > 0 && (
           <p className="product-stock-low">{t('onlyLeft', { count: product.stock })}</p>
         )}

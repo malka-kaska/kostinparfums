@@ -1,6 +1,7 @@
 import React from 'react';
 import { Package, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
+import { formatDualPrice } from '../../../utils/currency';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -52,7 +53,7 @@ const OrdersManager = ({ orders, onRefresh }) => {
                   </span>
                 </div>
                 <div className="order-info-right">
-                  <span className="order-total-admin">&euro;{order.total?.toFixed(2)}</span>
+                  <span className="order-total-admin">{formatDualPrice(order.total)}</span>
                   <div className="status-selector">
                     <select
                       value={order.status}
@@ -77,14 +78,14 @@ const OrdersManager = ({ orders, onRefresh }) => {
                 {order.items?.map((item, idx) => (
                   <div key={idx} className="order-item-admin">
                     <span>{item.name} x{item.quantity}</span>
-                    <span>&euro;{(item.price * item.quantity).toFixed(2)}</span>
+                    <span>{formatDualPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
               {order.shipping_cost > 0 && (
                 <div className="order-shipping-admin">
                   <span>{t('shipping')}</span>
-                  <span>&euro;{order.shipping_cost.toFixed(2)}</span>
+                  <span>{formatDualPrice(order.shipping_cost)}</span>
                 </div>
               )}
             </div>

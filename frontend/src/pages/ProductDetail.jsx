@@ -148,7 +148,10 @@ const ProductDetail = () => {
                 </>
               );
             })()}
-            <p className="product-detail-price" data-testid="product-price">&euro;{product.price.toFixed(2)}</p>
+            <div className="product-detail-price" data-testid="product-price">
+              <span className="price-eur">&euro;{product.price.toFixed(2)}</span>
+              <span className="price-bgn">{(product.price * 1.95583).toFixed(2)} лв.</span>
+            </div>
             
             <div className="product-detail-stock">
               {product.stock > 20 ? (

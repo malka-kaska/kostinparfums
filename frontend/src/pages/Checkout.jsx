@@ -733,7 +733,10 @@ const Checkout = () => {
               <div className="order-totals">
                 <div className="order-total-row">
                   <span>{t('subtotal') || 'Междинна сума'}</span>
-                  <span>€{total.toFixed(2)}</span>
+                  <div className="checkout-price">
+                    <span className="price-eur">€{total.toFixed(2)}</span>
+                    <span className="price-bgn">{(total * 1.95583).toFixed(2)} лв.</span>
+                  </div>
                 </div>
                 
                 {/* Discount Code Section */}
@@ -785,17 +788,20 @@ const Checkout = () => {
                 {appliedDiscount && (
                   <div className="order-total-row discount-row">
                     <span>{language === 'bg' ? 'Отстъпка' : 'Discount'}</span>
-                    <span className="discount-value">-€{appliedDiscount.discount_amount.toFixed(2)}</span>
+                    <span className="discount-value">-€{appliedDiscount.discount_amount.toFixed(2)} / -{(appliedDiscount.discount_amount * 1.95583).toFixed(2)} лв.</span>
                   </div>
                 )}
                 
                 <div className="order-total-row">
                   <span>{t('shipping') || 'Доставка'} ({deliveryType === 'OFFICE' ? (language === 'bg' ? 'офис' : 'office') : (language === 'bg' ? 'адрес' : 'address')})</span>
-                  <span>{shippingPrice ? `€${shippingPrice.eur.toFixed(2)}` : '---'}</span>
+                  <span>{shippingPrice ? `€${shippingPrice.eur.toFixed(2)} / ${(shippingPrice.eur * 1.95583).toFixed(2)} лв.` : '---'}</span>
                 </div>
                 <div className="order-total-row total">
                   <span>{t('total') || 'Общо'}</span>
-                  <span>€{finalTotal.toFixed(2)}</span>
+                  <div className="checkout-price total-price">
+                    <span className="price-eur">€{finalTotal.toFixed(2)}</span>
+                    <span className="price-bgn">{(finalTotal * 1.95583).toFixed(2)} лв.</span>
+                  </div>
                 </div>
               </div>
               

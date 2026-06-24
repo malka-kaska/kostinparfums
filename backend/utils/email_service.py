@@ -15,6 +15,16 @@ SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "contact@kostinparfums.com")
 # Logo URL (hosted on Cloudinary or your server)
 LOGO_URL = "https://res.cloudinary.com/dbtifacuv/image/upload/v1749848249/logo_aulozz.png"
 
+# Fixed exchange rate for EUR to BGN (Bulgaria's Euro adoption)
+EUR_TO_BGN_RATE = 1.95583
+
+def format_dual_price(eur_amount: float) -> str:
+    """Format price in both EUR and BGN for email templates"""
+    if eur_amount is None or not isinstance(eur_amount, (int, float)):
+        return "€0.00 / 0.00 лв."
+    bgn_amount = eur_amount * EUR_TO_BGN_RATE
+    return f"€{eur_amount:.2f} / {bgn_amount:.2f} лв."
+
 async def send_email(to_email: str, subject: str, html_content: str) -> dict:
     """Send email using Resend API (non-blocking)"""
     params = {
@@ -174,6 +184,8 @@ async def send_order_confirmation_email(
     # Build items table
     items_html = ""
     for item in items:
+        item_price = item.get('price', 0)
+        item_price_bgn = item_price * EUR_TO_BGN_RATE
         items_html += f"""
         <tr>
             <td style="padding: 12px 10px; border-bottom: 1px solid #eee; vertical-align: top;">
@@ -181,7 +193,7 @@ async def send_order_confirmation_email(
                 <span style="color: #888; font-size: 12px;">{item.get('brand', '')}</span>
             </td>
             <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: center; color: #555;">{item.get('quantity', 1)}</td>
-            <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: right; color: #1a1a1a;">{item.get('price', 0):.2f} лв.</td>
+            <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: right; color: #1a1a1a;">€{item_price:.2f}<br><span style="color: #888; font-size: 11px;">{item_price_bgn:.2f} лв.</span></td>
         </tr>
         """
     
@@ -226,16 +238,16 @@ async def send_order_confirmation_email(
                     <table style="width: 100%;">
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Междинна сума:</td>
-                            <td style="text-align: right; color: #555;">{subtotal:.2f} лв.</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(subtotal)}</td>
                         </tr>
-                        {"<tr><td style='padding: 5px 0; color: #16a34a;'>Отстъпка (" + discount_code + "):</td><td style='text-align: right; color: #16a34a;'>-" + f"{discount_amount:.2f}" + " лв.</td></tr>" if discount_code and discount_amount > 0 else ""}
+                        {"<tr><td style='padding: 5px 0; color: #16a34a;'>Отстъпка (" + discount_code + "):</td><td style='text-align: right; color: #16a34a;'>-" + format_dual_price(discount_amount) + "</td></tr>" if discount_code and discount_amount > 0 else ""}
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Доставка:</td>
-                            <td style="text-align: right; color: #555;">{shipping_cost:.2f} лв.</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(shipping_cost)}</td>
                         </tr>
                         <tr>
                             <td style="padding: 12px 0 5px 0; font-size: 18px; color: #1a1a1a;"><strong>Общо:</strong></td>
-                            <td style="text-align: right; font-size: 18px; color: #1a1a1a;"><strong>{total:.2f} лв.</strong></td>
+                            <td style="text-align: right; font-size: 18px; color: #1a1a1a;"><strong>{format_dual_price(total)}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -293,16 +305,16 @@ async def send_order_confirmation_email(
                     <table style="width: 100%;">
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Subtotal:</td>
-                            <td style="text-align: right; color: #555;">{subtotal:.2f} BGN</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(subtotal)}</td>
                         </tr>
-                        {"<tr><td style='padding: 5px 0; color: #16a34a;'>Discount (" + discount_code + "):</td><td style='text-align: right; color: #16a34a;'>-" + f"{discount_amount:.2f}" + " BGN</td></tr>" if discount_code and discount_amount > 0 else ""}
+                        {"<tr><td style='padding: 5px 0; color: #16a34a;'>Discount (" + discount_code + "):</td><td style='text-align: right; color: #16a34a;'>-" + format_dual_price(discount_amount) + "</td></tr>" if discount_code and discount_amount > 0 else ""}
                         <tr>
                             <td style="padding: 5px 0; color: #555;">Shipping:</td>
-                            <td style="text-align: right; color: #555;">{shipping_cost:.2f} BGN</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(shipping_cost)}</td>
                         </tr>
                         <tr>
                             <td style="padding: 12px 0 5px 0; font-size: 18px; color: #1a1a1a;"><strong>Total:</strong></td>
-                            <td style="text-align: right; font-size: 18px; color: #1a1a1a;"><strong>{total:.2f} BGN</strong></td>
+                            <td style="text-align: right; font-size: 18px; color: #1a1a1a;"><strong>{format_dual_price(total)}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -426,6 +438,8 @@ async def send_order_verification_email(
     # Build items table
     items_html = ""
     for item in items:
+        item_price = item.get('price', 0)
+        item_price_bgn = item_price * EUR_TO_BGN_RATE
         items_html += f"""
         <tr>
             <td style="padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: top;">
@@ -433,7 +447,7 @@ async def send_order_verification_email(
                 <span style="color: #888; font-size: 11px;">{item.get('brand', '')}</span>
             </td>
             <td style="padding: 10px 8px; border-bottom: 1px solid #eee; text-align: center; color: #555;">{item.get('quantity', 1)}</td>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #eee; text-align: right; color: #1a1a1a;">{item.get('price', 0):.2f} лв.</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #eee; text-align: right; color: #1a1a1a;">€{item_price:.2f}<br><span style="color: #888; font-size: 10px;">{item_price_bgn:.2f} лв.</span></td>
         </tr>
         """
     
@@ -476,15 +490,15 @@ async def send_order_verification_email(
                     <table style="width: 100%; font-size: 14px;">
                         <tr>
                             <td style="padding: 4px 0; color: #555;">Междинна сума:</td>
-                            <td style="text-align: right; color: #555;">{total - shipping_cost:.2f} лв.</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(total - shipping_cost)}</td>
                         </tr>
                         <tr>
                             <td style="padding: 4px 0; color: #555;">Доставка:</td>
-                            <td style="text-align: right; color: #555;">{shipping_cost:.2f} лв.</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(shipping_cost)}</td>
                         </tr>
                         <tr>
                             <td style="padding: 10px 0 4px 0; font-size: 16px;"><strong>Общо:</strong></td>
-                            <td style="text-align: right; font-size: 16px;"><strong>{total:.2f} лв.</strong></td>
+                            <td style="text-align: right; font-size: 16px;"><strong>{format_dual_price(total)}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -546,15 +560,15 @@ async def send_order_verification_email(
                     <table style="width: 100%; font-size: 14px;">
                         <tr>
                             <td style="padding: 4px 0; color: #555;">Subtotal:</td>
-                            <td style="text-align: right; color: #555;">{total - shipping_cost:.2f} BGN</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(total - shipping_cost)}</td>
                         </tr>
                         <tr>
                             <td style="padding: 4px 0; color: #555;">Shipping:</td>
-                            <td style="text-align: right; color: #555;">{shipping_cost:.2f} BGN</td>
+                            <td style="text-align: right; color: #555;">{format_dual_price(shipping_cost)}</td>
                         </tr>
                         <tr>
                             <td style="padding: 10px 0 4px 0; font-size: 16px;"><strong>Total:</strong></td>
-                            <td style="text-align: right; font-size: 16px;"><strong>{total:.2f} BGN</strong></td>
+                            <td style="text-align: right; font-size: 16px;"><strong>{format_dual_price(total)}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -606,6 +620,7 @@ async def send_cod_order_confirmation(
     items_html = ""
     for item in items:
         item_total = float(item.get('price', 0)) * int(item.get('quantity', 1))
+        item_total_bgn = item_total * EUR_TO_BGN_RATE
         items_html += f"""
         <tr>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
@@ -613,7 +628,7 @@ async def send_cod_order_confirmation(
                 <br><span style="color: #888; font-size: 12px;">Количество: {item.get('quantity', 1)}</span>
             </td>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; text-align: right; color: #1a1a1a;">
-                €{item_total:.2f}
+                €{item_total:.2f}<br><span style="color: #888; font-size: 11px;">{item_total_bgn:.2f} лв.</span>
             </td>
         </tr>
         """
@@ -723,21 +738,21 @@ async def send_cod_order_confirmation(
                     {items_html}
                     <tr>
                         <td style="padding: 8px 0; color: #666; font-size: 14px;">{'Междинна сума' if lang == 'bg' else 'Subtotal'}</td>
-                        <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">€{subtotal:.2f}</td>
+                        <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">{format_dual_price(subtotal)}</td>
                     </tr>
                     {f'''<tr>
                         <td style="padding: 8px 0; color: #16a34a; font-size: 14px;">
                             {'Отстъпка' if lang == 'bg' else 'Discount'} ({discount_code})
                         </td>
-                        <td style="padding: 8px 0; text-align: right; color: #16a34a; font-size: 14px;">-€{discount_amount:.2f}</td>
+                        <td style="padding: 8px 0; text-align: right; color: #16a34a; font-size: 14px;">-{format_dual_price(discount_amount)}</td>
                     </tr>''' if discount_code and discount_amount > 0 else ''}
                     <tr>
                         <td style="padding: 8px 0; color: #666; font-size: 14px;">{'Доставка' if lang == 'bg' else 'Shipping'}</td>
-                        <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">€{shipping_cost:.2f}</td>
+                        <td style="padding: 8px 0; text-align: right; color: #666; font-size: 14px;">{format_dual_price(shipping_cost)}</td>
                     </tr>
                     <tr>
                         <td style="padding: 15px 0; font-weight: bold; color: #1a1a1a; font-size: 16px; border-top: 2px solid #1a1a1a;">{total_label}</td>
-                        <td style="padding: 15px 0; text-align: right; font-weight: bold; color: #c9a86c; font-size: 20px; border-top: 2px solid #1a1a1a;">€{total:.2f}</td>
+                        <td style="padding: 15px 0; text-align: right; font-weight: bold; color: #c9a86c; font-size: 20px; border-top: 2px solid #1a1a1a;">{format_dual_price(total)}</td>
                     </tr>
                 </table>
                 

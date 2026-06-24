@@ -1,0 +1,51 @@
+{
+  "summary": "Verified EUR/BGN dual-currency display across Products, Cart, Checkout and Admin (Products + Orders) on https://kostin-cosmetics-1.preview.emergentagent.com using fixed rate 1 EUR = 1.95583 BGN. All four requested scenarios PASS. Conversion math validated programmatically on multiple samples (€129.00 -> 252.30 лв; €258.00 -> 504.60 лв; €68.32 -> 133.62 лв; €145.00 -> 283.60 лв; €85.00 -> 166.25 лв; €6.14 -> 12.01 лв; €69.02 -> 134.99 лв; €99.70 -> 195.00 лв) — all match formula.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Checkout.jsx order summary item row",
+        "issue": "Per-item line in the Order Summary panel shows only EUR (e.g. '€258.00'), no BGN equivalent. Subtotal, Total, Shipping and Discount rows DO show dual EUR/BGN, so it is an inconsistency, not a blocker. Code ref: /app/frontend/src/pages/Checkout.jsx line ~727: `<span className=\"order-item-price\">€{(item.price * item.quantity).toFixed(2)}</span>`",
+        "selector": ".order-item-price",
+        "priority": "LOW"
+      },
+      {
+        "component": "Checkout success message",
+        "issue": "Checkout.jsx line ~502 displays only EUR ('<strong>€{orderSuccess.total.toFixed(2)}</strong>') in the success confirmation. For consistency with the rest of the app, this should also show the BGN equivalent.",
+        "selector": "orderSuccess.total in Checkout success block",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_11.json"
+  ],
+  "action_items": [
+    "(Optional, LOW priority) Update Checkout.jsx ~line 727 to render dual price for each order-summary item, e.g. use `formatDualPrice(item.price * item.quantity)` for consistency with admin/cart.",
+    "(Optional, LOW priority) Update Checkout success block (line ~502) to show '€X.XX / Y.YY лв.' instead of EUR-only.",
+    "Consider refactoring all hardcoded `1.95583` multipliers across Cart.jsx, Checkout.jsx, ProductCard.jsx, ProductDetail.jsx to use `formatDualPrice`/`getPriceDisplay` from utils/currency.js (DRY) — the helpers exist but aren't fully adopted yet.",
+    "Pre-existing (unrelated to this iteration): `ReferenceError: DUBAI_BRANDS is not defined` console error on every page load (carried over from iteration_8/9/10)."
+  ],
+  "critical_code_review_comments": [
+    "DRY violation: the constant 1.95583 is hardcoded directly in Cart.jsx (4x), Checkout.jsx (5x), ProductCard.jsx (1x), ProductDetail.jsx (1x). currency.js already exports `EUR_TO_BGN_RATE`, `formatDualPrice`, `formatBgn`, `getPriceDisplay`. ProductCard imports `formatDualPrice` but still does the multiplication inline (line 70-71) — unused import suggests an incomplete migration.",
+    "Currency helpers are well written (NaN-safe, default to 0). Good defensive code in /app/frontend/src/utils/currency.js.",
+    "Admin (ProductsManager.jsx, OrdersManager.jsx) correctly uses formatDualPrice — consistent and clean.",
+    "Recommendation: replace inline `* 1.95583` literals with calls to the helper to avoid future drift if the rate ever changes (it shouldn't post-Eurozone, but best practice)."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only request per review_request.testing_type)",
+    "frontend": "100% on requested dual-currency scenarios (Products / Cart / Checkout / Admin Products / Admin Orders). 2 LOW-priority inconsistencies on Checkout per-item line and success message."
+  },
+  "test_credentials": "Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9 (from /app/memory/test_credentials.md). Login flow worked, redirected to /, manual navigation to /admin succeeded.",
+  "seed_data_creation": "Seeded localStorage key `kostin_cart` with [{id:'test-cart-1', name:'Test Perfume', brand:'KOSTIN', price:129.00, quantity:2, image, size:'100ml'}] to test Cart and Checkout dual-price math without going through full add-to-cart flow.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "EUR/BGN dual-currency feature is fully working in all four requested places (Products grid via ProductCard, Cart, Checkout summary subtotal/total, Admin Products PRICE column, Admin Orders). Rate 1.95583 confirmed numerically. Only nits left: (a) Checkout per-item line shows EUR only, (b) Checkout success line shows EUR only, (c) DRY refactor opportunity to use helpers everywhere. Pre-existing DUBAI_BRANDS ReferenceError still in console (not related). Admin login via /auth works with seeded admin creds.",
+  "rca_of_the_issue": "N/A — this iteration was feature verification of the dual EUR/BGN price display, not bug RCA. Feature behaves as specified."
+}

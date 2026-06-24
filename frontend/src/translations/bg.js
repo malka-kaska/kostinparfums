@@ -410,6 +410,11 @@ export const bg = {
   // Checkout Page
   checkout: "Плащане",
   backToCart: "Обратно към кошницата",
+  shippingMethod: "Начин на доставка",
+  speedyOfficeDesc: "Вземете от най-близкия офис на Спиди",
+  addressDeliveryDesc: "Доставка директно до вашия адрес",
+  speedyOfficeAddress: "Данни за получаване от офис",
+  speedyOfficeNote: "Въведете данни за връзка. Ще получите SMS с информация за офиса при изпращане.",
   paymentMethod: "Метод на плащане",
   payWithCard: "Плащане с карта",
   cardSecure: "Сигурно плащане чрез Stripe",

@@ -166,6 +166,13 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     # Generate order number
     order_number = generate_order_number()
     
+    # Get shipping cost from request or default
+    shipping_cost = order_data.shipping_cost if order_data.shipping_cost else 0.0
+    shipping_method = order_data.shipping_method if order_data.shipping_method else "speedy_office"
+    
+    # Final total includes shipping
+    final_total = total_amount + shipping_cost
+    
     # Create order document
     order_doc = {
         "order_number": order_number,
@@ -173,8 +180,10 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         "user_email": user_email,
         "user_name": user_name,
         "items": items_for_db,
-        "total": total_amount,
-        "shipping_cost": 0,  # Free shipping for now
+        "subtotal": total_amount,
+        "shipping_cost": shipping_cost,
+        "shipping_method": shipping_method,
+        "total": final_total,
         "payment_method": "cod",
         "payment_status": "pending",
         "status": "pending",
@@ -224,7 +233,9 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         "success": True,
         "order_id": str(order_doc["_id"]),
         "order_number": order_number,
-        "total": total_amount,
+        "subtotal": total_amount,
+        "shipping_cost": shipping_cost,
+        "total": final_total,
         "message": "Поръчката е приета успешно! Ще получите потвърждение по имейл."
     }
 

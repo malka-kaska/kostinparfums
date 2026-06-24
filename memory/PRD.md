@@ -3,6 +3,8 @@
 ## Product Overview
 KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end fragrances for men and women. Built with React + FastAPI + MongoDB, featuring Stripe checkout, Cloudinary image hosting, and Resend email integration.
 
+**Region**: Bulgaria only (shipping within Bulgaria)
+
 ## Core Features (Completed)
 
 ### Authentication & Email System
@@ -14,12 +16,19 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 ### Payment Methods
 - [x] **Card Payment via Stripe** (Live keys configured)
-- [x] **Cash on Delivery (COD)** - NEW
+- [x] **Cash on Delivery (COD)**
   - Full delivery address form (Name, Phone, Address, City, Postal Code, Notes)
   - Email field for guest checkout
   - Order confirmation email
   - No minimum order amount
   - No additional fees
+
+### Shipping Methods (NEW - December 2025)
+- [x] **Доставка до офис на Спиди** - €2.67 / 5.23 лв.
+- [x] **Доставка до адрес** - €3.62 / 7.08 лв.
+- [x] Shipping cost correctly added to order total
+- [x] Shipping method saved in order record
+- [x] Dynamic form label based on shipping method selection
 
 ### Product Management
 - [x] Dynamic product catalog with filtering (gender, brand, collection)
@@ -31,9 +40,11 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 ### Checkout Flow
 - [x] Dedicated `/checkout` page
-- [x] Payment method selection (Card or COD)
-- [x] Order summary sidebar
-- [x] Free shipping over €100
+- [x] **Step 1**: Shipping method selection (Speedy Office / Address)
+- [x] **Step 2**: Delivery details form
+- [x] **Step 3**: Payment method selection (Card or COD)
+- [x] Order summary sidebar with shipping cost
+- [x] Free shipping over €100 (announcement banner)
 - [x] Form validation
 - [x] Success confirmation page
 
@@ -61,16 +72,19 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - `GET /api/products?collection=slug` - Filter by collection
 
 ## Database Schema
-- `orders`: order_number, items, total, payment_method (card/cod), shipping_address, status
+- `orders`: order_number, items, subtotal, shipping_cost, shipping_method, total, payment_method (card/cod), shipping_address, status
 - `products`: name, brand, price, collections, visibility, popularity_score
 - `collections`: name, slug, is_system, is_active
 
 ## Recently Implemented (December 2025)
-- [x] **Cash on Delivery payment option**
-- [x] **Checkout page with payment method selection**
-- [x] **Delivery address form for COD**
-- [x] **COD order confirmation emails**
-- [x] **Stripe Live keys updated** (KOSTIN company)
+- [x] **Shipping Methods** (Speedy Office €2.67 / Address €3.62)
+- [x] **Two-step checkout**: Select shipping → Fill form → Choose payment
+- [x] **Shipping cost in order total**
+- [x] Cash on Delivery payment option
+- [x] Checkout page with payment method selection
+- [x] Delivery address form for COD
+- [x] COD order confirmation emails
+- [x] Stripe Live keys updated (KOSTIN company)
 - [x] Collections system for product pages
 - [x] Smart autocomplete search
 

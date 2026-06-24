@@ -114,6 +114,8 @@ class ShippingAddress(BaseModel):
 class CODOrderRequest(BaseModel):
     items: list
     shipping_address: ShippingAddress
+    shipping_method: Optional[str] = "speedy_office"  # 'speedy_office' or 'address'
+    shipping_cost: Optional[float] = 0.0
     email: Optional[str] = None  # For guest checkout
 
 

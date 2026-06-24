@@ -7,19 +7,38 @@ import './Checkout.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Shipping options with prices
+const SHIPPING_OPTIONS = {
+  speedy_office: {
+    id: 'speedy_office',
+    name: 'Доставка до офис на Спиди',
+    name_en: 'Delivery to Speedy office',
+    price: 2.67,
+    priceBGN: 5.23,
+  },
+  address: {
+    id: 'address',
+    name: 'Доставка до адрес',
+    name_en: 'Delivery to address',
+    price: 3.62,
+    priceBGN: 7.08,
+  },
+};
+
 const Checkout = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, getCartItems, getCartTotal, clearCartAll } = useAuth();
   
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'cod'
+  const [shippingMethod, setShippingMethod] = useState('speedy_office'); // 'speedy_office' or 'address'
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(null);
   
-  // Shipping form for COD
+  // Shipping form - required for ALL orders
   const [shippingForm, setShippingForm] = useState({
     full_name: user?.name || '',
     phone: '',
@@ -71,6 +90,9 @@ const Checkout = () => {
   };
 
   const handleCardCheckout = async () => {
+    // Validate shipping form first
+    if (!validateForm()) return;
+    
     setIsLoading(true);
     setError('');
 
@@ -84,11 +106,34 @@ const Checkout = () => {
         image: item.image,
       }));
 
+      // Save shipping address to session storage for after payment
+      sessionStorage.setItem('pending_shipping_address', JSON.stringify({
+        full_name: shippingForm.full_name,
+        phone: shippingForm.phone,
+        address: shippingForm.address,
+        city: shippingForm.city,
+        postal_code: shippingForm.postal_code,
+        notes: shippingForm.notes,
+        email: shippingForm.email,
+      }));
+
       const response = await fetch(`${API_URL}/api/payments/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ origin_url: originUrl, items })
+        body: JSON.stringify({ 
+          origin_url: originUrl, 
+          items,
+          shipping_address: {
+            full_name: shippingForm.full_name,
+            phone: shippingForm.phone,
+            address: shippingForm.address,
+            city: shippingForm.city,
+            postal_code: shippingForm.postal_code,
+            notes: shippingForm.notes,
+          },
+          customer_email: shippingForm.email,
+        })
       });
 
       if (!response.ok) {
@@ -138,6 +183,8 @@ const Checkout = () => {
             postal_code: shippingForm.postal_code,
             notes: shippingForm.notes,
           },
+          shipping_method: shippingMethod,
+          shipping_cost: shippingCost,
           email: shippingForm.email,
         })
       });
@@ -177,7 +224,8 @@ const Checkout = () => {
     }
   };
 
-  const shippingCost = total >= 100 ? 0 : 9.95;
+  const shippingOption = SHIPPING_OPTIONS[shippingMethod];
+  const shippingCost = shippingOption ? shippingOption.price : 0;
   const finalTotal = total + shippingCost;
 
   // Order success view
@@ -225,8 +273,182 @@ const Checkout = () => {
         <h1 className="heading-1 checkout-title">{t('checkout') || 'Плащане'}</h1>
 
         <div className="checkout-layout">
-          {/* Left column - Payment method & Form */}
+          {/* Left column - Shipping Address & Payment Method */}
           <div className="checkout-main">
+            {/* Shipping Method Selection */}
+            <div className="checkout-section">
+              <h2 className="checkout-section-title">{t('shippingMethod') || 'Начин на доставка'}</h2>
+              
+              <div className="shipping-options">
+                <label 
+                  className={`shipping-option ${shippingMethod === 'speedy_office' ? 'selected' : ''}`}
+                  data-testid="shipping-speedy-office"
+                >
+                  <input
+                    type="radio"
+                    name="shippingMethod"
+                    value="speedy_office"
+                    checked={shippingMethod === 'speedy_office'}
+                    onChange={(e) => setShippingMethod(e.target.value)}
+                  />
+                  <div className="shipping-option-content">
+                    <div className="shipping-option-info">
+                      <span className="shipping-option-title">
+                        {language === 'bg' ? SHIPPING_OPTIONS.speedy_office.name : SHIPPING_OPTIONS.speedy_office.name_en}
+                      </span>
+                      <span className="shipping-option-desc">{t('speedyOfficeDesc') || 'Вземете от най-близкия офис на Спиди'}</span>
+                    </div>
+                    <div className="shipping-option-price">
+                      <span className="price-eur">€{SHIPPING_OPTIONS.speedy_office.price.toFixed(2)}</span>
+                      <span className="price-bgn">{SHIPPING_OPTIONS.speedy_office.priceBGN.toFixed(2)} лв.</span>
+                    </div>
+                  </div>
+                </label>
+                
+                <label 
+                  className={`shipping-option ${shippingMethod === 'address' ? 'selected' : ''}`}
+                  data-testid="shipping-to-address"
+                >
+                  <input
+                    type="radio"
+                    name="shippingMethod"
+                    value="address"
+                    checked={shippingMethod === 'address'}
+                    onChange={(e) => setShippingMethod(e.target.value)}
+                  />
+                  <div className="shipping-option-content">
+                    <div className="shipping-option-info">
+                      <span className="shipping-option-title">
+                        {language === 'bg' ? SHIPPING_OPTIONS.address.name : SHIPPING_OPTIONS.address.name_en}
+                      </span>
+                      <span className="shipping-option-desc">{t('addressDeliveryDesc') || 'Доставка директно до вашия адрес'}</span>
+                    </div>
+                    <div className="shipping-option-price">
+                      <span className="price-eur">€{SHIPPING_OPTIONS.address.price.toFixed(2)}</span>
+                      <span className="price-bgn">{SHIPPING_OPTIONS.address.priceBGN.toFixed(2)} лв.</span>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Shipping Address Form - REQUIRED for all orders */}
+            <div className="checkout-section">
+              <h2 className="checkout-section-title">
+                {shippingMethod === 'speedy_office' 
+                  ? (t('speedyOfficeAddress') || 'Данни за получаване от офис') 
+                  : (t('deliveryAddress') || 'Адрес за доставка')}
+              </h2>
+              
+              {shippingMethod === 'speedy_office' && (
+                <p className="shipping-note">{t('speedyOfficeNote') || 'Въведете данни за връзка. Ще получите SMS с информация за офиса при изпращане.'}</p>
+              )}
+              
+              <div className="shipping-form">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>{t('fullName') || 'Име и фамилия'} *</label>
+                    <input
+                      type="text"
+                      name="full_name"
+                      value={shippingForm.full_name}
+                      onChange={handleInputChange}
+                      className={formErrors.full_name ? 'error' : ''}
+                      placeholder="Иван Иванов"
+                      data-testid="shipping-name"
+                    />
+                    {formErrors.full_name && <span className="form-error">{formErrors.full_name}</span>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>{t('phone') || 'Телефон'} *</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={shippingForm.phone}
+                      onChange={handleInputChange}
+                      className={formErrors.phone ? 'error' : ''}
+                      placeholder="+359 888 123 456"
+                      data-testid="shipping-phone"
+                    />
+                    {formErrors.phone && <span className="form-error">{formErrors.phone}</span>}
+                  </div>
+                </div>
+                
+                {!user && (
+                  <div className="form-group">
+                    <label>{t('email') || 'Имейл'} *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={shippingForm.email}
+                      onChange={handleInputChange}
+                      className={formErrors.email ? 'error' : ''}
+                      placeholder="email@example.com"
+                      data-testid="shipping-email"
+                    />
+                    {formErrors.email && <span className="form-error">{formErrors.email}</span>}
+                  </div>
+                )}
+                
+                <div className="form-group">
+                  <label>{t('address') || 'Адрес'} *</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={shippingForm.address}
+                    onChange={handleInputChange}
+                    className={formErrors.address ? 'error' : ''}
+                    placeholder="ул. Примерна 123, ап. 45"
+                    data-testid="shipping-address"
+                  />
+                  {formErrors.address && <span className="form-error">{formErrors.address}</span>}
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>{t('city') || 'Град'} *</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={shippingForm.city}
+                      onChange={handleInputChange}
+                      className={formErrors.city ? 'error' : ''}
+                      placeholder="София"
+                      data-testid="shipping-city"
+                    />
+                    {formErrors.city && <span className="form-error">{formErrors.city}</span>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>{t('postalCode') || 'Пощенски код'} *</label>
+                    <input
+                      type="text"
+                      name="postal_code"
+                      value={shippingForm.postal_code}
+                      onChange={handleInputChange}
+                      className={formErrors.postal_code ? 'error' : ''}
+                      placeholder="1000"
+                      data-testid="shipping-postal"
+                    />
+                    {formErrors.postal_code && <span className="form-error">{formErrors.postal_code}</span>}
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label>{t('deliveryNotes') || 'Бележки за доставка'}</label>
+                  <textarea
+                    name="notes"
+                    value={shippingForm.notes}
+                    onChange={handleInputChange}
+                    placeholder={t('deliveryNotesPlaceholder') || 'Допълнителни инструкции за куриера...'}
+                    rows={3}
+                    data-testid="shipping-notes"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Payment Method Selection */}
             <div className="checkout-section">
               <h2 className="checkout-section-title">{t('paymentMethod') || 'Метод на плащане'}</h2>
@@ -274,117 +496,6 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* Shipping Address Form - shown for COD */}
-            {paymentMethod === 'cod' && (
-              <div className="checkout-section">
-                <h2 className="checkout-section-title">{t('deliveryAddress') || 'Адрес за доставка'}</h2>
-                
-                <div className="shipping-form">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>{t('fullName') || 'Име и фамилия'} *</label>
-                      <input
-                        type="text"
-                        name="full_name"
-                        value={shippingForm.full_name}
-                        onChange={handleInputChange}
-                        className={formErrors.full_name ? 'error' : ''}
-                        placeholder="Иван Иванов"
-                        data-testid="shipping-name"
-                      />
-                      {formErrors.full_name && <span className="form-error">{formErrors.full_name}</span>}
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>{t('phone') || 'Телефон'} *</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={shippingForm.phone}
-                        onChange={handleInputChange}
-                        className={formErrors.phone ? 'error' : ''}
-                        placeholder="+359 888 123 456"
-                        data-testid="shipping-phone"
-                      />
-                      {formErrors.phone && <span className="form-error">{formErrors.phone}</span>}
-                    </div>
-                  </div>
-                  
-                  {!user && (
-                    <div className="form-group">
-                      <label>{t('email') || 'Имейл'} *</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={shippingForm.email}
-                        onChange={handleInputChange}
-                        className={formErrors.email ? 'error' : ''}
-                        placeholder="email@example.com"
-                        data-testid="shipping-email"
-                      />
-                      {formErrors.email && <span className="form-error">{formErrors.email}</span>}
-                    </div>
-                  )}
-                  
-                  <div className="form-group">
-                    <label>{t('address') || 'Адрес'} *</label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={shippingForm.address}
-                      onChange={handleInputChange}
-                      className={formErrors.address ? 'error' : ''}
-                      placeholder="ул. Примерна 123, ап. 45"
-                      data-testid="shipping-address"
-                    />
-                    {formErrors.address && <span className="form-error">{formErrors.address}</span>}
-                  </div>
-                  
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>{t('city') || 'Град'} *</label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={shippingForm.city}
-                        onChange={handleInputChange}
-                        className={formErrors.city ? 'error' : ''}
-                        placeholder="София"
-                        data-testid="shipping-city"
-                      />
-                      {formErrors.city && <span className="form-error">{formErrors.city}</span>}
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>{t('postalCode') || 'Пощенски код'} *</label>
-                      <input
-                        type="text"
-                        name="postal_code"
-                        value={shippingForm.postal_code}
-                        onChange={handleInputChange}
-                        className={formErrors.postal_code ? 'error' : ''}
-                        placeholder="1000"
-                        data-testid="shipping-postal"
-                      />
-                      {formErrors.postal_code && <span className="form-error">{formErrors.postal_code}</span>}
-                    </div>
-                  </div>
-                  
-                  <div className="form-group">
-                    <label>{t('deliveryNotes') || 'Бележки за доставка'}</label>
-                    <textarea
-                      name="notes"
-                      value={shippingForm.notes}
-                      onChange={handleInputChange}
-                      placeholder={t('deliveryNotesPlaceholder') || 'Допълнителни инструкции за куриера...'}
-                      rows={3}
-                      data-testid="shipping-notes"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
             {error && <div className="checkout-error">{error}</div>}
           </div>
 
@@ -414,8 +525,8 @@ const Checkout = () => {
                   <span>€{total.toFixed(2)}</span>
                 </div>
                 <div className="order-total-row">
-                  <span>{t('shipping') || 'Доставка'}</span>
-                  <span>{shippingCost === 0 ? (t('free') || 'Безплатна') : `€${shippingCost.toFixed(2)}`}</span>
+                  <span>{t('shipping') || 'Доставка'} ({shippingOption ? (language === 'bg' ? shippingOption.name : shippingOption.name_en) : ''})</span>
+                  <span>€{shippingCost.toFixed(2)}</span>
                 </div>
                 <div className="order-total-row total">
                   <span>{t('total') || 'Общо'}</span>

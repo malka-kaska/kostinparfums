@@ -411,6 +411,11 @@ export const en = {
   // Checkout Page
   checkout: "Checkout",
   backToCart: "Back to cart",
+  shippingMethod: "Shipping Method",
+  speedyOfficeDesc: "Pick up from the nearest Speedy office",
+  addressDeliveryDesc: "Delivery directly to your address",
+  speedyOfficeAddress: "Details for office pickup",
+  speedyOfficeNote: "Enter contact details. You will receive SMS with office information upon dispatch.",
   paymentMethod: "Payment Method",
   payWithCard: "Pay with Card",
   cardSecure: "Secure payment via Stripe",

@@ -240,16 +240,109 @@
   }
 }
 
+/* Mobile Grid Toggle - Hidden on desktop */
+.mobile-grid-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-grid-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    padding: 4px;
+    border-radius: 6px;
+  }
+  
+  .mobile-grid-toggle .grid-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-grid-toggle .grid-btn:hover {
+    color: var(--text-primary);
+  }
+  
+  .mobile-grid-toggle .grid-btn.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  /* Two column grid on mobile when selected */
+  .grid-product-showcase.mobile-two-cols {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  
+  .grid-product-showcase.mobile-two-cols .product-card {
+    /* Smaller text for compact view */
+  }
+  
+  .grid-product-showcase.mobile-two-cols .product-details {
+    padding: 10px 8px;
+  }
+  
+  .grid-product-showcase.mobile-two-cols .product-brand {
+    font-size: 9px;
+    margin-bottom: 4px;
+  }
+  
+  .grid-product-showcase.mobile-two-cols .product-name {
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+  
+  .grid-product-showcase.mobile-two-cols .product-variant {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  
+  .grid-product-showcase.mobile-two-cols .product-price .price-eur {
+    font-size: 13px;
+  }
+  
+  .grid-product-showcase.mobile-two-cols .product-price .price-bgn {
+    font-size: 10px;
+  }
+  
+  .grid-product-showcase.mobile-two-cols .quick-add-button {
+    padding: 6px 10px;
+    font-size: 9px;
+  }
+}
+
 @media (max-width: 640px) {
   .products-controls {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .filters-toggle {
+    flex: 0 0 auto;
+  }
+  
+  .mobile-grid-toggle {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
   
   .sort-controls {
     width: 100%;
     justify-content: space-between;
+    order: 3;
   }
   
   .sort-select {

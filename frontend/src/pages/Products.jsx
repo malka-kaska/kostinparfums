@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X, Grid2X2, LayoutList } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
 import './Products.css';
@@ -35,6 +35,7 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mobileGridCols, setMobileGridCols] = useState(1); // 1 or 2 columns on mobile
   const { t } = useLanguage();
 
   // Fetch brands with gender filter
@@ -279,6 +280,24 @@ const Products = () => {
                 <span>{t('filters')}</span>
               </button>
 
+              {/* Mobile Grid Toggle - only visible on mobile */}
+              <div className="mobile-grid-toggle" data-testid="mobile-grid-toggle">
+                <button
+                  className={`grid-btn ${mobileGridCols === 1 ? 'active' : ''}`}
+                  onClick={() => setMobileGridCols(1)}
+                  aria-label="1 column"
+                >
+                  <LayoutList size={18} />
+                </button>
+                <button
+                  className={`grid-btn ${mobileGridCols === 2 ? 'active' : ''}`}
+                  onClick={() => setMobileGridCols(2)}
+                  aria-label="2 columns"
+                >
+                  <Grid2X2 size={18} />
+                </button>
+              </div>
+
               <div className="sort-controls">
                 <label htmlFor="sort">{t('sortBy')}</label>
                 <select
@@ -298,7 +317,7 @@ const Products = () => {
             </div>
 
             {products.length > 0 ? (
-              <div className="grid-product-showcase" data-testid="products-grid">
+              <div className={`grid-product-showcase ${mobileGridCols === 2 ? 'mobile-two-cols' : ''}`} data-testid="products-grid">
                 {products.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}

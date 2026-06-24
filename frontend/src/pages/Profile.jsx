@@ -258,7 +258,7 @@ const Profile = () => {
                           <button 
                             className="btn-confirm-delete"
                             onClick={handleDeleteAccount}
-                            disabled={isDeleting}
+                            disabled={isDeleting || deleteConfirmText !== (language === 'bg' ? 'ИЗТРИЙ' : 'DELETE')}
                             data-testid="confirm-delete-btn"
                           >
                             {isDeleting 

@@ -421,5 +421,3 @@ async def delete_account(request: Request, response: Response):
     except Exception as e:
         logger.error(f"Error deleting user account: {e}")
         raise HTTPException(status_code=500, detail="Грешка при изтриване на акаунта. Моля, опитайте отново.")
-        raise HTTPException(status_code=500, detail="Грешка при изтриване на акаунта. Моля, опитайте отново.")
-

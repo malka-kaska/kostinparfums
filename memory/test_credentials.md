@@ -18,8 +18,13 @@
 - POST /api/auth/refresh
 - POST /api/auth/forgot-password
 - POST /api/auth/reset-password
+- DELETE /api/auth/delete-account (GDPR - Right to be Forgotten)
 
 ## Stripe Test Card
 - **Card:** 4242 4242 4242 4242
 - **Expiry:** Any future date
 - **CVC:** Any 3 digits
+
+## GDPR Testing
+- Cookie Banner: Clear `localStorage.cookie_consent` to show banner again
+- Delete Account: Type "ИЗТРИЙ" (BG) or "DELETE" (EN) to confirm

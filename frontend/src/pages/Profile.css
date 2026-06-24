@@ -132,12 +132,13 @@
 .admin-badge {
   display: inline-block;
   padding: 4px 12px;
-  background: var(--text-primary);
-  color: var(--bg-primary);
+  background: var(--accent-color, #c9a962);
+  color: #ffffff;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-radius: 4px;
 }
 
 /* Profile Actions */

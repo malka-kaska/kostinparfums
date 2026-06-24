@@ -111,6 +111,11 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] Stripe Live keys updated (KOSTIN company)
 - [x] Collections system for product pages
 - [x] Smart autocomplete search
+- [x] **GDPR Compliance** (June 2026):
+  - Cookie Consent Banner (Customize, Essential Only, Accept All)
+  - Terms/Privacy checkbox on Checkout
+  - Delete Account functionality (Right to be Forgotten)
+  - DELETE /api/auth/delete-account endpoint
 
 ## Backlog
 - [ ] Dropshipping API integration (awaiting supplier API details)

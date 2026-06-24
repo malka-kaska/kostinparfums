@@ -3,27 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CreditCard, Truck, ArrowLeft, Loader, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import SpeedyShipping from '../components/SpeedyShipping';
+import '../components/SpeedyShipping.css';
 import './Checkout.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-
-// Shipping options with prices
-const SHIPPING_OPTIONS = {
-  speedy_office: {
-    id: 'speedy_office',
-    name: 'Доставка до офис на Спиди',
-    name_en: 'Delivery to Speedy office',
-    price: 2.67,
-    priceBGN: 5.23,
-  },
-  address: {
-    id: 'address',
-    name: 'Доставка до адрес',
-    name_en: 'Delivery to address',
-    price: 3.62,
-    priceBGN: 7.08,
-  },
-};
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -33,20 +17,23 @@ const Checkout = () => {
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'cod'
-  const [shippingMethod, setShippingMethod] = useState('speedy_office'); // 'speedy_office' or 'address'
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(null);
   
-  // Shipping form - required for ALL orders
-  const [shippingForm, setShippingForm] = useState({
+  // Speedy integration state
+  const [deliveryType, setDeliveryType] = useState('OFFICE'); // 'OFFICE' or 'ADDRESS'
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedOffice, setSelectedOffice] = useState(null);
+  const [shippingPrice, setShippingPrice] = useState(null);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  
+  // Contact form - required for ALL orders
+  const [contactForm, setContactForm] = useState({
     full_name: user?.name || '',
     phone: '',
-    address: '',
-    city: '',
-    postal_code: '',
-    notes: '',
     email: user?.email || '',
+    notes: '',
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -68,7 +55,7 @@ const Checkout = () => {
   useEffect(() => {
     // Pre-fill user data if logged in
     if (user) {
-      setShippingForm(prev => ({
+      setContactForm(prev => ({
         ...prev,
         full_name: user.name || prev.full_name,
         email: user.email || prev.email,
@@ -78,19 +65,30 @@ const Checkout = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!shippingForm.full_name.trim()) errors.full_name = t('requiredField') || 'Задължително поле';
-    if (!shippingForm.phone.trim()) errors.phone = t('requiredField') || 'Задължително поле';
-    if (!shippingForm.address.trim()) errors.address = t('requiredField') || 'Задължително поле';
-    if (!shippingForm.city.trim()) errors.city = t('requiredField') || 'Задължително поле';
-    if (!shippingForm.postal_code.trim()) errors.postal_code = t('requiredField') || 'Задължително поле';
-    if (!user && !shippingForm.email.trim()) errors.email = t('requiredField') || 'Задължително поле';
+    if (!contactForm.full_name.trim()) errors.full_name = t('requiredField') || 'Задължително поле';
+    if (!contactForm.phone.trim()) errors.phone = t('requiredField') || 'Задължително поле';
+    if (!user && !contactForm.email.trim()) errors.email = t('requiredField') || 'Задължително поле';
+    
+    // Validate Speedy selection
+    if (!selectedCity) {
+      errors.city = language === 'bg' ? 'Моля, изберете град' : 'Please select a city';
+    }
+    if (deliveryType === 'OFFICE' && !selectedOffice) {
+      errors.office = language === 'bg' ? 'Моля, изберете офис' : 'Please select an office';
+    }
+    if (deliveryType === 'ADDRESS' && !deliveryAddress.trim()) {
+      errors.address = language === 'bg' ? 'Моля, въведете адрес' : 'Please enter an address';
+    }
+    if (!shippingPrice) {
+      errors.shipping = language === 'bg' ? 'Цената за доставка не е изчислена' : 'Shipping price not calculated';
+    }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleCardCheckout = async () => {
-    // Validate shipping form first
+    // Validate form first
     if (!validateForm()) return;
     
     setIsLoading(true);
@@ -106,15 +104,28 @@ const Checkout = () => {
         image: item.image,
       }));
 
-      // Save shipping address to session storage for after payment
+      // Build shipping address based on delivery type
+      const shippingAddress = {
+        full_name: contactForm.full_name,
+        phone: contactForm.phone,
+        city: selectedCity?.name || '',
+        notes: contactForm.notes,
+      };
+      
+      if (deliveryType === 'OFFICE' && selectedOffice) {
+        shippingAddress.address = `Офис Спиди: ${selectedOffice.name}`;
+        shippingAddress.office_id = selectedOffice.id;
+        shippingAddress.office_name = selectedOffice.name;
+      } else {
+        shippingAddress.address = deliveryAddress;
+      }
+
+      // Save shipping info for after payment
       sessionStorage.setItem('pending_shipping_address', JSON.stringify({
-        full_name: shippingForm.full_name,
-        phone: shippingForm.phone,
-        address: shippingForm.address,
-        city: shippingForm.city,
-        postal_code: shippingForm.postal_code,
-        notes: shippingForm.notes,
-        email: shippingForm.email,
+        ...shippingAddress,
+        email: contactForm.email,
+        delivery_type: deliveryType,
+        shipping_cost: shippingPrice?.eur || 0,
       }));
 
       const response = await fetch(`${API_URL}/api/payments/checkout`, {
@@ -124,15 +135,10 @@ const Checkout = () => {
         body: JSON.stringify({ 
           origin_url: originUrl, 
           items,
-          shipping_address: {
-            full_name: shippingForm.full_name,
-            phone: shippingForm.phone,
-            address: shippingForm.address,
-            city: shippingForm.city,
-            postal_code: shippingForm.postal_code,
-            notes: shippingForm.notes,
-          },
-          customer_email: shippingForm.email,
+          shipping_address: shippingAddress,
+          customer_email: contactForm.email,
+          shipping_cost: shippingPrice?.eur || 0,
+          shipping_method: deliveryType === 'OFFICE' ? 'speedy_office' : 'address',
         })
       });
 
@@ -169,23 +175,39 @@ const Checkout = () => {
         image: item.image,
       }));
 
+      // Build shipping address based on delivery type
+      const shippingAddress = {
+        full_name: contactForm.full_name,
+        phone: contactForm.phone,
+        city: selectedCity?.name || '',
+        notes: contactForm.notes,
+      };
+      
+      if (deliveryType === 'OFFICE' && selectedOffice) {
+        shippingAddress.address = `Офис Спиди: ${selectedOffice.name}`;
+        shippingAddress.office_id = selectedOffice.id;
+        shippingAddress.office_name = selectedOffice.name;
+      } else {
+        shippingAddress.address = deliveryAddress;
+      }
+
       const response = await fetch(`${API_URL}/api/orders/cod`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           items,
-          shipping_address: {
-            full_name: shippingForm.full_name,
-            phone: shippingForm.phone,
-            address: shippingForm.address,
-            city: shippingForm.city,
-            postal_code: shippingForm.postal_code,
-            notes: shippingForm.notes,
-          },
-          shipping_method: shippingMethod,
-          shipping_cost: shippingCost,
-          email: shippingForm.email,
+          shipping_address: shippingAddress,
+          shipping_method: deliveryType === 'OFFICE' ? 'speedy_office' : 'address',
+          shipping_cost: shippingPrice?.eur || 0,
+          email: contactForm.email,
+          speedy_data: {
+            city_id: selectedCity?.id,
+            city_name: selectedCity?.name,
+            office_id: selectedOffice?.id,
+            office_name: selectedOffice?.name,
+            delivery_type: deliveryType,
+          }
         })
       });
 
@@ -218,15 +240,13 @@ const Checkout = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setShippingForm(prev => ({ ...prev, [name]: value }));
+    setContactForm(prev => ({ ...prev, [name]: value }));
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const shippingOption = SHIPPING_OPTIONS[shippingMethod];
-  const shippingCost = shippingOption ? shippingOption.price : 0;
-  const finalTotal = total + shippingCost;
+  const finalTotal = total + (shippingPrice?.eur || 0);
 
   // Order success view
   if (orderSuccess) {
@@ -275,74 +295,32 @@ const Checkout = () => {
         <div className="checkout-layout">
           {/* Left column - Shipping Address & Payment Method */}
           <div className="checkout-main">
-            {/* Shipping Method Selection */}
+            {/* Speedy Shipping Integration */}
             <div className="checkout-section">
-              <h2 className="checkout-section-title">{t('shippingMethod') || 'Начин на доставка'}</h2>
+              <h2 className="checkout-section-title">{t('shippingMethod') || 'Доставка'}</h2>
               
-              <div className="shipping-options">
-                <label 
-                  className={`shipping-option ${shippingMethod === 'speedy_office' ? 'selected' : ''}`}
-                  data-testid="shipping-speedy-office"
-                >
-                  <input
-                    type="radio"
-                    name="shippingMethod"
-                    value="speedy_office"
-                    checked={shippingMethod === 'speedy_office'}
-                    onChange={(e) => setShippingMethod(e.target.value)}
-                  />
-                  <div className="shipping-option-content">
-                    <div className="shipping-option-info">
-                      <span className="shipping-option-title">
-                        {language === 'bg' ? SHIPPING_OPTIONS.speedy_office.name : SHIPPING_OPTIONS.speedy_office.name_en}
-                      </span>
-                      <span className="shipping-option-desc">{t('speedyOfficeDesc') || 'Вземете от най-близкия офис на Спиди'}</span>
-                    </div>
-                    <div className="shipping-option-price">
-                      <span className="price-eur">€{SHIPPING_OPTIONS.speedy_office.price.toFixed(2)}</span>
-                      <span className="price-bgn">{SHIPPING_OPTIONS.speedy_office.priceBGN.toFixed(2)} лв.</span>
-                    </div>
-                  </div>
-                </label>
-                
-                <label 
-                  className={`shipping-option ${shippingMethod === 'address' ? 'selected' : ''}`}
-                  data-testid="shipping-to-address"
-                >
-                  <input
-                    type="radio"
-                    name="shippingMethod"
-                    value="address"
-                    checked={shippingMethod === 'address'}
-                    onChange={(e) => setShippingMethod(e.target.value)}
-                  />
-                  <div className="shipping-option-content">
-                    <div className="shipping-option-info">
-                      <span className="shipping-option-title">
-                        {language === 'bg' ? SHIPPING_OPTIONS.address.name : SHIPPING_OPTIONS.address.name_en}
-                      </span>
-                      <span className="shipping-option-desc">{t('addressDeliveryDesc') || 'Доставка директно до вашия адрес'}</span>
-                    </div>
-                    <div className="shipping-option-price">
-                      <span className="price-eur">€{SHIPPING_OPTIONS.address.price.toFixed(2)}</span>
-                      <span className="price-bgn">{SHIPPING_OPTIONS.address.priceBGN.toFixed(2)} лв.</span>
-                    </div>
-                  </div>
-                </label>
-              </div>
+              <SpeedyShipping
+                deliveryType={deliveryType}
+                setDeliveryType={setDeliveryType}
+                selectedCity={selectedCity}
+                setSelectedCity={setSelectedCity}
+                selectedOffice={selectedOffice}
+                setSelectedOffice={setSelectedOffice}
+                shippingPrice={shippingPrice}
+                setShippingPrice={setShippingPrice}
+                address={deliveryAddress}
+                setAddress={setDeliveryAddress}
+              />
+              
+              {formErrors.city && <span className="form-error">{formErrors.city}</span>}
+              {formErrors.office && <span className="form-error">{formErrors.office}</span>}
+              {formErrors.address && <span className="form-error">{formErrors.address}</span>}
+              {formErrors.shipping && <span className="form-error">{formErrors.shipping}</span>}
             </div>
 
-            {/* Shipping Address Form - REQUIRED for all orders */}
+            {/* Contact Information */}
             <div className="checkout-section">
-              <h2 className="checkout-section-title">
-                {shippingMethod === 'speedy_office' 
-                  ? (t('speedyOfficeAddress') || 'Данни за получаване от офис') 
-                  : (t('deliveryAddress') || 'Адрес за доставка')}
-              </h2>
-              
-              {shippingMethod === 'speedy_office' && (
-                <p className="shipping-note">{t('speedyOfficeNote') || 'Въведете данни за връзка. Ще получите SMS с информация за офиса при изпращане.'}</p>
-              )}
+              <h2 className="checkout-section-title">{t('contactInfo') || 'Данни за контакт'}</h2>
               
               <div className="shipping-form">
                 <div className="form-row">
@@ -351,11 +329,11 @@ const Checkout = () => {
                     <input
                       type="text"
                       name="full_name"
-                      value={shippingForm.full_name}
+                      value={contactForm.full_name}
                       onChange={handleInputChange}
                       className={formErrors.full_name ? 'error' : ''}
                       placeholder="Иван Иванов"
-                      data-testid="shipping-name"
+                      data-testid="contact-name"
                     />
                     {formErrors.full_name && <span className="form-error">{formErrors.full_name}</span>}
                   </div>
@@ -365,11 +343,11 @@ const Checkout = () => {
                     <input
                       type="tel"
                       name="phone"
-                      value={shippingForm.phone}
+                      value={contactForm.phone}
                       onChange={handleInputChange}
                       className={formErrors.phone ? 'error' : ''}
                       placeholder="+359 888 123 456"
-                      data-testid="shipping-phone"
+                      data-testid="contact-phone"
                     />
                     {formErrors.phone && <span className="form-error">{formErrors.phone}</span>}
                   </div>
@@ -381,69 +359,25 @@ const Checkout = () => {
                     <input
                       type="email"
                       name="email"
-                      value={shippingForm.email}
+                      value={contactForm.email}
                       onChange={handleInputChange}
                       className={formErrors.email ? 'error' : ''}
                       placeholder="email@example.com"
-                      data-testid="shipping-email"
+                      data-testid="contact-email"
                     />
                     {formErrors.email && <span className="form-error">{formErrors.email}</span>}
                   </div>
                 )}
                 
                 <div className="form-group">
-                  <label>{t('address') || 'Адрес'} *</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={shippingForm.address}
-                    onChange={handleInputChange}
-                    className={formErrors.address ? 'error' : ''}
-                    placeholder="ул. Примерна 123, ап. 45"
-                    data-testid="shipping-address"
-                  />
-                  {formErrors.address && <span className="form-error">{formErrors.address}</span>}
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>{t('city') || 'Град'} *</label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={shippingForm.city}
-                      onChange={handleInputChange}
-                      className={formErrors.city ? 'error' : ''}
-                      placeholder="София"
-                      data-testid="shipping-city"
-                    />
-                    {formErrors.city && <span className="form-error">{formErrors.city}</span>}
-                  </div>
-                  
-                  <div className="form-group">
-                    <label>{t('postalCode') || 'Пощенски код'} *</label>
-                    <input
-                      type="text"
-                      name="postal_code"
-                      value={shippingForm.postal_code}
-                      onChange={handleInputChange}
-                      className={formErrors.postal_code ? 'error' : ''}
-                      placeholder="1000"
-                      data-testid="shipping-postal"
-                    />
-                    {formErrors.postal_code && <span className="form-error">{formErrors.postal_code}</span>}
-                  </div>
-                </div>
-                
-                <div className="form-group">
                   <label>{t('deliveryNotes') || 'Бележки за доставка'}</label>
                   <textarea
                     name="notes"
-                    value={shippingForm.notes}
+                    value={contactForm.notes}
                     onChange={handleInputChange}
                     placeholder={t('deliveryNotesPlaceholder') || 'Допълнителни инструкции за куриера...'}
                     rows={3}
-                    data-testid="shipping-notes"
+                    data-testid="contact-notes"
                   />
                 </div>
               </div>
@@ -525,8 +459,8 @@ const Checkout = () => {
                   <span>€{total.toFixed(2)}</span>
                 </div>
                 <div className="order-total-row">
-                  <span>{t('shipping') || 'Доставка'} ({shippingOption ? (language === 'bg' ? shippingOption.name : shippingOption.name_en) : ''})</span>
-                  <span>€{shippingCost.toFixed(2)}</span>
+                  <span>{t('shipping') || 'Доставка'} ({deliveryType === 'OFFICE' ? (language === 'bg' ? 'офис' : 'office') : (language === 'bg' ? 'адрес' : 'address')})</span>
+                  <span>{shippingPrice ? `€${shippingPrice.eur.toFixed(2)}` : '---'}</span>
                 </div>
                 <div className="order-total-row total">
                   <span>{t('total') || 'Общо'}</span>

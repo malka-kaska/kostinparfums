@@ -1,0 +1,89 @@
+{
+  "summary": "End-to-end testing of Speedy Bulgaria courier integration (backend + frontend). 6/7 backend pytest tests passed, full UI flow verified for ADDRESS delivery (price €4.46 calculated successfully). City search, office loading (322 offices for Sofia), delivery type switch, address-mode price calc, and COD order creation all work. CRITICAL: the COD endpoint silently DROPS the `speedy_data` field because it is not declared in the CODOrderRequest Pydantic schema — orders are persisted without city_id/office_id/delivery_type, blocking the future auto-shipment phase.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/orders/cod",
+        "issue": "Endpoint returns 200/success but silently ignores `speedy_data` payload (city_id, office_id, delivery_type). The field is NOT declared in /app/backend/models/schemas.py::CODOrderRequest, so Pydantic drops it. Verified by inserting a COD order with speedy_data and inspecting MongoDB: stored doc keys are only [_id, created_at, items, order_number, payment_method, payment_status, shipping_address, shipping_cost, shipping_method, status, subtotal, total, updated_at, user_email, user_id, user_name]. No speedy_data persisted. This blocks auto-shipment / waybill creation and removes the ability for admin/courier to know which Speedy office to deliver to.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "GET /api/speedy/cities?name=Варна",
+        "issue": "Search for 'Варна' did not include a city whose name contains 'Варна' in the returned list (only nearby/different-named sites). May be expected behavior of Speedy site search, but worth confirming with the courier docs that an exact name match is returned in the top results."
+      },
+      {
+        "endpoint": "POST /api/speedy/calculate",
+        "issue": "SERVICE_TO_OFFICE and SERVICE_TO_ADDRESS are both hard-coded to 505 in /app/backend/routes/speedy.py. Per Speedy docs office and address delivery typically use distinct service IDs (e.g. 505 vs 5800). Currently both branches send the same serviceId so pricing for address vs office could be incorrect."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Brands fetch (unrelated to Speedy)",
+        "issue": "Runtime ReferenceError: DUBAI_BRANDS is not defined — repeated on every page load in bundle.js (fetchBrands). Pre-existing but still present.",
+        "selector": "console",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "City -> Office selection (Speedy)",
+        "issue": "City dropdown for 'София' search returns ONE option only ('гр. София'). This is correct functionally because the user must pick a city — but if the user types a partial query they may not see expected matches. Office dropdown opens fine on focus, but Playwright reproducibly fails to click an office <div> in the dropdown on the first attempt (city dropdown items intercept pointer events on certain layouts). Real users can click without issue (verified visually that 322 offices are loaded). Consider adding `data-testid` on individual office dropdown items to improve testability.",
+        "affected_selectors": [".speedy-dropdown-offices .speedy-dropdown-item", "[data-testid='speedy-office-search']"]
+      },
+      {
+        "flow": "Order Summary shipping line",
+        "issue": "Order Summary shows 'Shipping (office) ---' until a price is calculated. Works correctly: once ADDRESS price was calculated (€4.46) the order summary updated. Office-mode price could not be verified through the UI script due to dropdown pointer-event interception (see above); backend pytest verified office price calc returns a valid price."
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Checkout page",
+        "issues": [
+          "contactInfo section heading is rendered as the literal i18n key string 'contactInfo' (untranslated) — visible in screenshot. Missing translation entry."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_speedy.py",
+    "/app/test_reports/pytest/iteration_8.xml"
+  ],
+  "action_items": [
+    "HIGH: Add `speedy_data` (city_id:int, city_name:str, office_id:Optional[int], office_name:Optional[str], delivery_type:str, address:Optional[str]) as a Pydantic sub-model on CODOrderRequest and persist it in the order document so the future shipment creation phase can read it.",
+    "HIGH: After adding the field, also surface it in order_doc_to_response so admins can see the chosen Speedy office.",
+    "MEDIUM: Verify Speedy service IDs — SERVICE_TO_ADDRESS should likely differ from SERVICE_TO_OFFICE (both currently 505). Confirm with Speedy docs / contract.",
+    "MEDIUM: Fix `DUBAI_BRANDS is not defined` runtime error (pre-existing, unrelated to Speedy but pollutes console).",
+    "LOW: Add `data-testid` on office and city dropdown item nodes for reliable Playwright targeting (e.g. data-testid=`speedy-city-item-{id}`).",
+    "LOW: Add i18n translation for the 'contactInfo' heading on /checkout (currently shows raw key).",
+    "LOW: Sanity-check the Варна (Varna) site search results."
+  ],
+  "critical_code_review_comments": [
+    "CODOrderRequest does not include speedy_data → the entire Speedy integration is essentially write-only on the order side. Highest priority fix.",
+    "speedy.py SERVICE_TO_OFFICE and SERVICE_TO_ADDRESS are both 505 — looks like a copy-paste oversight.",
+    "speedy.py uses the bare 1 EUR ≈ 1.95583 BGN conversion as a magic constant. Move to env or shared constants module.",
+    "speedy.py logs full API errors at error level which may leak credentials/PII into logs (httpx URL contains password? — actually password is in payload body, so log line is safe, but worth reviewing).",
+    "SpeedyShipping.jsx debounces price calc with setTimeout 500ms inside a useCallback dependency that includes setShippingPrice (a setter) — setShippingPrice is stable so this is fine, but the calculatePrice ref is recreated whenever shippingPrice/address/etc change; consider useRef on payload to reduce extra fetches.",
+    "SpeedyShipping.jsx does not surface selected city/office back to the parent via a single object (uses 4 separate state setters). Parent Checkout.jsx then re-derives speedy_data — works, but a single onChange({city,office,address,deliveryType,price}) would be cleaner.",
+    "orders.py:create_cod_order computes total = subtotal + shipping_cost but the frontend sends shipping_cost in EUR while subtotal is stored as raw item prices (also EUR per the catalog). Confirm currency consistency end-to-end (€129.00 + €6.50 = €135.50 verified)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_speedy.py (new)"
+  ],
+  "success_rate": {
+    "backend": "86% (6/7 pytest passed; 1 minor assertion on Варна search result names)",
+    "frontend": "80% (city search ✓, office list load ✓ 322 offices, address-mode price calc ✓, COD submit ✓; office-mode price-via-UI not fully verified through Playwright due to dropdown pointer interception)"
+  },
+  "test_credentials": {
+    "admin": "konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9 (not needed for this iteration — public/guest flows)",
+    "test_user": "test_verify@example.com / test12345"
+  },
+  "seed_data_creation": "Created one test COD order (KOS-260624-ED11) in MongoDB to verify speedy_data persistence — confirmed speedy_data was NOT saved.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Speedy Bulgaria backend endpoints (/api/speedy/cities, /api/speedy/offices, /api/speedy/calculate) are working against the live Speedy API. Sofia city_id 68134 returns 322 offices. Address-mode price for Sofia is ~€4.46. The main outstanding issue is that POST /api/orders/cod does NOT persist `speedy_data` because the Pydantic schema (models/schemas.py::CODOrderRequest) doesn't declare it. After main agent adds the field, retest by POSTing a COD order with speedy_data and confirming the field appears in the stored document and in GET /api/orders/{id}. Also verify SERVICE_TO_ADDRESS uses a different Speedy service ID than SERVICE_TO_OFFICE.",
+  "rca_of_the_issue": "Root cause of the dropped speedy_data: Pydantic v2 BaseModel without `model_config = ConfigDict(extra='allow')` drops undeclared fields silently. Since CODOrderRequest only declares items/shipping_address/shipping_method/shipping_cost/email, the `speedy_data` key from the frontend is stripped before reaching `create_cod_order`, so it never gets inserted into the orders collection. Fix: declare a `speedy_data: Optional[SpeedyData] = None` field on CODOrderRequest and store `order_data.speedy_data.dict()` in the order document."
+}

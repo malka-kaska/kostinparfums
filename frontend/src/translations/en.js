@@ -416,6 +416,7 @@ export const en = {
   addressDeliveryDesc: "Delivery directly to your address",
   speedyOfficeAddress: "Details for office pickup",
   speedyOfficeNote: "Enter contact details. You will receive SMS with office information upon dispatch.",
+  contactInfo: "Contact Information",
   paymentMethod: "Payment Method",
   payWithCard: "Pay with Card",
   cardSecure: "Secure payment via Stripe",

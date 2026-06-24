@@ -3,7 +3,7 @@
 ## Product Overview
 KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end fragrances for men and women. Built with React + FastAPI + MongoDB, featuring Stripe checkout, Cloudinary image hosting, and Resend email integration.
 
-**Region**: Bulgaria only (shipping within Bulgaria)
+**Region**: Bulgaria only (shipping within Bulgaria via Speedy courier)
 
 ## Core Features (Completed)
 
@@ -17,18 +17,20 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 ### Payment Methods
 - [x] **Card Payment via Stripe** (Live keys configured)
 - [x] **Cash on Delivery (COD)**
-  - Full delivery address form (Name, Phone, Address, City, Postal Code, Notes)
+  - Full delivery address form (Name, Phone, Address, City, Notes)
   - Email field for guest checkout
   - Order confirmation email
   - No minimum order amount
   - No additional fees
 
-### Shipping Methods (NEW - December 2025)
-- [x] **Доставка до офис на Спиди** - €2.67 / 5.23 лв.
-- [x] **Доставка до адрес** - €3.62 / 7.08 лв.
-- [x] Shipping cost correctly added to order total
-- [x] Shipping method saved in order record
-- [x] Dynamic form label based on shipping method selection
+### Speedy Courier Integration (NEW - December 2025)
+- [x] **Live API integration** with Speedy Bulgaria (api.speedy.bg)
+- [x] **City search** - autocomplete from Speedy API
+- [x] **Office selection** - dropdown with all offices in selected city
+- [x] **Dynamic price calculation** - real-time shipping cost from Speedy
+- [x] **Delivery types**: Office pickup (€3.32) / Address delivery (€4.46)
+- [x] **speedy_data** stored in orders (city_id, office_id, delivery_type)
+- [ ] Auto shipment creation (товарителница) - next phase
 
 ### Product Management
 - [x] Dynamic product catalog with filtering (gender, brand, collection)
@@ -40,10 +42,11 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 ### Checkout Flow
 - [x] Dedicated `/checkout` page
-- [x] **Step 1**: Shipping method selection (Speedy Office / Address)
-- [x] **Step 2**: Delivery details form
-- [x] **Step 3**: Payment method selection (Card or COD)
-- [x] Order summary sidebar with shipping cost
+- [x] **Step 1**: Delivery type (Speedy Office / Address)
+- [x] **Step 2**: City search + Office/Address selection
+- [x] **Step 3**: Contact info (Name, Phone, Email)
+- [x] **Step 4**: Payment method (Card or COD)
+- [x] Order summary with real-time shipping cost
 - [x] Free shipping over €100 (announcement banner)
 - [x] Form validation
 - [x] Success confirmation page
@@ -62,33 +65,50 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - **Database**: MongoDB
 - **Email**: Resend API (via Emergent Integrations)
 - **Payments**: Stripe (Live mode)
+- **Shipping**: Speedy Bulgaria API (Live)
 - **Image Hosting**: Cloudinary
 - **Auth**: JWT tokens, bcrypt hashing
 
 ## API Endpoints
+### Payments & Orders
 - `POST /api/payments/checkout` - Create Stripe checkout session
 - `POST /api/orders/cod` - Create Cash on Delivery order
+
+### Speedy Integration
+- `GET /api/speedy/cities?name=X` - Search cities
+- `GET /api/speedy/offices?cityId=X` - Get offices in city
+- `POST /api/speedy/calculate` - Calculate shipping price
+- `POST /api/speedy/shipment` - Create shipment (next phase)
+- `GET /api/speedy/track/{number}` - Track shipment
+
+### Collections
 - `GET /api/collections` - List collections
 - `GET /api/products?collection=slug` - Filter by collection
 
 ## Database Schema
-- `orders`: order_number, items, subtotal, shipping_cost, shipping_method, total, payment_method (card/cod), shipping_address, status
+- `orders`: order_number, items, subtotal, shipping_cost, shipping_method, total, payment_method, shipping_address, speedy_data, status
 - `products`: name, brand, price, collections, visibility, popularity_score
 - `collections`: name, slug, is_system, is_active
 
+## Speedy Integration Details
+- **API URL**: https://api.speedy.bg/v1
+- **Service ID**: 505 (Standard 24h)
+- **Sender Location**: Варна, бул. "Цар Освободител" 263А
+- **Credentials**: Stored in backend/.env (SPEEDY_USERNAME, SPEEDY_PASSWORD)
+
 ## Recently Implemented (December 2025)
-- [x] **Shipping Methods** (Speedy Office €2.67 / Address €3.62)
-- [x] **Two-step checkout**: Select shipping → Fill form → Choose payment
-- [x] **Shipping cost in order total**
+- [x] **Speedy Bulgaria API Integration** - city search, office selection, price calculation
+- [x] **SpeedyShipping.jsx component** - reusable shipping UI
+- [x] **speedy_data in orders** - city_id, office_id, delivery_type stored
+- [x] Two-step checkout with real-time pricing
 - [x] Cash on Delivery payment option
-- [x] Checkout page with payment method selection
-- [x] Delivery address form for COD
-- [x] COD order confirmation emails
 - [x] Stripe Live keys updated (KOSTIN company)
 - [x] Collections system for product pages
 - [x] Smart autocomplete search
 
 ## Backlog
+- [ ] **Auto shipment creation** - create Speedy waybill on order confirmation
+- [ ] **Tracking integration** - show shipment status in user profile
 - [ ] Dropshipping API integration (awaiting supplier API details)
 - [ ] Refactor Admin.jsx into smaller components
 - [ ] Extract email HTML templates to separate files
@@ -97,6 +117,10 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9
 - Demo User: test_verify@example.com / test12345
 
+## Speedy Credentials
+- Username: 1910084
+- Password: (in backend/.env)
+
 ## Stripe Configuration
 - Account: KOSTIN (Bulgaria)
 - Mode: **LIVE** (real payments enabled)
@@ -104,16 +128,20 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 ## File Structure
 ```
-/app/frontend/src/pages/
-├── Checkout.jsx        # Payment method selection + COD form
-├── Checkout.css        # Checkout styles
-├── Cart.jsx            # Cart page (redirects to /checkout)
-└── CheckoutSuccess.jsx # Success page after payment
+/app/frontend/src/
+├── components/
+│   ├── SpeedyShipping.jsx  # City/office selection component
+│   └── SpeedyShipping.css  # Shipping component styles
+├── pages/
+│   ├── Checkout.jsx        # Main checkout page
+│   ├── Checkout.css        # Checkout styles
+│   └── CheckoutSuccess.jsx # Success page
 
 /app/backend/routes/
-├── orders.py           # COD order endpoint (/api/orders/cod)
-└── collections.py      # Collections CRUD
+├── speedy.py       # Speedy API integration
+├── orders.py       # COD order endpoint
+└── collections.py  # Collections CRUD
 
-/app/backend/utils/
-└── email_service.py    # COD confirmation email function
+/app/backend/models/
+└── schemas.py      # SpeedyData, ShippingAddress, CODOrderRequest
 ```

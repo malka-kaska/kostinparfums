@@ -415,6 +415,7 @@ export const bg = {
   addressDeliveryDesc: "Доставка директно до вашия адрес",
   speedyOfficeAddress: "Данни за получаване от офис",
   speedyOfficeNote: "Въведете данни за връзка. Ще получите SMS с информация за офиса при изпращане.",
+  contactInfo: "Данни за контакт",
   paymentMethod: "Метод на плащане",
   payWithCard: "Плащане с карта",
   cardSecure: "Сигурно плащане чрез Stripe",

@@ -191,13 +191,26 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
             "full_name": order_data.shipping_address.full_name,
             "phone": order_data.shipping_address.phone,
             "address": order_data.shipping_address.address,
-            "city": order_data.shipping_address.city,
-            "postal_code": order_data.shipping_address.postal_code,
+            "city": order_data.shipping_address.city or "",
+            "postal_code": order_data.shipping_address.postal_code or "",
             "notes": order_data.shipping_address.notes or "",
+            "office_id": order_data.shipping_address.office_id,
+            "office_name": order_data.shipping_address.office_name,
         },
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    
+    # Add Speedy data if provided
+    if order_data.speedy_data:
+        order_doc["speedy_data"] = {
+            "city_id": order_data.speedy_data.city_id,
+            "city_name": order_data.speedy_data.city_name,
+            "office_id": order_data.speedy_data.office_id,
+            "office_name": order_data.speedy_data.office_name,
+            "delivery_type": order_data.speedy_data.delivery_type,
+            "address": order_data.speedy_data.address,
+        }
     
     result = await db.orders.insert_one(order_doc)
     order_doc["_id"] = result.inserted_id

@@ -106,9 +106,21 @@ class ShippingAddress(BaseModel):
     full_name: str
     phone: str
     address: str
-    city: str
-    postal_code: str
+    city: Optional[str] = None  # City name from Speedy selection
+    postal_code: Optional[str] = None  # Made optional for Speedy integration
     notes: Optional[str] = None
+    office_id: Optional[int] = None  # Speedy office ID
+    office_name: Optional[str] = None  # Speedy office name
+
+
+class SpeedyData(BaseModel):
+    """Speedy courier integration data"""
+    city_id: Optional[int] = None
+    city_name: Optional[str] = None
+    office_id: Optional[int] = None
+    office_name: Optional[str] = None
+    delivery_type: Optional[str] = None  # 'OFFICE' or 'ADDRESS'
+    address: Optional[str] = None  # Full address for address delivery
 
 
 class CODOrderRequest(BaseModel):
@@ -117,6 +129,7 @@ class CODOrderRequest(BaseModel):
     shipping_method: Optional[str] = "speedy_office"  # 'speedy_office' or 'address'
     shipping_cost: Optional[float] = 0.0
     email: Optional[str] = None  # For guest checkout
+    speedy_data: Optional[SpeedyData] = None  # Speedy integration data
 
 
 # Collection schemas

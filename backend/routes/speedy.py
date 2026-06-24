@@ -240,11 +240,12 @@ class CreateShipmentRequest(BaseModel):
     weight: float = 0.5
     cod_amount: Optional[float] = None  # Cash on delivery amount (if COD payment)
     contents: str = "Парфюми"
+    include_return_voucher: bool = True  # Include 14-day return voucher
 
 
 @router.post("/shipment")
 async def create_shipment(request: CreateShipmentRequest):
-    """Create a shipment (waybill) in Speedy system with COD and receipt support"""
+    """Create a shipment (waybill) in Speedy system with COD, receipt, and return voucher support"""
     try:
         # Build recipient based on delivery type
         recipient = {
@@ -298,6 +299,15 @@ async def create_shipment(request: CreateShipmentRequest):
             }
             # Add fiscal receipt request
             shipment_payload["payment"]["declaredValueAmount"] = request.cod_amount
+        
+        # Add return voucher for 14-day free returns (неразопакован продукт)
+        if request.include_return_voucher:
+            shipment_payload["service"]["returnVoucher"] = {
+                "serviceId": SERVICE_TO_OFFICE,  # Return to office
+                "payer": "SENDER",  # KOSTIN pays for return shipping
+                "validityPeriod": 14  # 14 days validity
+            }
+            logger.info(f"Including 14-day return voucher for order {request.order_number}")
         
         logger.info(f"Creating Speedy shipment for order {request.order_number}, COD: {request.cod_amount}")
         

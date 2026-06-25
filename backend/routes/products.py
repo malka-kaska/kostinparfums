@@ -469,22 +469,8 @@ async def update_product(request: Request, product_id: str, data: ProductUpdate)
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    # Build update data, handling original_price specially (can be explicitly set to None)
-    update_data = {}
-    data_dict = data.model_dump()
-    
-    for k, v in data_dict.items():
-        if k == "original_price":
-            # original_price can be explicitly set to None to remove discount
-            if v is not None or "original_price" in (request._body.decode() if hasattr(request, '_body') else ""):
-                update_data[k] = v
-        elif v is not None:
-            update_data[k] = v
-    
-    # Always allow original_price to be set/unset if it's in the request
-    raw_body = await request.body()
-    if b"original_price" in raw_body:
-        update_data["original_price"] = data_dict.get("original_price")
+    # Build update data - include all non-None values
+    update_data = {k: v for k, v in data.model_dump(exclude_unset=True).items()}
     
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")

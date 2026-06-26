@@ -29,14 +29,38 @@ const Products = () => {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
-  const [selectedBrands, setSelectedBrands] = useState([]); // Multiple brands support
+  const [selectedBrands, setSelectedBrands] = useState(() => {
+    const brandsParam = searchParams.get('brands');
+    return brandsParam ? brandsParam.split(',').filter(Boolean) : [];
+  });
   const [selectedGender, setSelectedGender] = useState(searchParams.get('gender') || 'all');
+  const [selectedScentProfiles, setSelectedScentProfiles] = useState(() => {
+    const profilesParam = searchParams.get('scent_profiles');
+    return profilesParam ? profilesParam.split(',').filter(Boolean) : [];
+  });
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mobileGridCols, setMobileGridCols] = useState(1); // 1 or 2 columns on mobile
   const { t } = useLanguage();
+
+  // Scent profile options
+  const SCENT_PROFILE_OPTIONS = [
+    { key: 'sweet', label: t('scentSweet') || 'Sweet' },
+    { key: 'fresh', label: t('scentFresh') || 'Fresh' },
+    { key: 'citrus', label: t('scentCitrus') || 'Citrus' },
+    { key: 'fruity', label: t('scentFruity') || 'Fruity' },
+    { key: 'floral', label: t('scentFloral') || 'Floral' },
+    { key: 'woody', label: t('scentWoody') || 'Woody' },
+    { key: 'spicy', label: t('scentSpicy') || 'Spicy' },
+    { key: 'aquatic', label: t('scentAquatic') || 'Aquatic' },
+    { key: 'musky', label: t('scentMusky') || 'Musky' },
+    { key: 'leather', label: t('scentLeather') || 'Leather' },
+    { key: 'tobacco', label: t('scentTobacco') || 'Tobacco' },
+    { key: 'oriental', label: t('scentOriental') || 'Oriental' },
+    { key: 'vanilla', label: t('scentVanilla') || 'Vanilla' },
+  ];
 
   // Fetch brands with gender filter
   const fetchBrands = async (gender) => {
@@ -84,6 +108,7 @@ const Products = () => {
     const searchFromUrl = searchParams.get('search') || '';
     const genderFromUrl = searchParams.get('gender') || 'all';
     const brandsFromUrl = searchParams.get('brands');
+    const profilesFromUrl = searchParams.get('scent_profiles');
     
     setSelectedCategory(categoryFromUrl);
     setSearchQuery(searchFromUrl);
@@ -92,6 +117,11 @@ const Products = () => {
     // Set brands from URL if present
     if (brandsFromUrl) {
       setSelectedBrands(brandsFromUrl.split(',').filter(Boolean));
+    }
+    
+    // Set scent profiles from URL if present
+    if (profilesFromUrl) {
+      setSelectedScentProfiles(profilesFromUrl.split(',').filter(Boolean));
     }
   }, [searchParams]);
 
@@ -108,8 +138,15 @@ const Products = () => {
           ? brandsFromUrl.split(',').filter(Boolean) 
           : selectedBrands;
         
+        // Read scent profiles from URL directly to avoid race condition
+        const profilesFromUrl = searchParams.get('scent_profiles');
+        const profilesToUse = profilesFromUrl 
+          ? profilesFromUrl.split(',').filter(Boolean) 
+          : selectedScentProfiles;
+        
         if (brandsToUse.length > 0) params.set('brands', brandsToUse.join(','));
         if (selectedGender !== 'all') params.set('gender', selectedGender);
+        if (profilesToUse.length > 0) params.set('scent_profiles', profilesToUse.join(','));
         if (searchQuery) params.set('search', searchQuery);
         if (sortBy) params.set('sort', sortBy);
         
@@ -137,7 +174,7 @@ const Products = () => {
 
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, selectedBrands, selectedGender, sortBy, searchQuery, searchParams]);
+  }, [selectedCategory, selectedBrands, selectedGender, selectedScentProfiles, sortBy, searchQuery, searchParams]);
 
   const categoryNames = {
     perfumes: t('perfumes'),
@@ -175,10 +212,21 @@ const Products = () => {
     });
   };
 
+  const handleScentProfileToggle = (profile) => {
+    setSelectedScentProfiles(prev => {
+      if (prev.includes(profile)) {
+        return prev.filter(p => p !== profile);
+      } else {
+        return [...prev, profile];
+      }
+    });
+  };
+
   const clearFilters = () => {
     setSelectedCategory('all');
     setSelectedBrands([]);
     setSelectedGender('all');
+    setSelectedScentProfiles([]);
     setSearchQuery('');
     setSearchParams({});
   };
@@ -260,6 +308,31 @@ const Products = () => {
                   onClick={() => setSelectedBrands([])}
                 >
                   {t('clearBrands') || 'Clear brands'} ({selectedBrands.length})
+                </button>
+              )}
+            </div>
+
+            {/* Scent Profile Filter */}
+            <div className="filter-group">
+              <h4 className="filter-title">{t('scentProfile') || 'Scent Profile'}</h4>
+              <div className="filter-options scrollable">
+                {SCENT_PROFILE_OPTIONS.map(({ key, label }) => (
+                  <label key={key} className="filter-option checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedScentProfiles.includes(key)}
+                      onChange={() => handleScentProfileToggle(key)}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedScentProfiles.length > 0 && (
+                <button 
+                  className="clear-brands-btn"
+                  onClick={() => setSelectedScentProfiles([])}
+                >
+                  {t('clearScentProfiles') || 'Clear profiles'} ({selectedScentProfiles.length})
                 </button>
               )}
             </div>

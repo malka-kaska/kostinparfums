@@ -46,6 +46,7 @@ class ProductCreate(BaseModel):
     is_visible: bool = True
     gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
     collections: Optional[List[str]] = None  # Collection slugs: ["all_products", "dubai", "campaign_xyz"]
+    scent_profiles: Optional[List[str]] = None  # Scent profile tags: ["sweet", "woody", "oriental", etc.]
 
 
 class ProductUpdate(BaseModel):
@@ -63,6 +64,7 @@ class ProductUpdate(BaseModel):
     is_visible: Optional[bool] = None
     gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
     collections: Optional[List[str]] = None  # Collection slugs
+    scent_profiles: Optional[List[str]] = None  # Scent profile tags
 
 
 class ProductVisibilityUpdate(BaseModel):

@@ -196,6 +196,7 @@ def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict
         "is_visible": doc.get("is_visible", True),
         "gender": doc.get("gender", []),  # New field - ["men"], ["women"], or both
         "collections": doc.get("collections", ["all_products"]),  # Collection slugs
+        "scent_profiles": doc.get("scent_profiles", []),  # Scent profile tags
         "created_at": doc.get("created_at"),
     }
     if doc.get("description_bg"):
@@ -211,6 +212,7 @@ async def get_products(
     brands: Optional[str] = None,  # Comma-separated list of brands for multi-select
     gender: Optional[str] = None,  # "men" or "women" - filters products that include this gender
     collection: Optional[str] = None,  # Filter by collection slug
+    scent_profiles: Optional[str] = None,  # Comma-separated list of scent profiles
     search: Optional[str] = None,
     sort: Optional[str] = "popular",  # Default to popular/best sellers
     min_price: Optional[float] = None,
@@ -240,6 +242,12 @@ async def get_products(
     # Collection filter - filter by collection slug
     if collection:
         query["collections"] = collection
+    
+    # Scent profiles filter - show products that have ANY of the selected profiles
+    if scent_profiles:
+        profile_list = [p.strip() for p in scent_profiles.split(",") if p.strip()]
+        if profile_list:
+            query["scent_profiles"] = {"$in": profile_list}
     
     if search:
         query["$or"] = [

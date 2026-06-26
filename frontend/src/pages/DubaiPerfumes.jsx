@@ -17,13 +17,33 @@ const DubaiPerfumes = () => {
   const [expandedSections, setExpandedSections] = useState({
     gender: true,
     brand: true,
+    scentProfile: true,
   });
   const [availableBrands, setAvailableBrands] = useState([]);
+
+  // Scent profile options
+  const SCENT_PROFILE_OPTIONS = [
+    { key: 'sweet', label: t('scentSweet') || 'Sweet' },
+    { key: 'fresh', label: t('scentFresh') || 'Fresh' },
+    { key: 'citrus', label: t('scentCitrus') || 'Citrus' },
+    { key: 'fruity', label: t('scentFruity') || 'Fruity' },
+    { key: 'floral', label: t('scentFloral') || 'Floral' },
+    { key: 'woody', label: t('scentWoody') || 'Woody' },
+    { key: 'spicy', label: t('scentSpicy') || 'Spicy' },
+    { key: 'aquatic', label: t('scentAquatic') || 'Aquatic' },
+    { key: 'musky', label: t('scentMusky') || 'Musky' },
+    { key: 'leather', label: t('scentLeather') || 'Leather' },
+    { key: 'tobacco', label: t('scentTobacco') || 'Tobacco' },
+    { key: 'oriental', label: t('scentOriental') || 'Oriental' },
+    { key: 'vanilla', label: t('scentVanilla') || 'Vanilla' },
+  ];
 
   // Get filter values from URL
   const selectedGender = searchParams.get('gender') || '';
   const selectedBrandsParam = searchParams.get('brands') || '';
   const selectedBrands = selectedBrandsParam ? selectedBrandsParam.split(',').filter(Boolean) : [];
+  const selectedScentProfilesParam = searchParams.get('scent_profiles') || '';
+  const selectedScentProfiles = selectedScentProfilesParam ? selectedScentProfilesParam.split(',').filter(Boolean) : [];
   const sortBy = searchParams.get('sort') || 'popular';
 
   useEffect(() => {
@@ -43,6 +63,9 @@ const DubaiPerfumes = () => {
         }
         if (selectedGender) {
           params.set('gender', selectedGender);
+        }
+        if (selectedScentProfilesParam) {
+          params.set('scent_profiles', selectedScentProfilesParam);
         }
         
         const url = `${API_URL}/api/products?${params.toString()}`;
@@ -66,7 +89,7 @@ const DubaiPerfumes = () => {
     };
 
     fetchProducts();
-  }, [selectedGender, selectedBrandsParam, sortBy]);
+  }, [selectedGender, selectedBrandsParam, selectedScentProfilesParam, sortBy]);
 
   const updateFilters = (key, value) => {
     const newParams = new URLSearchParams(searchParams);
@@ -88,6 +111,16 @@ const DubaiPerfumes = () => {
     updateFilters('brands', newBrands.join(','));
   };
 
+  const toggleScentProfile = (profile) => {
+    let newProfiles;
+    if (selectedScentProfiles.includes(profile)) {
+      newProfiles = selectedScentProfiles.filter(p => p !== profile);
+    } else {
+      newProfiles = [...selectedScentProfiles, profile];
+    }
+    updateFilters('scent_profiles', newProfiles.join(','));
+  };
+
   const clearAllFilters = () => {
     setSearchParams({ sort: sortBy });
   };
@@ -99,7 +132,7 @@ const DubaiPerfumes = () => {
     }));
   };
 
-  const hasActiveFilters = selectedGender || selectedBrands.length > 0;
+  const hasActiveFilters = selectedGender || selectedBrands.length > 0 || selectedScentProfiles.length > 0;
 
   return (
     <div className="products-page">
@@ -227,6 +260,31 @@ const DubaiPerfumes = () => {
                 )}
               </div>
             )}
+
+            {/* Scent Profile Filter */}
+            <div className="filter-section">
+              <button 
+                className="filter-section-header"
+                onClick={() => toggleSection('scentProfile')}
+              >
+                <span>{t('scentProfile') || 'Scent Profile'}</span>
+                {expandedSections.scentProfile ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </button>
+              {expandedSections.scentProfile && (
+                <div className="filter-options brand-filter-options">
+                  {SCENT_PROFILE_OPTIONS.map(({ key, label }) => (
+                    <label key={key} className="filter-option checkbox-option">
+                      <input
+                        type="checkbox"
+                        checked={selectedScentProfiles.includes(key)}
+                        onChange={() => toggleScentProfile(key)}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <button 
               className="apply-filters-mobile"

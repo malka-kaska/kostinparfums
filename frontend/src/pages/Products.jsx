@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, X, Grid2X2, LayoutList } from 'lucide-react';
+import { SlidersHorizontal, X, Grid2X2, LayoutList, ChevronDown, ChevronUp } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
 import './Products.css';
@@ -43,7 +43,19 @@ const Products = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mobileGridCols, setMobileGridCols] = useState(1); // 1 or 2 columns on mobile
+  const [expandedFilters, setExpandedFilters] = useState({
+    gender: true,
+    brand: true,
+    scent: true,
+  });
   const { t } = useLanguage();
+
+  const toggleFilter = (filterName) => {
+    setExpandedFilters(prev => ({
+      ...prev,
+      [filterName]: !prev[filterName]
+    }));
+  };
 
   // Scent profile options
   const SCENT_PROFILE_OPTIONS = [
@@ -256,66 +268,83 @@ const Products = () => {
 
             {/* Gender filter */}
             <div className="filter-group">
-              <h4 className="filter-title">{t('gender') || 'Gender'}</h4>
-              <div className="filter-options">
-                <label className="filter-option">
-                  <input
-                    type="radio"
-                    name="gender"
-                    checked={selectedGender === 'all'}
-                    onChange={() => handleGenderChange('all')}
-                  />
-                  <span>{t('all') || 'All'}</span>
-                </label>
-                <label className="filter-option">
-                  <input
-                    type="radio"
-                    name="gender"
-                    checked={selectedGender === 'women'}
-                    onChange={() => handleGenderChange('women')}
-                  />
-                  <span>{t('forWomen') || 'For Women'}</span>
-                </label>
-                <label className="filter-option">
-                  <input
-                    type="radio"
-                    name="gender"
-                    checked={selectedGender === 'men'}
-                    onChange={() => handleGenderChange('men')}
-                  />
-                  <span>{t('forMen') || 'For Men'}</span>
-                </label>
-              </div>
+              <button className="filter-title-btn" onClick={() => toggleFilter('gender')}>
+                <span>{t('gender') || 'Gender'}</span>
+                {expandedFilters.gender ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              {expandedFilters.gender && (
+                <div className="filter-options">
+                  <label className="filter-option">
+                    <input
+                      type="radio"
+                      name="gender"
+                      checked={selectedGender === 'all'}
+                      onChange={() => handleGenderChange('all')}
+                    />
+                    <span>{t('all') || 'All'}</span>
+                  </label>
+                  <label className="filter-option">
+                    <input
+                      type="radio"
+                      name="gender"
+                      checked={selectedGender === 'women'}
+                      onChange={() => handleGenderChange('women')}
+                    />
+                    <span>{t('forWomen') || 'For Women'}</span>
+                  </label>
+                  <label className="filter-option">
+                    <input
+                      type="radio"
+                      name="gender"
+                      checked={selectedGender === 'men'}
+                      onChange={() => handleGenderChange('men')}
+                    />
+                    <span>{t('forMen') || 'For Men'}</span>
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="filter-group">
-              <h4 className="filter-title">{t('brand')}</h4>
-              <div className="filter-options scrollable">
-                {brands.map(brand => (
-                  <label key={brand} className="filter-option checkbox">
-                    <input
-                      type="checkbox"
-                      checked={selectedBrands.includes(brand)}
-                      onChange={() => handleBrandToggle(brand)}
-                    />
-                    <span>{brand}</span>
-                  </label>
-                ))}
-              </div>
-              {selectedBrands.length > 0 && (
-                <button 
-                  className="clear-brands-btn"
-                  onClick={() => setSelectedBrands([])}
-                >
-                  {t('clearBrands') || 'Clear brands'} ({selectedBrands.length})
-                </button>
+              <button className="filter-title-btn" onClick={() => toggleFilter('brand')}>
+                <span>{t('brand')}</span>
+                {expandedFilters.brand ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              {expandedFilters.brand && (
+                <>
+                  <div className="filter-options scrollable">
+                    {brands.map(brand => (
+                      <label key={brand} className="filter-option checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedBrands.includes(brand)}
+                          onChange={() => handleBrandToggle(brand)}
+                        />
+                        <span>{brand}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedBrands.length > 0 && (
+                    <button 
+                      className="clear-brands-btn"
+                      onClick={() => setSelectedBrands([])}
+                    >
+                      {t('clearBrands') || 'Clear brands'} ({selectedBrands.length})
+                    </button>
+                  )}
+                </>
               )}
             </div>
 
             {/* Scent Profile Filter */}
             <div className="filter-group">
-              <h4 className="filter-title">{t('scentProfile') || 'Scent Profile'}</h4>
-              <div className="filter-options scrollable">
+              <button className="filter-title-btn" onClick={() => toggleFilter('scent')}>
+                <span>{t('scentProfile') || 'Scent Profile'}</span>
+                {expandedFilters.scent ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              {expandedFilters.scent && (
+                <>
+                  <div className="filter-options scrollable">
                 {SCENT_PROFILE_OPTIONS.map(({ key, label }) => (
                   <label key={key} className="filter-option checkbox">
                     <input
@@ -334,6 +363,8 @@ const Products = () => {
                 >
                   {t('clearScentProfiles') || 'Clear profiles'} ({selectedScentProfiles.length})
                 </button>
+              )}
+              </>
               )}
             </div>
 

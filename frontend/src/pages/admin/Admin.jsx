@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Package, Filter, Home, Percent } from 'lucide-react';
+import { ShoppingBag, Package, Filter, Home, Percent, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import ProductsManager from './components/ProductsManager';
@@ -8,6 +8,7 @@ import OrdersManager from './components/OrdersManager';
 import CollectionsManager from './components/CollectionsManager';
 import HomepageManager from './components/HomepageManager';
 import DiscountCodesManager from './components/DiscountCodesManager';
+import ScentMigrationManager from './components/ScentMigrationManager';
 import '../Admin.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -143,6 +144,14 @@ const Admin = () => {
             <Percent size={18} />
             <span>{t('discountsTab') || 'Отстъпки'} ({discountCodesCount})</span>
           </button>
+          <button
+            className={`admin-tab ${activeTab === 'scent' ? 'active' : ''}`}
+            onClick={() => setActiveTab('scent')}
+            data-testid="admin-tab-scent"
+          >
+            <Sparkles size={18} />
+            <span>{t('scentAnalysis') || 'Аромати'}</span>
+          </button>
         </div>
 
         {activeTab === 'products' && (
@@ -167,6 +176,10 @@ const Admin = () => {
 
         {activeTab === 'discounts' && (
           <DiscountCodesManager products={products} collections={collections} />
+        )}
+
+        {activeTab === 'scent' && (
+          <ScentMigrationManager token={user?.token} />
         )}
       </div>
     </div>

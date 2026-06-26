@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -57,6 +57,8 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verify-order" element={<VerifyOrder />} />
           <Route path="/dubai-perfumes" element={<DubaiPerfumes />} />
+          {/* Redirect /collection/dubai to /dubai-perfumes */}
+          <Route path="/collection/dubai" element={<Navigate to="/dubai-perfumes" replace />} />
         </Routes>
         <Footer />
         <CookieBanner />

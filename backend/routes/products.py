@@ -565,6 +565,31 @@ def extract_gender_from_name(product_name: str) -> str:
     return "unisex"  # Default to unisex if can't determine
 
 
+def get_product_gender(product: dict) -> str:
+    """
+    Get product gender from gender field or extract from name.
+    - If gender field has both ["men", "women"] -> unisex
+    - If gender field has ["men"] -> men
+    - If gender field has ["women"] -> women
+    - If gender field is empty -> extract from name
+    """
+    gender_list = product.get("gender", [])
+    
+    if gender_list:
+        # Gender field is set - use it
+        if "men" in gender_list and "women" in gender_list:
+            return "unisex"
+        elif "men" in gender_list:
+            return "men"
+        elif "women" in gender_list:
+            return "women"
+        else:
+            return "unisex"
+    
+    # Gender field is empty - extract from name
+    return extract_gender_from_name(product.get("name", ""))
+
+
 @router.get("/{product_id}/related")
 async def get_related_products(request: Request, product_id: str, limit: int = 5):
     """Get related products based on scent profile, gender, and Dubai/non-Dubai separation"""
@@ -582,7 +607,7 @@ async def get_related_products(request: Request, product_id: str, limit: int = 5
     collections = product.get("collections", [])
     category = product.get("category", "perfumes")
     is_dubai = "dubai" in collections
-    product_gender = extract_gender_from_name(product.get("name", ""))
+    product_gender = get_product_gender(product)  # Use new hybrid function
     
     query = {
         "is_active": True,
@@ -597,12 +622,21 @@ async def get_related_products(request: Request, product_id: str, limit: int = 5
     else:
         query["collections"] = {"$ne": "dubai"}
     
-    # Gender rule: Match product gender using regex on name
-    # M products -> show only M products, W products -> show only W products
+    # Gender rule: Match product gender
+    # First try to match by gender field, then fallback to name regex
     if product_gender == "men":
-        query["name"] = {"$regex": r"\d+\s*M\b", "$options": "i"}
+        # Match products with gender=["men"] OR name contains M pattern
+        query["$or"] = [
+            {"gender": "men"},
+            {"name": {"$regex": r"\d+\s*M\b", "$options": "i"}}
+        ]
     elif product_gender == "women":
-        query["name"] = {"$regex": r"\d+\s*W\b", "$options": "i"}
+        # Match products with gender=["women"] OR name contains W pattern
+        query["$or"] = [
+            {"gender": "women"},
+            {"name": {"$regex": r"\d+\s*W\b", "$options": "i"}}
+        ]
+    # For unisex, don't filter by gender - show all
     
     # If product has scent profiles, prefer products with matching profiles
     if scent_profiles:

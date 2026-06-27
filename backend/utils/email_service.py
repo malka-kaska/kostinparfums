@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 # Initialize Resend
 resend.api_key = os.environ.get("RESEND_API_KEY")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "contact@kostinparfums.com")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://kostinparfums.com")
 
 # Logo URL (hosted on Cloudinary or your server)
 LOGO_URL = "https://res.cloudinary.com/dbtifacuv/image/upload/v1749848249/logo_aulozz.png"
@@ -107,7 +108,7 @@ async def send_registration_email(to_email: str, user_name: str, lang: str = "bg
                 </ul>
                 
                 <div style="text-align: center; margin: 35px 0;">
-                    <a href="https://kostinparfums.com/products" 
+                    <a href="{FRONTEND_URL}/products" 
                        style="display: inline-block; background: #1a1a1a; color: #fff; padding: 14px 35px; text-decoration: none; font-size: 13px; letter-spacing: 2px;">
                         РАЗГЛЕДАЙТЕ КОЛЕКЦИЯТА
                     </a>
@@ -145,7 +146,7 @@ async def send_registration_email(to_email: str, user_name: str, lang: str = "bg
                 </ul>
                 
                 <div style="text-align: center; margin: 35px 0;">
-                    <a href="https://kostinparfums.com/products" 
+                    <a href="{FRONTEND_URL}/products" 
                        style="display: inline-block; background: #1a1a1a; color: #fff; padding: 14px 35px; text-decoration: none; font-size: 13px; letter-spacing: 2px;">
                         EXPLORE COLLECTION
                     </a>
@@ -342,7 +343,7 @@ async def send_email_verification(to_email: str, user_name: str, verification_to
     header = get_email_header(lang)
     footer = get_email_footer(lang)
     
-    verification_url = f"https://kostinparfums.com/verify-email?token={verification_token}"
+    verification_url = f"{FRONTEND_URL}/verify-email?token={verification_token}"
     
     if lang == "bg":
         subject = "Потвърдете имейл адреса си - KOSTIN"
@@ -433,7 +434,7 @@ async def send_order_verification_email(
     header = get_email_header(lang)
     footer = get_email_footer(lang)
     
-    verification_url = f"https://kostinparfums.com/verify-order?token={verification_token}"
+    verification_url = f"{FRONTEND_URL}/verify-order?token={verification_token}"
     
     # Build items table
     items_html = ""

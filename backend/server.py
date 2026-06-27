@@ -475,6 +475,26 @@ async def startup_event():
     # Seed admin user
     await seed_admin(db)
     logger.info("Admin user seeded successfully")
+    
+    # Seed navigation collections (Dubai Fragrances)
+    await seed_nav_collections(db)
+    logger.info("Navigation collections seeded")
+
+
+async def seed_nav_collections(database):
+    """Seed default navigation collections if they don't exist"""
+    # Check if Dubai collection exists
+    existing = await database.nav_collections.find_one({"slug": "dubai"})
+    if not existing:
+        await database.nav_collections.insert_one({
+            "slug": "dubai",
+            "name": "Dubai Fragrances",
+            "name_bg": "Дубайски аромати",
+            "path": "/dubai-perfumes",
+            "is_active": True,
+            "order": 1
+        })
+        logger.info("Created Dubai Fragrances navigation collection")
 
 
 @app.on_event("shutdown")

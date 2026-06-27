@@ -65,6 +65,10 @@ export const en = {
   // Scent Profiles Filter
   scentProfile: "Scent Profile",
   scentProfiles: "Scent Profiles",
+  allScentProfiles: "All Profiles",
+  withScentProfile: "With Profile",
+  withoutScentProfile: "Without Profile",
+  scentProfilesHint: "Select up to 4 scent profiles for this product",
   clearScentProfiles: "Clear profiles",
   scentSweet: "Sweet",
   scentFresh: "Fresh",

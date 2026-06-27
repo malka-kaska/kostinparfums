@@ -65,6 +65,10 @@ export const bg = {
   // Scent Profiles Filter
   scentProfile: "Ароматен профил",
   scentProfiles: "Ароматни профили",
+  allScentProfiles: "Всички профили",
+  withScentProfile: "С профил",
+  withoutScentProfile: "Без профил",
+  scentProfilesHint: "Избери до 4 ароматни профила за този продукт",
   clearScentProfiles: "Изчисти профили",
   scentSweet: "Сладки",
   scentFresh: "Свежи",

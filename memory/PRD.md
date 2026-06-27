@@ -36,12 +36,15 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] **Manual shipment** - Admin може ръчно да създаде товарителница за поръчка
 
 ### Product Management
-- [x] Dynamic product catalog with filtering (gender, brand, collection)
+- [x] Dynamic product catalog with filtering (gender, brand, collection, scent profile)
 - [x] Collections system - assign products to pages/campaigns
 - [x] Sorting options: popularity, newest, name, price
 - [x] Cloudinary image uploads via Admin Panel
 - [x] Drag-and-drop product reordering (Admin)
 - [x] Product visibility toggle (Admin)
+- [x] Product-specific discounts with original_price field
+- [x] Dual currency display (EUR/BGN) across all views
+- [x] **Scent Profiles**: 13-category classification for perfume filtering
 
 ### Checkout Flow
 - [x] Dedicated `/checkout` page
@@ -173,6 +176,15 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9
 - Demo User: test_verify@example.com / test12345
+
+## LLM-Powered Scent Profile System (December 2025)
+- [x] **13 Scent Categories**: Sweet, Fresh, Citrus, Fruity, Floral, Woody, Spicy, Aquatic, Musky, Leather, Tobacco, Oriental, Vanilla
+- [x] **LLM Migration Tool**: Uses GPT-4o-mini via Emergent Integrations to analyze product descriptions and auto-assign profiles
+- [x] **Smart Migration**: Only analyzes **visible products WITHOUT existing profile** (saves LLM credits)
+- [x] **Admin Manual Edit**: Scent profile checkboxes in product edit form for manual corrections
+- [x] **Admin Filter**: Filter products by "All Profiles" / "With Profile" / "Without Profile"
+- [x] **Progress Tracking**: Real-time progress bar with stats in Scents admin tab
+- **Endpoint**: `POST /api/admin/scent-migration/start`, `GET /api/admin/scent-migration/status`
 
 ## Speedy Credentials
 - Username: 1910084

@@ -172,6 +172,7 @@ async def run_migration_task(db):
             logger.error(f"Error processing {name}: {e}")
             migration_state["errors"] += 1
             migration_state["processed"] += 1
+            migration_state["last_product"] = f"ERROR: {name} - {str(e)[:50]}"
     
     migration_state["is_running"] = False
     logger.info(f"Migration complete! Processed: {migration_state['processed']}, Errors: {migration_state['errors']}")

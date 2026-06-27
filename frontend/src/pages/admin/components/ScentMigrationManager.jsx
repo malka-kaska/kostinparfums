@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Square, RefreshCw, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -7,6 +7,7 @@ const ScentMigrationManager = ({ token }) => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const isRunningRef = useRef(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -16,6 +17,7 @@ const ScentMigrationManager = ({ token }) => {
       if (res.ok) {
         const data = await res.json();
         setStatus(data);
+        isRunningRef.current = data.is_running;
         setError(null);
       }
     } catch (err) {
@@ -25,14 +27,14 @@ const ScentMigrationManager = ({ token }) => {
 
   useEffect(() => {
     fetchStatus();
-    // Poll status every 3 seconds if migration is running
+    
+    // Poll status every 2 seconds continuously
     const interval = setInterval(() => {
-      if (status?.is_running) {
-        fetchStatus();
-      }
-    }, 3000);
+      fetchStatus();
+    }, 2000);
+    
     return () => clearInterval(interval);
-  }, [fetchStatus, status?.is_running]);
+  }, [fetchStatus]);
 
   const handleStart = async () => {
     setLoading(true);
@@ -115,15 +117,25 @@ const ScentMigrationManager = ({ token }) => {
         </div>
       )}
 
-      {status?.is_running && (
-        <div className="migration-progress">
+      {/* Progress bar - show when running OR when there's recent progress */}
+      {(status?.is_running || (status?.processed > 0 && status?.total_to_process > 0)) && (
+        <div className={`migration-progress ${!status?.is_running ? 'completed' : ''}`}>
           <div className="progress-header">
             <span className="progress-label">
-              <Loader size={16} className="spin" />
-              Миграцията работи...
+              {status?.is_running ? (
+                <>
+                  <Loader size={16} className="spin" />
+                  Миграцията работи...
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={16} />
+                  Миграцията приключи
+                </>
+              )}
             </span>
             <span className="progress-count">
-              {status.processed} / {status.total_to_process}
+              {status?.processed || 0} / {status?.total_to_process || 0}
             </span>
           </div>
           <div className="progress-bar-container">
@@ -132,16 +144,16 @@ const ScentMigrationManager = ({ token }) => {
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
-          {status.last_product && (
-            <div className="last-processed">
+          {status?.last_product && (
+            <div className={`last-processed ${status?.last_product?.startsWith('ERROR') ? 'error-item' : ''}`}>
               <span className="last-label">Последен:</span>
-              <span className="last-value">{status.last_product}</span>
+              <span className="last-value">{status?.last_product}</span>
             </div>
           )}
-          {status.errors > 0 && (
+          {status?.errors > 0 && (
             <div className="error-count">
               <AlertCircle size={14} />
-              <span>{status.errors} грешки</span>
+              <span>{status?.errors} грешки</span>
             </div>
           )}
         </div>
@@ -307,6 +319,11 @@ const ScentMigrationManager = ({ token }) => {
           margin-top: 12px;
           font-size: 12px;
           color: var(--text-secondary);
+          word-break: break-word;
+        }
+
+        .last-processed.error-item .last-value {
+          color: #ef4444;
         }
 
         .last-label {
@@ -315,6 +332,19 @@ const ScentMigrationManager = ({ token }) => {
 
         .last-value {
           color: var(--text-primary);
+        }
+
+        .migration-progress.completed {
+          border: 1px solid rgba(34, 197, 94, 0.3);
+          background: rgba(34, 197, 94, 0.05);
+        }
+
+        .migration-progress.completed .progress-label {
+          color: #22c55e;
+        }
+
+        .migration-progress.completed .progress-bar-fill {
+          background: #22c55e;
         }
 
         .error-count {

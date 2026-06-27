@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowLeft, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
@@ -179,6 +179,11 @@ const ProductDetail = () => {
               ) : (
                 <span className="stock-out" data-testid="stock-status">{t('outOfStock')}</span>
               )}
+            </div>
+
+            <div className="free-return-info" data-testid="free-return-info">
+              <RotateCcw size={18} />
+              <span>{t('freeReturnInfo') || '14 дни безплатно връщане'}</span>
             </div>
 
             <div className="product-actions mt-4">

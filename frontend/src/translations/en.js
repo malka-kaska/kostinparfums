@@ -101,6 +101,7 @@ export const en = {
   inStock: "In Stock",
   onlyLeft: "Only {count} left",
   outOfStock: "Out of Stock",
+  freeReturnInfo: "14-day free returns",
   addToCart: "Add to Cart",
   addedToCart: "Added {qty} {name} to cart!",
   youMayAlsoLike: "You May Also Like",

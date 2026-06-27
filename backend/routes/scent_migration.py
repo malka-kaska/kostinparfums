@@ -121,8 +121,9 @@ async def run_migration_task(db):
         system_message=SYSTEM_PROMPT
     ).with_model("openai", "gpt-4o-mini")
     
-    # Get products without scent_profiles
+    # Get VISIBLE products without scent_profiles (only analyze visible products)
     query = {
+        "is_visible": True,
         "$or": [
             {"scent_profiles": {"$exists": False}},
             {"scent_profiles": []},
@@ -181,9 +182,10 @@ async def get_migration_status(request: Request):
     """Get the current migration status"""
     db = request.app.state.db
     
-    # Get current counts from DB
-    total_products = await db.products.count_documents({})
-    with_profiles = await db.products.count_documents({
+    # Get current counts from DB (only visible products)
+    total_visible = await db.products.count_documents({"is_visible": True})
+    visible_with_profiles = await db.products.count_documents({
+        "is_visible": True,
         "scent_profiles": {"$exists": True, "$not": {"$in": [[], None]}}
     })
     
@@ -195,9 +197,9 @@ async def get_migration_status(request: Request):
         "started_at": migration_state["started_at"],
         "last_product": migration_state["last_product"],
         "db_stats": {
-            "total_products": total_products,
-            "with_profiles": with_profiles,
-            "percentage": round(with_profiles / total_products * 100, 1) if total_products > 0 else 0
+            "total_visible": total_visible,
+            "with_profiles": visible_with_profiles,
+            "percentage": round(visible_with_profiles / total_visible * 100, 1) if total_visible > 0 else 0
         }
     }
 

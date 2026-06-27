@@ -93,16 +93,16 @@ const ScentMigrationManager = ({ token }) => {
 
       <div className="migration-info">
         <p className="info-text">
-          Този инструмент използва AI за анализ на описанията на продуктите и автоматично присвоява ароматни профили 
-          (сладки, свежи, цитрусови, дървесни и др.).
+          Този инструмент използва AI за анализ на описанията на <strong>видимите продукти</strong> и автоматично присвоява ароматни профили 
+          (сладки, свежи, цитрусови, дървесни и др.). Скритите продукти се пропускат.
         </p>
       </div>
 
       {status && (
         <div className="migration-stats">
           <div className="stat-card">
-            <span className="stat-label">Общо продукти</span>
-            <span className="stat-value">{status.db_stats?.total_products || 0}</span>
+            <span className="stat-label">Видими продукти</span>
+            <span className="stat-value">{status.db_stats?.total_visible || 0}</span>
           </div>
           <div className="stat-card">
             <span className="stat-label">С профили</span>

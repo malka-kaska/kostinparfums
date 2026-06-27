@@ -7,10 +7,13 @@ import { useTheme } from '../context/ThemeContext';
 import SmartSearch from './SmartSearch';
 import './Header.css';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [navCollections, setNavCollections] = useState([]);
   const navigate = useNavigate();
   const { user, logout, getCartCount } = useAuth();
   const { lang, t, toggleLanguage } = useLanguage();
@@ -26,6 +29,22 @@ const Header = () => {
       window.removeEventListener('storage', updateCount);
     };
   }, [getCartCount]);
+
+  // Fetch navigation collections
+  useEffect(() => {
+    const fetchNavCollections = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/homepage/nav-collections`);
+        if (res.ok) {
+          const data = await res.json();
+          setNavCollections(data.collections || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch nav collections:', err);
+      }
+    };
+    fetchNavCollections();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -131,9 +150,17 @@ const Header = () => {
             <Link to="/products?category=perfumes&gender=men" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
               {t('mensFragrances')}
             </Link>
-            <Link to="/dubai-perfumes" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-              {t('dubaiFragrances')}
-            </Link>
+            {/* Dynamic navigation collections */}
+            {navCollections.map(col => (
+              <Link 
+                key={col.slug} 
+                to={col.path} 
+                className="nav-link" 
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {lang === 'bg' && col.name_bg ? col.name_bg : col.name}
+              </Link>
+            ))}
           </nav>
           
           {/* Smart Search Bar */}

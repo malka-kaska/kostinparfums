@@ -1,11 +1,30 @@
-import React from 'react';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import './Footer.css';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
 const Footer = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const [navCollections, setNavCollections] = useState([]);
+
+  // Fetch navigation collections
+  useEffect(() => {
+    const fetchNavCollections = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/homepage/nav-collections`);
+        if (res.ok) {
+          const data = await res.json();
+          setNavCollections(data.collections || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch nav collections:', err);
+      }
+    };
+    fetchNavCollections();
+  }, []);
 
   return (
     <footer className="footer">
@@ -37,6 +56,14 @@ const Footer = () => {
               <li><Link to="/products">{t('shopAll')}</Link></li>
               <li><Link to="/products?category=perfumes&gender=women">{t('womensFragrances')}</Link></li>
               <li><Link to="/products?category=perfumes&gender=men">{t('mensFragrances')}</Link></li>
+              {/* Dynamic navigation collections */}
+              {navCollections.map(col => (
+                <li key={col.slug}>
+                  <Link to={col.path}>
+                    {lang === 'bg' && col.name_bg ? col.name_bg : col.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           

@@ -54,7 +54,7 @@ async def update_hero_slides(request: Request, data: UpdateHeroSlidesRequest):
         from utils.auth import get_current_user
         try:
             user = await get_current_user(request, db)
-        except:
+        except Exception:
             raise HTTPException(status_code=401, detail="Not authenticated")
         
         if not user or user.get("role") != "admin":
@@ -95,7 +95,7 @@ async def update_featured_products(request: Request, data: UpdateFeaturedProduct
         from utils.auth import get_current_user
         try:
             user = await get_current_user(request, db)
-        except:
+        except Exception:
             raise HTTPException(status_code=401, detail="Not authenticated")
         
         if not user or user.get("role") != "admin":
@@ -137,7 +137,7 @@ async def get_featured_products(request: Request):
                 product = await db.products.find_one({"_id": ObjectId(pid), "is_active": True, "is_visible": True})
                 if product:
                     products.append(product)
-            except:
+            except Exception:
                 continue
     
     # Convert to response format
@@ -165,7 +165,7 @@ async def get_best_sellers(request: Request, limit: int = 8):
     
     try:
         sales_data = await db.orders.aggregate(pipeline).to_list(limit * 2)
-    except:
+    except Exception:
         sales_data = []
     
     if not sales_data:
@@ -188,7 +188,7 @@ async def get_best_sellers(request: Request, limit: int = 8):
                 if product:
                     product["total_sold"] = item["total_sold"]
                     products.append(product)
-            except:
+            except Exception:
                 continue
         
         # If not enough products from orders, fill with newest
@@ -203,3 +203,144 @@ async def get_best_sellers(request: Request, limit: int = 8):
     
     from routes.products import product_doc_to_response
     return [product_doc_to_response(p) for p in products]
+
+
+
+# ============ Navigation Collections ============
+
+class NavCollectionCreate(BaseModel):
+    slug: str
+    name: str
+    name_bg: Optional[str] = None
+    path: str  # e.g., "/dubai-perfumes" or "/collection/summer-sale"
+    is_active: bool = True
+    order: int = 0
+
+
+@router.get("/nav-collections")
+async def get_nav_collections(request: Request):
+    """Get navigation collections for header and footer"""
+    db = request.app.state.db
+    
+    collections = await db.nav_collections.find(
+        {"is_active": True}
+    ).sort("order", 1).to_list(20)
+    
+    return {
+        "collections": [
+            {
+                "id": str(c["_id"]),
+                "slug": c.get("slug"),
+                "name": c.get("name"),
+                "name_bg": c.get("name_bg"),
+                "path": c.get("path"),
+                "is_active": c.get("is_active", True),
+                "order": c.get("order", 0)
+            }
+            for c in collections
+        ]
+    }
+
+
+@router.post("/nav-collections")
+async def create_nav_collection(request: Request, data: NavCollectionCreate):
+    """Create a new navigation collection (admin only)"""
+    db = request.app.state.db
+    
+    from utils.auth import get_current_user
+    try:
+        user = await get_current_user(request, db)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if slug already exists
+    existing = await db.nav_collections.find_one({"slug": data.slug})
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Collection with slug '{data.slug}' already exists")
+    
+    collection_doc = {
+        "slug": data.slug,
+        "name": data.name,
+        "name_bg": data.name_bg,
+        "path": data.path,
+        "is_active": data.is_active,
+        "order": data.order
+    }
+    
+    result = await db.nav_collections.insert_one(collection_doc)
+    collection_doc["_id"] = result.inserted_id
+    
+    return {
+        "success": True,
+        "collection": {
+            "id": str(collection_doc["_id"]),
+            **{k: v for k, v in collection_doc.items() if k != "_id"}
+        }
+    }
+
+
+@router.put("/nav-collections/{collection_id}")
+async def update_nav_collection(request: Request, collection_id: str):
+    """Update a navigation collection (admin only)"""
+    db = request.app.state.db
+    
+    from utils.auth import get_current_user
+    try:
+        user = await get_current_user(request, db)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    body = await request.json()
+    
+    try:
+        oid = ObjectId(collection_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid collection ID")
+    
+    update_data = {k: v for k, v in body.items() if k in ["name", "name_bg", "path", "is_active", "order"]}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    result = await db.nav_collections.update_one(
+        {"_id": oid},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    
+    return {"success": True, "message": "Collection updated"}
+
+
+@router.delete("/nav-collections/{collection_id}")
+async def delete_nav_collection(request: Request, collection_id: str):
+    """Delete a navigation collection (admin only)"""
+    db = request.app.state.db
+    
+    from utils.auth import get_current_user
+    try:
+        user = await get_current_user(request, db)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        oid = ObjectId(collection_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid collection ID")
+    
+    result = await db.nav_collections.delete_one({"_id": oid})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    
+    return {"success": True, "message": "Collection deleted"}

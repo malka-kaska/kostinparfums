@@ -173,6 +173,14 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
   - Luxury styling: No red badges, only gold accent for elegance
   - Admin table shows sale prices with original crossed out
 
+## Security Audit (December 2025)
+### Fixed Vulnerabilities:
+- [x] **SEC-001 (CRITICAL)**: Order prices validated from database, not client-supplied values
+- [x] **SEC-002 (HIGH)**: Discount admin endpoints require admin authentication
+- [x] **SEC-003 (HIGH)**: Speedy shipment endpoints require admin authentication  
+- [x] **SEC-004 (MEDIUM)**: Password reset sends email instead of logging token
+- [x] **Cookie Security**: Uses secure=True in production environment
+
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9
 - Demo User: test_verify@example.com / test12345

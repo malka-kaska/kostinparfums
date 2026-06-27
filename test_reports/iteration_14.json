@@ -1,0 +1,46 @@
+{
+  "summary": "Verified all 5 review_request items for scent_profiles admin editing + scent_profile_filter. Backend: 8/8 pytest pass on new test file. Frontend: filter dropdown, 13 scent checkboxes in edit modal, persistence, updated Scents tab text/stats — all verified via Playwright on production URL. One minor i18n issue found: filter dropdown labels display raw translation keys.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ProductsManager.jsx - filter-scent-profile dropdown",
+        "issue": "Dropdown options display raw translation keys 'allScentProfiles', 'withScentProfile', 'withoutScentProfile' instead of Bulgarian labels 'Всички профили / С профил / Без профил'. The `t('allScentProfiles') || 'Всички профили'` fallback fails because t() returns the key string (truthy) when missing. Keys are absent from /app/frontend/src/translations/bg.js and en.js.",
+        "selector": "[data-testid='filter-scent-profile'] option",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_scent_profile_filter.py",
+    "/app/test_reports/pytest/iteration_14.xml"
+  ],
+  "action_items": [
+    "Add translation keys to /app/frontend/src/translations/bg.js and en.js: allScentProfiles, withScentProfile, withoutScentProfile (also consider scentProfiles, scentProfilesHint, leaveEmptyForNoDiscount if those are also missing)."
+  ],
+  "critical_code_review_comments": [
+    "products.py lines 365-373: scent_profile_filter='with' uses {'$exists': True, '$not': {'$in': [[], None]}, '$ne': []} — works but is redundant; '$ne': [] alone would suffice and the '$not': {'$in': [[], None]}' is a more complex pattern. Working correctly though (verified: with+without == total).",
+    "products.py line 387-393: $or merging logic correctly handles search + scent_profile_filter combination by promoting both into $and. Verified passing.",
+    "ProductsManager.jsx line 264-269: filter dropdown wired correctly to scent_profile_filter query param, useEffect properly resets page to 1 on filter change (line 86).",
+    "ProductsManager.jsx line 410-427: 13 scent profile checkboxes implemented correctly with proper add/remove logic. UI hint says 'Избери до 4' but there is NO enforcement of the 4-max in the UI — user can select all 13. If 4-max is a real business rule, add validation. Otherwise update the hint text.",
+    "Backend update endpoint correctly persists scent_profiles via Pydantic ProductUpdate model (test_update_scent_profiles_persists passes round-trip)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_scent_profile_filter.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 pytest)",
+    "frontend": "100% on functional checks; 1 minor i18n cosmetic issue"
+  },
+  "test_credentials": "Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9 — login works on /auth",
+  "seed_data_creation": "Test temporarily set scent_profiles=[sweet,fresh,citrus] on one product then restored original value.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Verifications performed: (1) GET /api/products/admin/all?scent_profile_filter=with returned only products with non-empty scent_profiles; ?scent_profile_filter=without returned only empty/null; with+without sums to total (math identity verified). (2) PUT /api/products/{id} with scent_profiles body persists and round-trips via GET. (3) /api/admin/scent-migration/status returns db_stats with total_visible (7347), with_profiles (1120), percentage (15.2%). (4) UI: filter-scent-profile dropdown exists with 3 options, applying filter changes table rows. Edit modal opens to show exactly 13 checkboxes labeled Sweet/Fresh/Citrus/Fruity/Floral/Woody/Spicy/Aquatic/Musky/Leather/Tobacco/Oriental/Vanilla. (5) Scents tab info-text contains 'видими продукти БЕЗ профил', button reads 'Анализирай нови/непрофилирани', three stat cards present with correct Bulgarian labels and live values.",
+  "rca_of_the_issue": "Minor i18n bug: filter dropdown labels display raw keys because the t() function returns the key itself when no translation is found, so the `||` fallback never triggers. Fix: add three keys (allScentProfiles/withScentProfile/withoutScentProfile) to both bg.js and en.js translation files."
+}

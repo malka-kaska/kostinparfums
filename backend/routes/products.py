@@ -343,6 +343,7 @@ async def get_all_products_admin(
     search: Optional[str] = None,
     sort: Optional[str] = "name",
     visibility: Optional[str] = None,  # all, visible, hidden
+    scent_profile_filter: Optional[str] = None,  # all, with, without
     page: int = Query(1, ge=1),
     limit: int = Query(200, ge=1, le=10000),
 ):
@@ -361,17 +362,37 @@ async def get_all_products_admin(
         query["is_visible"] = False
     # 'all' or None = no visibility filter
 
+    # Scent profile filter
+    if scent_profile_filter == "with":
+        query["scent_profiles"] = {"$exists": True, "$not": {"$in": [[], None]}, "$ne": []}
+    elif scent_profile_filter == "without":
+        query["$or"] = [
+            {"scent_profiles": {"$exists": False}},
+            {"scent_profiles": []},
+            {"scent_profiles": None}
+        ]
+
     if category:
         query["category"] = category
     if brand:
         query["brand"] = brand
     if search:
-        query["$or"] = [
+        # Need to handle $or carefully if already set by scent_profile_filter
+        search_conditions = [
             {"name": {"$regex": search, "$options": "i"}},
             {"brand": {"$regex": search, "$options": "i"}},
             {"description": {"$regex": search, "$options": "i"}},
             {"sku": {"$regex": search, "$options": "i"}},
         ]
+        if "$or" in query:
+            # Combine with $and
+            existing_or = query.pop("$or")
+            query["$and"] = [
+                {"$or": existing_or},
+                {"$or": search_conditions}
+            ]
+        else:
+            query["$or"] = search_conditions
 
     # Sort
     sort_field = "name"

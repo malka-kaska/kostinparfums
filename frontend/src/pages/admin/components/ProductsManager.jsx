@@ -17,7 +17,7 @@ const ProductsManager = ({ collections }) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', brand: '', category: '', price: '', original_price: '', description: '', description_bg: '', images: [], stock: '', gender: [], collections: ['all_products']
+    name: '', brand: '', category: '', price: '', original_price: '', description: '', description_bg: '', images: [], stock: '', gender: [], collections: ['all_products'], scent_profiles: []
   });
   const [draggedIndex, setDraggedIndex] = useState(null);
 
@@ -32,6 +32,24 @@ const ProductsManager = ({ collections }) => {
   const [filterSort, setFilterSort] = useState('name');
   const [filterSearch, setFilterSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterScentProfile, setFilterScentProfile] = useState('all'); // 'all', 'with', 'without'
+
+  // Scent profile options
+  const SCENT_PROFILE_OPTIONS = [
+    { key: 'sweet', label: t('scentSweet') || 'Сладки' },
+    { key: 'fresh', label: t('scentFresh') || 'Свежи' },
+    { key: 'citrus', label: t('scentCitrus') || 'Цитрусови' },
+    { key: 'fruity', label: t('scentFruity') || 'Плодови' },
+    { key: 'floral', label: t('scentFloral') || 'Флорални' },
+    { key: 'woody', label: t('scentWoody') || 'Дървесни' },
+    { key: 'spicy', label: t('scentSpicy') || 'Пикантни' },
+    { key: 'aquatic', label: t('scentAquatic') || 'Водни' },
+    { key: 'musky', label: t('scentMusky') || 'Мускусни' },
+    { key: 'leather', label: t('scentLeather') || 'Кожени' },
+    { key: 'tobacco', label: t('scentTobacco') || 'Тютюневи' },
+    { key: 'oriental', label: t('scentOriental') || 'Ориенталски' },
+    { key: 'vanilla', label: t('scentVanilla') || 'Ванилови' },
+  ];
 
   const CATEGORY_OPTIONS = [
     { id: 'perfumes', name: t('perfumes') },
@@ -51,6 +69,7 @@ const ProductsManager = ({ collections }) => {
       if (filterSort) params.set('sort', filterSort);
       if (filterSearch.trim()) params.set('search', filterSearch.trim());
       if (filterCategory !== 'all') params.set('category', filterCategory);
+      if (filterScentProfile !== 'all') params.set('scent_profile_filter', filterScentProfile);
       
       const res = await fetch(`${API_URL}/api/products/admin/all?${params.toString()}`, { credentials: 'include' });
       if (res.ok) {
@@ -62,9 +81,9 @@ const ProductsManager = ({ collections }) => {
     } catch (err) {
       console.error('Failed to fetch products:', err);
     }
-  }, [page, filterVisibility, filterSort, filterSearch, filterCategory]);
+  }, [page, filterVisibility, filterSort, filterSearch, filterCategory, filterScentProfile]);
 
-  useEffect(() => { setPage(1); }, [filterVisibility, filterSort, filterSearch, filterCategory]);
+  useEffect(() => { setPage(1); }, [filterVisibility, filterSort, filterSearch, filterCategory, filterScentProfile]);
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   // Image upload handlers
@@ -139,7 +158,8 @@ const ProductsManager = ({ collections }) => {
       original_price: product.original_price ? product.original_price.toString() : '',
       description: product.description || '',
       description_bg: product.description_bg || '', images, stock: product.stock.toString(),
-      gender: product.gender || [], collections: product.collections || ['all_products']
+      gender: product.gender || [], collections: product.collections || ['all_products'],
+      scent_profiles: product.scent_profiles || []
     });
   };
 
@@ -148,7 +168,7 @@ const ProductsManager = ({ collections }) => {
     setEditingProduct(null);
     setFormData({
       name: '', brand: '', category: 'perfumes', price: '', original_price: '', description: '', description_bg: '',
-      images: [], stock: '', gender: [], collections: ['all_products']
+      images: [], stock: '', gender: [], collections: ['all_products'], scent_profiles: []
     });
   };
 
@@ -162,6 +182,7 @@ const ProductsManager = ({ collections }) => {
         image: formData.images[0] || '', images: formData.images,
         stock: parseInt(formData.stock) || 0, gender: formData.gender || [],
         collections: formData.collections || ['all_products'],
+        scent_profiles: formData.scent_profiles || [],
       };
       
       // Handle original_price for discounts
@@ -240,6 +261,13 @@ const ProductsManager = ({ collections }) => {
           </select>
         </div>
         <div className="filter-group">
+          <select value={filterScentProfile} onChange={(e) => setFilterScentProfile(e.target.value)} data-testid="filter-scent-profile">
+            <option value="all">{t('allScentProfiles') || 'Всички профили'}</option>
+            <option value="with">{t('withScentProfile') || 'С профил'}</option>
+            <option value="without">{t('withoutScentProfile') || 'Без профил'}</option>
+          </select>
+        </div>
+        <div className="filter-group">
           <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} data-testid="filter-category">
             <option value="all">{t('allCategories') || 'All Categories'}</option>
             {CATEGORY_OPTIONS.map(cat => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
@@ -255,8 +283,8 @@ const ProductsManager = ({ collections }) => {
             <option value="newest">{t('sortNewest') || 'Newest First'}</option>
           </select>
         </div>
-        {(filterVisibility !== 'all' || filterCategory !== 'all' || filterSearch) && (
-          <button className="filter-clear" onClick={() => { setFilterVisibility('all'); setFilterCategory('all'); setFilterSearch(''); setFilterSort('name'); }}>
+        {(filterVisibility !== 'all' || filterCategory !== 'all' || filterSearch || filterScentProfile !== 'all') && (
+          <button className="filter-clear" onClick={() => { setFilterVisibility('all'); setFilterCategory('all'); setFilterSearch(''); setFilterSort('name'); setFilterScentProfile('all'); }}>
             {t('clearFilters') || 'Clear Filters'}
           </button>
         )}
@@ -373,6 +401,32 @@ const ProductsManager = ({ collections }) => {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              {/* Scent Profiles */}
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="form-label">{t('scentProfiles') || 'Ароматни профили'}</label>
+                <div className="scent-profiles-checkboxes">
+                  {SCENT_PROFILE_OPTIONS.map(profile => (
+                    <label key={profile.key} className="scent-profile-checkbox">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.scent_profiles?.includes(profile.key)}
+                        onChange={(e) => {
+                          let newProfiles = [...(formData.scent_profiles || [])];
+                          if (e.target.checked) {
+                            if (!newProfiles.includes(profile.key)) newProfiles.push(profile.key);
+                          } else {
+                            newProfiles = newProfiles.filter(p => p !== profile.key);
+                          }
+                          setFormData({ ...formData, scent_profiles: newProfiles });
+                        }}
+                      />
+                      <span>{profile.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="form-hint">{t('scentProfilesHint') || 'Избери до 4 ароматни профила за този продукт'}</p>
               </div>
 
               {/* Descriptions */}

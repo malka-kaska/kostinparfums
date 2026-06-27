@@ -780,6 +780,35 @@ textarea.form-input {
   user-select: none;
 }
 
+/* Scent Profiles Checkboxes */
+.scent-profiles-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 8px;
+}
+
+.scent-profile-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  min-width: 120px;
+}
+
+.scent-profile-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-gold);
+  cursor: pointer;
+}
+
+.scent-profile-checkbox span {
+  user-select: none;
+}
+
 
 /* Homepage Management Styles */
 .homepage-management {

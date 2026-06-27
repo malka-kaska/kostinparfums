@@ -104,6 +104,7 @@ export const en = {
   freeReturnInfo: "14-day free returns",
   addToCart: "Add to Cart",
   addedToCart: "Added {qty} {name} to cart!",
+  availableSizes: "Available sizes:",
   youMayAlsoLike: "You May Also Like",
   categoryLabel: "Category:",
   brandLabel: "Brand:",

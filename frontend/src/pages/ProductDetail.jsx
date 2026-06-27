@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, Heart, ArrowLeft, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import ProductCard from '../components/ProductCard';
@@ -18,6 +18,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageError, setImageError] = useState({});
@@ -36,10 +37,18 @@ const ProductDetail = () => {
           // Add to recently viewed
           addToRecentlyViewed(data);
           
-          const relRes = await fetch(`${API_URL}/api/products?category=${data.category}&limit=5`);
+          // Fetch variants (other sizes of same product)
+          const varRes = await fetch(`${API_URL}/api/products/${id}/variants`);
+          if (varRes.ok) {
+            const varData = await varRes.json();
+            setVariants(varData.variants || []);
+          }
+          
+          // Fetch related products by scent profile
+          const relRes = await fetch(`${API_URL}/api/products/${id}/related?limit=5`);
           if (relRes.ok) {
             const relData = await relRes.json();
-            setRelatedProducts(relData.products.filter(p => p.id !== data.id).slice(0, 4));
+            setRelatedProducts(relData.products || []);
           }
         } else {
           setProduct(null);
@@ -222,6 +231,30 @@ const ProductDetail = () => {
                 <Heart size={20} />
               </button>
             </div>
+
+            {/* Product Variants (Different Sizes) */}
+            {variants.length > 1 && (
+              <div className="product-variants" data-testid="product-variants">
+                <span className="variants-label">{t('availableSizes') || 'Налични разфасовки:'}</span>
+                <div className="variants-buttons">
+                  {variants.map(variant => {
+                    const { details } = parseProductName(variant.name);
+                    const isActive = variant.id === product.id;
+                    return (
+                      <Link
+                        key={variant.id}
+                        to={`/product/${variant.id}`}
+                        className={`variant-button ${isActive ? 'active' : ''}`}
+                        data-testid={`variant-${variant.id}`}
+                      >
+                        <span className="variant-size">{details || variant.name}</span>
+                        <span className="variant-price">€{variant.price.toFixed(2)}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="product-description mt-5" data-testid="product-description">
               <ReactMarkdown>{getDescription()}</ReactMarkdown>

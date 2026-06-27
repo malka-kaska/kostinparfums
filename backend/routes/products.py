@@ -282,7 +282,7 @@ async def get_products(
             sales_data = await db.orders.aggregate(sales_pipeline).to_list(10000)
             # Create a map of product_id -> rank
             sales_rank = {item["_id"]: idx for idx, item in enumerate(sales_data)}
-        except:
+        except Exception:
             sales_rank = {}
         
         # Fetch all matching products (need more for proper sorting)
@@ -470,6 +470,130 @@ async def get_product(request: Request, product_id: str):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product_doc_to_response(product)
+
+
+import re
+
+def extract_base_name(product_name: str) -> str:
+    """Extract base product name without size (e.g., '100 ml', '150ml', '50 M')"""
+    # Remove size patterns like "100 ml", "150ml", "50 M", "100 W", etc.
+    # Pattern matches: number + optional space + (ml/M/W/U) at end or before other text
+    cleaned = re.sub(r'\s*\d+\s*(ml|ML|M|W|U)\b', '', product_name)
+    # Also remove TR (Tester) designation for variant matching
+    cleaned = re.sub(r'\s+TR\b', '', cleaned)
+    # Remove trailing whitespace
+    cleaned = cleaned.strip()
+    return cleaned
+
+
+@router.get("/{product_id}/variants")
+async def get_product_variants(request: Request, product_id: str):
+    """Get other size variants of the same product"""
+    db = request.app.state.db
+    
+    try:
+        product = await db.products.find_one({"_id": ObjectId(product_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Extract base name (without size)
+    base_name = extract_base_name(product.get("name", ""))
+    brand = product.get("brand", "")
+    
+    if not base_name or not brand:
+        return {"variants": [product_doc_to_response(product)], "base_name": base_name}
+    
+    # Find other products with same brand and similar base name
+    # Use regex to match products that start with the base name
+    escaped_base = re.escape(base_name)
+    
+    query = {
+        "is_active": True,
+        "is_visible": True,
+        "brand": brand,
+        "name": {"$regex": f"^{escaped_base}", "$options": "i"}
+    }
+    
+    cursor = db.products.find(query).sort("price", 1)  # Sort by price ascending
+    variants = await cursor.to_list(20)
+    
+    # Filter to only include true variants (same base name after extraction)
+    filtered_variants = []
+    for v in variants:
+        v_base = extract_base_name(v.get("name", ""))
+        if v_base.lower() == base_name.lower():
+            filtered_variants.append(product_doc_to_response(v))
+    
+    # If no variants found, return just the current product
+    if not filtered_variants:
+        filtered_variants = [product_doc_to_response(product)]
+    
+    return {"variants": filtered_variants, "base_name": base_name}
+
+
+@router.get("/{product_id}/related")
+async def get_related_products(request: Request, product_id: str, limit: int = 5):
+    """Get related products based on scent profile, respecting Dubai/non-Dubai separation"""
+    db = request.app.state.db
+    
+    try:
+        product = await db.products.find_one({"_id": ObjectId(product_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    scent_profiles = product.get("scent_profiles", [])
+    collections = product.get("collections", [])
+    category = product.get("category", "perfumes")
+    is_dubai = "dubai" in collections
+    
+    query = {
+        "is_active": True,
+        "is_visible": True,
+        "_id": {"$ne": product["_id"]},  # Exclude current product
+        "category": category
+    }
+    
+    # Dubai rule: if Dubai product, show only Dubai. If not Dubai, exclude Dubai
+    if is_dubai:
+        query["collections"] = "dubai"
+    else:
+        query["collections"] = {"$ne": "dubai"}
+    
+    # If product has scent profiles, prefer products with matching profiles
+    if scent_profiles:
+        # First try to find products with matching scent profiles
+        query["scent_profiles"] = {"$in": scent_profiles}
+        cursor = db.products.find(query).limit(limit * 2)
+        related = await cursor.to_list(limit * 2)
+        
+        # Sort by number of matching profiles (more matches = more relevant)
+        def count_matches(p):
+            p_profiles = p.get("scent_profiles", [])
+            return len(set(p_profiles) & set(scent_profiles))
+        
+        related.sort(key=count_matches, reverse=True)
+        related = related[:limit]
+        
+        # If not enough results, fill with category products
+        if len(related) < limit:
+            del query["scent_profiles"]
+            existing_ids = [p["_id"] for p in related]
+            query["_id"] = {"$nin": existing_ids + [product["_id"]]}
+            cursor = db.products.find(query).limit(limit - len(related))
+            more = await cursor.to_list(limit - len(related))
+            related.extend(more)
+    else:
+        # No scent profiles, just get products from same category
+        cursor = db.products.find(query).limit(limit)
+        related = await cursor.to_list(limit)
+    
+    return {"products": [product_doc_to_response(p) for p in related]}
 
 
 # Admin-only endpoints

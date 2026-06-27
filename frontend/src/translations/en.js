@@ -79,6 +79,7 @@ export const en = {
   scentTobacco: "Tobacco",
   scentOriental: "Oriental",
   scentVanilla: "Vanilla",
+  scentAnalysis: "Scents",
   
   applyFilters: "Apply Filters",
   showingProducts: "Showing {count} products",

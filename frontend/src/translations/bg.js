@@ -79,6 +79,7 @@ export const bg = {
   scentTobacco: "Тютюневи",
   scentOriental: "Ориенталски",
   scentVanilla: "Ванилови",
+  scentAnalysis: "Аромати",
   
   applyFilters: "Приложи филтри",
   showingProducts: "Показани: {count} продукта",

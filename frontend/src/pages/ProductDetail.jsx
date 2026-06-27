@@ -231,6 +231,18 @@ const ProductDetail = () => {
                 <span className="meta-label">{t('brandLabel')}</span>
                 <span className="meta-value">{product.brand}</span>
               </div>
+              {product.scent_profiles && product.scent_profiles.length > 0 && (
+                <div className="meta-item">
+                  <span className="meta-label">{t('scentProfile')}</span>
+                  <span className="meta-value scent-profile-tags">
+                    {product.scent_profiles.map(profile => (
+                      <span key={profile} className="scent-tag">
+                        {t(`scent${profile.charAt(0).toUpperCase() + profile.slice(1)}`) || profile}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

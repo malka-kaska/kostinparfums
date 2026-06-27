@@ -8,13 +8,24 @@ import os
 import httpx
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from typing import Optional, List
+from utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/speedy", tags=["speedy"])
+
+
+# Helper function to verify admin access
+async def verify_admin_speedy(request: Request, db):
+    """Verify the user is authenticated and has admin role"""
+    user = await get_current_user(request, db)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
 
 # Speedy API configuration
 SPEEDY_API_URL = os.environ.get("SPEEDY_API_URL", "https://api.speedy.bg/v1")
@@ -244,27 +255,31 @@ class CreateShipmentRequest(BaseModel):
 
 
 @router.post("/shipment")
-async def create_shipment(request: CreateShipmentRequest):
+async def create_shipment(request: Request, shipment_data: CreateShipmentRequest):
     """Create a shipment (waybill) in Speedy system with COD, receipt, and return voucher support"""
+    # SEC-003 FIX: Require admin auth for shipment creation
+    db = request.app.state.db
+    await verify_admin_speedy(request, db)
+    
     try:
         # Build recipient based on delivery type
         recipient = {
-            "phone1": {"number": request.recipient.phone},
-            "clientName": request.recipient.name,
+            "phone1": {"number": shipment_data.recipient.phone},
+            "clientName": shipment_data.recipient.name,
             "privatePerson": True,
         }
         
-        if request.delivery_type == "OFFICE" and request.recipient.office_id:
-            recipient["siteId"] = request.recipient.city_id
-            recipient["pickupOfficeId"] = request.recipient.office_id
-        elif request.delivery_type == "ADDRESS":
+        if shipment_data.delivery_type == "OFFICE" and shipment_data.recipient.office_id:
+            recipient["siteId"] = shipment_data.recipient.city_id
+            recipient["pickupOfficeId"] = shipment_data.recipient.office_id
+        elif shipment_data.delivery_type == "ADDRESS":
             # For address delivery use addressLocation structure
             recipient["addressLocation"] = {
-                "siteId": request.recipient.city_id,
-                "addressNote": request.recipient.address or ""
+                "siteId": shipment_data.recipient.city_id,
+                "addressNote": shipment_data.recipient.address or ""
             }
         else:
-            recipient["siteId"] = request.recipient.city_id
+            recipient["siteId"] = shipment_data.recipient.city_id
         
         # Build shipment payload using clientId for sender (required by Speedy contract)
         shipment_payload = {
@@ -274,42 +289,42 @@ async def create_shipment(request: CreateShipmentRequest):
             },
             "recipient": recipient,
             "service": {
-                "serviceId": SERVICE_TO_OFFICE if request.delivery_type == "OFFICE" else SERVICE_TO_ADDRESS,
+                "serviceId": SERVICE_TO_OFFICE if shipment_data.delivery_type == "OFFICE" else SERVICE_TO_ADDRESS,
                 "autoAdjustPickupDate": True
             },
             "content": {
                 "parcelsCount": 1,
-                "totalWeight": request.weight,
-                "contents": request.contents,
+                "totalWeight": shipment_data.weight,
+                "contents": shipment_data.contents,
                 "package": "BOX"
             },
             "payment": {
                 "courierServicePayer": "SENDER"
             },
-            "ref1": request.order_number  # Link to our order
+            "ref1": shipment_data.order_number  # Link to our order
         }
         
         # Add COD with receipt (касов бон) if applicable
-        if request.cod_amount and request.cod_amount > 0:
+        if shipment_data.cod_amount and shipment_data.cod_amount > 0:
             shipment_payload["payment"]["codPayment"] = {
-                "amount": request.cod_amount,
+                "amount": shipment_data.cod_amount,
                 "processingType": "CASH",
                 # Request receipt (касов бон) for COD - ВАЖНО за онлайн магазин!
                 "includeShippingPrice": False  # COD amount is only for goods, not shipping
             }
             # Add fiscal receipt request
-            shipment_payload["payment"]["declaredValueAmount"] = request.cod_amount
+            shipment_payload["payment"]["declaredValueAmount"] = shipment_data.cod_amount
         
         # Add return voucher for 14-day free returns (неразопакован продукт)
-        if request.include_return_voucher:
+        if shipment_data.include_return_voucher:
             shipment_payload["service"]["returnVoucher"] = {
                 "serviceId": SERVICE_TO_OFFICE,  # Return to office
                 "payer": "SENDER",  # KOSTIN pays for return shipping
                 "validityPeriod": 14  # 14 days validity
             }
-            logger.info(f"Including 14-day return voucher for order {request.order_number}")
+            logger.info(f"Including 14-day return voucher for order {shipment_data.order_number}")
         
-        logger.info(f"Creating Speedy shipment for order {request.order_number}, COD: {request.cod_amount}")
+        logger.info(f"Creating Speedy shipment for order {shipment_data.order_number}, COD: {shipment_data.cod_amount}")
         
         data = await speedy_request("shipment", shipment_payload)
         
@@ -320,7 +335,7 @@ async def create_shipment(request: CreateShipmentRequest):
         
         tracking_number = parcels[0].get("id") if parcels else shipment_id
         
-        logger.info(f"Speedy shipment created: {tracking_number} for order {request.order_number}")
+        logger.info(f"Speedy shipment created: {tracking_number} for order {shipment_data.order_number}")
         
         return {
             "success": True,
@@ -442,12 +457,15 @@ async def create_shipment_for_order(order: dict) -> dict:
 # ============= Admin endpoint to manually create shipment =============
 
 @router.post("/shipment/order/{order_id}")
-async def create_shipment_for_order_id(order_id: str):
+async def create_shipment_for_order_id(request: Request, order_id: str):
     """
     Admin endpoint to manually create a Speedy shipment for an existing order.
     """
     from bson import ObjectId
-    from server import db
+    
+    # SEC-003 FIX: Require admin auth
+    db = request.app.state.db
+    await verify_admin_speedy(request, db)
     
     try:
         # Get order from database

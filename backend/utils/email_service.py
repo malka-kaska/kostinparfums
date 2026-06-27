@@ -772,3 +772,62 @@ async def send_cod_order_confirmation(
     """
     
     return await send_email(to_email, subject, html_content)
+
+
+
+async def send_password_reset_email(to_email: str, name: str, token: str):
+    """Send password reset email with secure link"""
+    reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
+    
+    subject = "Възстановяване на парола | KOSTIN"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://res.cloudinary.com/dj3zd0gxq/image/upload/v1749040949/KOSTIN_Logo_ttvfmx.png" alt="KOSTIN" style="height: 40px; margin-bottom: 20px;">
+            </div>
+            
+            <div style="background: #ffffff; padding: 40px; border-radius: 2px;">
+                <h1 style="font-size: 22px; font-weight: 300; color: #1a1a1a; margin: 0 0 25px; text-align: center; letter-spacing: 1px;">
+                    ВЪЗСТАНОВЯВАНЕ НА ПАРОЛА
+                </h1>
+                
+                <p style="color: #666; font-size: 14px; line-height: 1.8; margin: 0 0 20px;">
+                    Здравейте{', ' + name if name else ''},
+                </p>
+                
+                <p style="color: #666; font-size: 14px; line-height: 1.8; margin: 0 0 25px;">
+                    Получихме заявка за възстановяване на паролата на вашия акаунт в KOSTIN. 
+                    Кликнете бутона по-долу, за да зададете нова парола:
+                </p>
+                
+                <div style="text-align: center; margin: 35px 0;">
+                    <a href="{reset_url}" 
+                       style="display: inline-block; background: #1a1a1a; color: #fff; padding: 14px 35px; text-decoration: none; font-size: 13px; letter-spacing: 2px;">
+                        ЗАДАЙ НОВА ПАРОЛА
+                    </a>
+                </div>
+                
+                <p style="color: #999; font-size: 12px; line-height: 1.6; margin: 25px 0 0; text-align: center;">
+                    Този линк е валиден 1 час. Ако не сте заявили възстановяване на парола, 
+                    можете спокойно да игнорирате този имейл.
+                </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <p style="color: #888; font-size: 12px;">
+                    © {datetime.now().year} KOSTIN | Луксозни парфюми
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return await send_email(to_email, subject, html_content)

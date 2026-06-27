@@ -128,26 +128,77 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     """Create a Cash on Delivery order"""
     db = request.app.state.db
     
-    # Calculate total
+    # SEC-001 FIX: Validate prices from database, not client
     total_amount = 0.0
     items_for_db = []
     
     for item in order_data.items:
-        item_price = float(item.get('price', 0))
+        product_id = item.get('id', '')
         item_qty = int(item.get('quantity', 1))
-        item_total = item_price * item_qty
+        
+        if not product_id:
+            raise HTTPException(status_code=400, detail="Product ID is required")
+        
+        # Fetch actual price from database
+        try:
+            product = await db.products.find_one({"_id": ObjectId(product_id)})
+        except Exception:
+            raise HTTPException(status_code=400, detail=f"Invalid product ID: {product_id}")
+        
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Product not found: {product_id}")
+        
+        if not product.get("is_active", True) or not product.get("is_visible", True):
+            raise HTTPException(status_code=400, detail=f"Product not available: {product.get('name', product_id)}")
+        
+        # Use database price, not client-supplied price
+        db_price = float(product.get("price", 0))
+        item_total = db_price * item_qty
         total_amount += item_total
         
         items_for_db.append({
-            "product_id": item.get('id', ''),
-            "name": item.get('name', ''),
-            "price": item_price,
+            "product_id": product_id,
+            "name": product.get('name', ''),
+            "price": db_price,  # Use DB price
             "quantity": item_qty,
-            "image": item.get('image', ''),
+            "image": product.get('images', [item.get('image', '')])[0] if product.get('images') else item.get('image', ''),
         })
     
     if total_amount <= 0:
         raise HTTPException(status_code=400, detail="Invalid order total")
+    
+    # Validate discount code if provided
+    discount_code = order_data.discount_code
+    discount_amount = 0.0
+    
+    if discount_code:
+        # Verify discount code is valid and calculate actual discount
+        discount_doc = await db.discount_codes.find_one({
+            "code": discount_code.upper().strip(),
+            "is_active": True
+        })
+        
+        if discount_doc:
+            # Check usage limits
+            if discount_doc.get("max_uses") and discount_doc.get("current_uses", 0) >= discount_doc.get("max_uses"):
+                discount_code = None  # Code exhausted
+            elif discount_doc.get("expires_at") and datetime.now(timezone.utc) > discount_doc.get("expires_at"):
+                discount_code = None  # Code expired
+            else:
+                # Calculate discount from server-side
+                if discount_doc.get("discount_type") == "percentage":
+                    discount_amount = total_amount * (discount_doc.get("discount_value", 0) / 100)
+                    max_discount = discount_doc.get("max_discount_amount")
+                    if max_discount and discount_amount > max_discount:
+                        discount_amount = max_discount
+                else:
+                    discount_amount = min(discount_doc.get("discount_value", 0), total_amount)
+        else:
+            discount_code = None  # Invalid code
+    
+    # Validate shipping cost from Speedy API (simplified - trust for now but could re-validate)
+    shipping_cost = order_data.shipping_cost if order_data.shipping_cost and order_data.shipping_cost >= 0 else 0.0
+    shipping_method = order_data.shipping_method if order_data.shipping_method else "speedy_office"
     
     # Try to get user info if authenticated
     user_id = ""
@@ -165,14 +216,6 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     
     # Generate order number
     order_number = generate_order_number()
-    
-    # Get shipping cost from request or default
-    shipping_cost = order_data.shipping_cost if order_data.shipping_cost else 0.0
-    shipping_method = order_data.shipping_method if order_data.shipping_method else "speedy_office"
-    
-    # Get discount info
-    discount_code = order_data.discount_code
-    discount_amount = order_data.discount_amount if order_data.discount_amount else 0.0
     
     # Final total includes shipping minus discount
     final_total = total_amount + shipping_cost - discount_amount

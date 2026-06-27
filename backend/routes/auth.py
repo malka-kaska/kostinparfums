@@ -1,4 +1,5 @@
 import secrets
+import os
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Request, HTTPException, Response
 from bson import ObjectId
@@ -23,11 +24,14 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
+    # SEC-HARDENING: Use secure cookies in production
+    is_production = os.environ.get("ENVIRONMENT", "development") == "production"
+    
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,
+        secure=is_production,  # True for HTTPS in production
         samesite="lax",
         max_age=604800,  # 7 days
         path="/",
@@ -36,7 +40,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,
+        secure=is_production,  # True for HTTPS in production
         samesite="lax",
         max_age=604800,  # 7 days
         path="/",
@@ -248,7 +252,15 @@ async def forgot_password(request: Request, data: ResetPasswordRequest):
         "created_at": datetime.now(timezone.utc).isoformat(),
     })
 
-    logger.info(f"Password reset token for {email}: {token}")
+    # SEC-004 FIX: Send reset email instead of logging token
+    try:
+        from utils.email_service import send_password_reset_email
+        await send_password_reset_email(email, user.get("name", ""), token)
+        logger.info(f"Password reset email sent to {email}")
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {email}: {e}")
+        # Don't reveal email sending failure to user
+    
     return {"message": "If the email exists, a reset link has been sent."}
 
 

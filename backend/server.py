@@ -7,6 +7,7 @@ load_dotenv(ROOT_DIR / '.env')
 from fastapi import FastAPI, APIRouter, Request, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from bson import ObjectId
 import os
 import sys
 import logging
@@ -137,10 +138,31 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest):
         total_amount = 0.0
         item_descriptions = []
 
+        # SEC-001 FIX: Validate prices from database, not client
         for item in checkout_data.items:
-            item_total = float(item.get('price', 0)) * int(item.get('quantity', 1))
+            product_id = item.get('id', '')
+            quantity = int(item.get('quantity', 1))
+            
+            if not product_id:
+                raise HTTPException(status_code=400, detail="Product ID is required")
+            
+            # Fetch actual price from database
+            try:
+                product = await db.products.find_one({"_id": ObjectId(product_id)})
+            except Exception:
+                raise HTTPException(status_code=400, detail=f"Invalid product ID: {product_id}")
+            
+            if not product:
+                raise HTTPException(status_code=404, detail=f"Product not found: {product_id}")
+            
+            if not product.get("is_active", True) or not product.get("is_visible", True):
+                raise HTTPException(status_code=400, detail=f"Product not available: {product.get('name', product_id)}")
+            
+            # Use database price, not client-supplied price
+            db_price = float(product.get("price", 0))
+            item_total = db_price * quantity
             total_amount += item_total
-            item_descriptions.append(f"{item.get('name', 'Product')} x{item.get('quantity', 1)}")
+            item_descriptions.append(f"{product.get('name', 'Product')} x{quantity}")
 
         if total_amount <= 0:
             raise HTTPException(status_code=400, detail="Invalid cart total")

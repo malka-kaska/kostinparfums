@@ -3,6 +3,7 @@ from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional, List
 from pydantic import BaseModel, Field
+from utils.auth import get_current_user
 import secrets
 import string
 import logging
@@ -10,6 +11,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/discounts", tags=["discounts"])
+
+
+# Helper function to verify admin access
+async def verify_admin(request: Request, db):
+    """Verify the user is authenticated and has admin role"""
+    user = await get_current_user(request, db)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
 
 
 # ============ SCHEMAS ============
@@ -102,6 +112,7 @@ def serialize_discount(doc: dict) -> dict:
 async def get_all_discount_codes(request: Request):
     """Get all discount codes (admin only)"""
     db = request.app.state.db
+    await verify_admin(request, db)  # SEC-002 FIX: Require admin auth
     
     codes = []
     cursor = db.discount_codes.find().sort("created_at", -1)
@@ -115,6 +126,7 @@ async def get_all_discount_codes(request: Request):
 async def create_discount_code(request: Request, data: DiscountCodeCreate):
     """Create a new discount code (admin only)"""
     db = request.app.state.db
+    await verify_admin(request, db)  # SEC-002 FIX: Require admin auth
     
     # Generate code if not provided
     code = data.code.upper().strip() if data.code else generate_discount_code()
@@ -204,6 +216,7 @@ async def create_discount_code(request: Request, data: DiscountCodeCreate):
 async def update_discount_code(request: Request, code_id: str, data: DiscountCodeUpdate):
     """Update a discount code (admin only)"""
     db = request.app.state.db
+    await verify_admin(request, db)  # SEC-002 FIX: Require admin auth
     
     try:
         oid = ObjectId(code_id)
@@ -268,6 +281,7 @@ async def update_discount_code(request: Request, code_id: str, data: DiscountCod
 async def delete_discount_code(request: Request, code_id: str):
     """Delete a discount code (admin only)"""
     db = request.app.state.db
+    await verify_admin(request, db)  # SEC-002 FIX: Require admin auth
     
     try:
         oid = ObjectId(code_id)
@@ -286,6 +300,7 @@ async def delete_discount_code(request: Request, code_id: str):
 async def toggle_discount_code(request: Request, code_id: str):
     """Toggle discount code active status (admin only)"""
     db = request.app.state.db
+    await verify_admin(request, db)  # SEC-002 FIX: Require admin auth
     
     try:
         oid = ObjectId(code_id)

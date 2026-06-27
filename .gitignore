@@ -88,3 +88,8 @@ memory/test_credentials.md
 
 # Node modules cache
 frontend/node_modules/.cache/
+.env
+.env.*
+credentials.json
+*.key
+.credentials

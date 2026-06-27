@@ -37,10 +37,36 @@ const Header = () => {
         const res = await fetch(`${API_URL}/api/homepage/nav-collections`);
         if (res.ok) {
           const data = await res.json();
-          setNavCollections(data.collections || []);
+          const collections = data.collections || [];
+          // If no collections from API, use default Dubai
+          if (collections.length === 0) {
+            setNavCollections([{
+              slug: 'dubai',
+              name: 'Dubai Fragrances',
+              name_bg: 'Дубайски аромати',
+              path: '/dubai-perfumes'
+            }]);
+          } else {
+            setNavCollections(collections);
+          }
+        } else {
+          // API error - use default
+          setNavCollections([{
+            slug: 'dubai',
+            name: 'Dubai Fragrances',
+            name_bg: 'Дубайски аромати',
+            path: '/dubai-perfumes'
+          }]);
         }
       } catch (err) {
         console.error('Failed to fetch nav collections:', err);
+        // Fallback to default Dubai collection
+        setNavCollections([{
+          slug: 'dubai',
+          name: 'Dubai Fragrances',
+          name_bg: 'Дубайски аромати',
+          path: '/dubai-perfumes'
+        }]);
       }
     };
     fetchNavCollections();

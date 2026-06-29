@@ -51,15 +51,14 @@ const Auth = () => {
         if (subscribeNewsletter) {
           localStorage.setItem('newsletterSubscribed', 'true');
         }
-        // Show verification message instead of navigating
-        if (result && result.email_verified === false) {
-          setSuccessMessage(t('checkEmailToVerify'));
+        // Show verification message - user must verify email before logging in
+        if (result && (result.pendingVerification || result.email_verified === false)) {
+          setSuccessMessage(t('checkEmailToVerify') || 'Проверете имейла си за да потвърдите акаунта.');
           setEmail('');
           setPassword('');
           setName('');
           setAgreeTerms(false);
-        } else {
-          navigate('/');
+          setIsLogin(true); // Switch to login form
         }
       }
     } catch (err) {

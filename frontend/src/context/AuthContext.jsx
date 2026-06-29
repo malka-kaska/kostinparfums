@@ -124,10 +124,15 @@ export const AuthProvider = ({ children }) => {
       throw new Error(detail);
     }
     const data = await res.clone().json();
-    setUser(data);
-    await fetchCart();
-    return data;
-  }, [fetchCart]);
+    // Don't log in user after registration - they need to verify email first
+    // setUser(data) - REMOVED
+    // Return data with pending verification status
+    return {
+      ...data,
+      pendingVerification: true,
+      message: data.message || 'Please check your email to verify your account'
+    };
+  }, []);
 
   const logout = useCallback(async () => {
     try {

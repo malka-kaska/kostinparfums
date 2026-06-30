@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, Heart, ArrowLeft, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -26,6 +26,7 @@ const ProductDetail = () => {
   const [imageError, setImageError] = useState({});
   const { t, lang } = useLanguage();
   const { addToCart } = useAuth();
+  const viewedRef = useRef(null); // guards GA4 view_item against StrictMode double-invoke
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,8 +40,11 @@ const ProductDetail = () => {
           // Add to recently viewed
           addToRecentlyViewed(data);
 
-          // GA4: Track view_item
-          trackViewItem(data);
+          // GA4: Track view_item once per product (avoids double-count on re-render)
+          if (viewedRef.current !== data.id) {
+            viewedRef.current = data.id;
+            trackViewItem(data);
+          }
           
           // Fetch variants (other sizes of same product)
           const varRes = await fetch(`${API_URL}/api/products/${id}/variants`);

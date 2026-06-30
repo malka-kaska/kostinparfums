@@ -244,6 +244,14 @@ class RecipientInfo(BaseModel):
     post_code: Optional[str] = None
 
 
+class FiscalReceiptItem(BaseModel):
+    """Item for fiscal receipt (касов бон)"""
+    name: str
+    quantity: int = 1
+    unit_price: float
+    vat_percent: float = 20.0  # 20% VAT in Bulgaria
+
+
 class CreateShipmentRequest(BaseModel):
     order_number: str
     recipient: RecipientInfo
@@ -252,6 +260,7 @@ class CreateShipmentRequest(BaseModel):
     cod_amount: Optional[float] = None  # Cash on delivery amount (if COD payment)
     contents: str = "Парфюми"
     include_return_voucher: bool = True  # Include 14-day return voucher
+    fiscal_receipt_items: Optional[List[FiscalReceiptItem]] = None  # Items for касов бон
 
 
 async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dict:
@@ -302,15 +311,32 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             "ref1": shipment_data.order_number  # Link to our order
         }
         
-        # Add COD with receipt (касов бон) if applicable
+        # Add COD with fiscal receipt (касов бон) if applicable
         if shipment_data.cod_amount and shipment_data.cod_amount > 0:
-            shipment_payload["payment"]["codPayment"] = {
+            cod_service = {
                 "amount": shipment_data.cod_amount,
-                "processingType": "CASH",
-                # Request receipt (касов бон) for COD - ВАЖНО за онлайн магазин!
-                "includeShippingPrice": False  # COD amount is only for goods, not shipping
+                "processingType": "CASH"
             }
-            # Add fiscal receipt request
+            
+            # Add fiscal receipt items for касов бон
+            if shipment_data.fiscal_receipt_items:
+                fiscal_items = []
+                for item in shipment_data.fiscal_receipt_items:
+                    fiscal_items.append({
+                        "itemName": item.name[:50],  # Max 50 chars
+                        "quantity": item.quantity,
+                        "unitPrice": round(item.unit_price, 2),
+                        "vatClass": "B"  # B = 20% VAT in Bulgaria
+                    })
+                cod_service["codFiscalReceiptItems"] = fiscal_items
+                logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон")
+            
+            # COD goes in service.additionalServices, not payment
+            shipment_payload["service"]["additionalServices"] = {
+                "cod": cod_service
+            }
+            
+            # Also set declaredValueAmount for insurance purposes
             shipment_payload["payment"]["declaredValueAmount"] = shipment_data.cod_amount
         
         # Add return voucher for 14-day free returns (неразопакован продукт)
@@ -428,8 +454,22 @@ async def create_shipment_for_order(order: dict) -> dict:
         
         # Determine COD amount (only for COD orders)
         cod_amount = None
+        fiscal_items = None
         if order.get("payment_method") == "cod":
             cod_amount = order.get("total", 0)
+            
+            # Build fiscal receipt items from order items
+            order_items = order.get("items", [])
+            if order_items:
+                fiscal_items = []
+                for item in order_items:
+                    item_name = f"{item.get('brand', '')} {item.get('name', 'Парфюм')}"[:50]
+                    fiscal_items.append(FiscalReceiptItem(
+                        name=item_name,
+                        quantity=item.get("quantity", 1),
+                        unit_price=float(item.get("price", 0))
+                    ))
+                logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order.get('order_number')}")
         
         # Build recipient info
         recipient = RecipientInfo(
@@ -441,14 +481,15 @@ async def create_shipment_for_order(order: dict) -> dict:
             address=speedy_data.get("address") or shipping_address.get("address", "")
         )
         
-        # Create shipment request
+        # Create shipment request with fiscal items for касов бон
         shipment_request = CreateShipmentRequest(
             order_number=order.get("order_number", ""),
             recipient=recipient,
             delivery_type=speedy_data.get("delivery_type", "OFFICE"),
             weight=0.5,  # Default weight for perfumes
             cod_amount=cod_amount,
-            contents="Парфюми / Perfumes"
+            contents="Парфюми / Perfumes",
+            fiscal_receipt_items=fiscal_items
         )
         
         # Call the internal shipment creation function (no auth required)

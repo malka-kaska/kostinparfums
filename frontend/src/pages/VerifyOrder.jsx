@@ -11,6 +11,7 @@ const VerifyOrder = () => {
   const [status, setStatus] = useState('loading'); // loading, success, error
   const [message, setMessage] = useState('');
   const [orderId, setOrderId] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const VerifyOrder = () => {
           setStatus('success');
           setMessage(data.message || t('orderVerified'));
           setOrderId(data.order_id || '');
+          setTrackingNumber(data.tracking_number || '');
         } else {
           setStatus('error');
           setMessage(data.detail || t('orderVerificationFailed'));
@@ -79,6 +81,32 @@ const VerifyOrder = () => {
                   <p style={{ margin: '5px 0 0 0', fontSize: '18px', fontWeight: '500', letterSpacing: '2px' }}>
                     #{orderId.slice(0, 8).toUpperCase()}
                   </p>
+                </div>
+              )}
+
+              {trackingNumber && (
+                <div style={{ 
+                  background: 'var(--bg-secondary)', 
+                  padding: '15px 25px', 
+                  borderRadius: '8px', 
+                  marginBottom: '25px',
+                  display: 'block',
+                  maxWidth: '320px',
+                  margin: '0 auto 25px'
+                }}>
+                  <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>{t('trackingNumber')}</p>
+                  <p style={{ margin: '5px 0 10px 0', fontSize: '18px', fontWeight: '500', letterSpacing: '1px' }}>
+                    {trackingNumber}
+                  </p>
+                  <a
+                    href={`https://www.speedy.bg/bg/track-shipment?shipmentNumber=${trackingNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--accent-gold)', fontSize: '14px', textDecoration: 'none' }}
+                  >
+                    <Package size={16} />
+                    {t('trackShipment')}
+                  </a>
                 </div>
               )}
               

@@ -197,6 +197,21 @@ const Checkout = () => {
     loadCart();
   }, [loadCart]);
 
+  // Meta Pixel: Track InitiateCheckout when page loads with items
+  useEffect(() => {
+    if (cart.length > 0 && typeof window !== 'undefined' && window.fbq) {
+      const contentIds = cart.map(item => item.id);
+      const totalValue = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      window.fbq('track', 'InitiateCheckout', {
+        content_ids: contentIds,
+        content_type: 'product',
+        num_items: cart.length,
+        value: totalValue,
+        currency: 'EUR'
+      });
+    }
+  }, [cart.length > 0]); // Only fire once when cart has items
+
   useEffect(() => {
     // Pre-fill user data if logged in
     if (user) {
@@ -442,6 +457,18 @@ const Checkout = () => {
       }
 
       const data = await response.json();
+      
+      // Meta Pixel: Track Purchase event for COD
+      if (typeof window !== 'undefined' && window.fbq) {
+        const totalValue = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        window.fbq('track', 'Purchase', {
+          content_ids: items.map(item => item.id),
+          content_type: 'product',
+          num_items: items.length,
+          value: totalValue,
+          currency: 'EUR'
+        });
+      }
       
       // Clear cart and show success
       await clearCartAll();

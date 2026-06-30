@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import './CheckoutSuccess.css';
 
 const clearCart = () => {
-  try { localStorage.removeItem('cart'); } catch (e) {}
+  try { localStorage.removeItem('cart'); } catch { /* ignore */ }
 };
 
 const CheckoutSuccess = () => {
@@ -53,6 +53,15 @@ const CheckoutSuccess = () => {
           setStatus('success');
           clearCart();
           window.dispatchEvent(new Event('cartUpdated'));
+          
+          // Meta Pixel: Track Purchase event
+          if (typeof window !== 'undefined' && window.fbq && data.amount) {
+            window.fbq('track', 'Purchase', {
+              value: data.amount / 100, // Convert from cents to EUR
+              currency: 'EUR',
+              content_type: 'product'
+            });
+          }
           return;
         } else if (data.status === 'expired') {
           setStatus('expired');

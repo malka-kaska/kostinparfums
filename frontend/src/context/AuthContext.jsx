@@ -146,6 +146,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const addToCart = useCallback(async (product, quantity = 1) => {
+    // Meta Pixel: Track AddToCart event
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'AddToCart', {
+        content_ids: [product.id],
+        content_name: product.name,
+        content_type: 'product',
+        value: product.price * quantity,
+        currency: 'EUR'
+      });
+    }
+
     if (user) {
       try {
         const res = await fetch(`${API_URL}/api/cart/add`, {

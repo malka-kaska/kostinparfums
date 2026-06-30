@@ -179,18 +179,29 @@ const SpeedyShipping = ({
 
   // Handle city selection
   const handleSelectCity = (city) => {
-    setSelectedCity(city);
-    setCitySearch(city.name);
-    setShowCityDropdown(false);
-    setSelectedOffice(null);
-    setOffices([]);
+    if (!city) return;
+    try {
+      setSelectedCity(city);
+      setCitySearch(city.name || '');
+      setShowCityDropdown(false);
+      setSelectedOffice(null);
+      setOffices([]);
+      setOfficeSearch('');
+    } catch (error) {
+      console.error('Error selecting city:', error);
+    }
   };
 
   // Handle office selection
   const handleSelectOffice = (office) => {
-    setSelectedOffice(office);
-    setOfficeSearch(office.name);
-    setShowOfficeDropdown(false);
+    if (!office) return;
+    try {
+      setSelectedOffice(office);
+      setOfficeSearch(office.name || '');
+      setShowOfficeDropdown(false);
+    } catch (error) {
+      console.error('Error selecting office:', error);
+    }
   };
 
   // Filter offices by search
@@ -283,7 +294,11 @@ const SpeedyShipping = ({
                 <div
                   key={city.id}
                   className="speedy-dropdown-item"
-                  onClick={() => handleSelectCity(city)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSelectCity(city);
+                  }}
                 >
                   <MapPin size={16} />
                   <div>
@@ -322,15 +337,21 @@ const SpeedyShipping = ({
               <div className="speedy-dropdown speedy-dropdown-offices">
                 {filteredOffices.slice(0, 50).map(office => (
                   <div
-                    key={office.id}
+                    key={office.id || Math.random()}
                     className={`speedy-dropdown-item ${selectedOffice?.id === office.id ? 'selected' : ''}`}
-                    onClick={() => handleSelectOffice(office)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelectOffice(office);
+                    }}
                   >
                     <Package size={16} />
                     <div>
-                      <span className="office-name">{office.name}</span>
-                      <span className="office-address">{office.address}</span>
-                      <span className="office-hours">{office.workingTimeFrom} - {office.workingTimeTo}</span>
+                      <span className="office-name">{office.name || 'Офис'}</span>
+                      <span className="office-address">{office.address || ''}</span>
+                      {office.workingTimeFrom && office.workingTimeTo && (
+                        <span className="office-hours">{office.workingTimeFrom} - {office.workingTimeTo}</span>
+                      )}
                     </div>
                   </div>
                 ))}

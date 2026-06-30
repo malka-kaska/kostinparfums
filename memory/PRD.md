@@ -125,10 +125,35 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 ## Backlog
 - [ ] Dropshipping API integration (awaiting supplier API details)
 - [x] ~~Refactor Admin.jsx into smaller components~~ (DONE - June 2026)
-- [ ] Extract email HTML templates to separate files
+- [ ] Extract email HTML templates to Jinja2 files
 - [x] ~~Integrate discount codes in Checkout flow~~ (DONE - June 2026)
+- [x] ~~Order Cancellation with Reason~~ (DONE - July 2026)
+- [x] ~~Guest Cancel Order Page~~ (DONE - July 2026)
+- [ ] НЕкоректен БГ API integration (BLOCKED - awaiting IP whitelist confirmation)
 
-## Recently Added (June 2026)
+## Recently Added (June-July 2026)
+
+### Order Cancellation System (July 2026)
+- [x] **User Cancel Order (Profile)**: Textarea за описание на причината при отказ
+- [x] **Admin Cancel Order**: Textarea за причина в Admin OrdersManager с заглавие "Защо отказвате тази поръчка?"
+- [x] **Guest Cancel Order**: Нова страница `/cancel-order?order=X&token=Y` за гости
+- [x] **Email Link**: Линк за отказ в COD confirmation email-а за гости
+- [x] **Admin Notifications**: Cancellation emails изпращани до `contact@kostinparfums.com`
+- [x] **API Endpoints**: 
+  - `POST /api/orders/{id}/cancel` - User cancel (requires auth)
+  - `POST /api/orders/guest/{id}/cancel?token=X` - Guest cancel
+  - `POST /api/orders/admin/{id}/cancel` - Admin cancel
+- [x] **Cleanup**: Изтрит obsolete `invoice_generator.py` (заменен от Inv.bg интеграция)
+
+### OrderSuccess Page (June 2026)
+- [x] **Tracking Info**: Показва tracking номер и линк за Speedy
+- [x] **Recommended Products**: Препоръчани продукти след поръчка
+
+### Free Shipping Threshold
+- [x] Праг за безплатна доставка: €90 (преди €100)
+- [x] При поръчка под €90 - получателят плаща доставката
+- [x] При поръчка над €90 - изпращачът плаща доставката
+
 - [x] **Admin Panel Refactoring**
   - Split Admin.jsx (1307 lines) into modular components
   - ProductsManager.jsx, OrdersManager.jsx, CollectionsManager.jsx, HomepageManager.jsx, DiscountCodesManager.jsx

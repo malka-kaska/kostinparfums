@@ -127,6 +127,7 @@ export const en = {
   orderSummary: "Order Summary",
   subtotal: "Subtotal",
   shipping: "Shipping",
+  calculatedAtCheckout: "Calculated at checkout",
   freeShipping: "FREE",
   freeShippingNote: "Free shipping on orders over \u20ac100",
   addMoreForFree: "Add \u20ac{amount} more for free shipping!",

@@ -203,6 +203,12 @@
   color: var(--text-primary);
 }
 
+.shipping-calculated {
+  font-style: italic;
+  color: var(--text-secondary) !important;
+  font-weight: 400 !important;
+}
+
 .summary-divider {
   height: 1px;
   background: var(--border-light);

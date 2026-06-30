@@ -146,24 +146,18 @@ const Cart = () => {
               </div>
             </div>
             
-            <div className="summary-row">
+            <div className="summary-row shipping-note">
               <span>{t('shipping')}</span>
-              <span>{total >= 100 ? t('freeShipping') : '\u20ac9.95'}</span>
+              <span className="shipping-calculated">{t('calculatedAtCheckout')}</span>
             </div>
-            
-            {total < 100 && (
-              <p className="free-shipping-hint">
-                {t('addMoreForFree', { amount: (100 - total).toFixed(2) })}
-              </p>
-            )}
             
             <div className="summary-divider"></div>
             
             <div className="summary-row summary-total">
-              <span>{t('total')}</span>
+              <span>{t('subtotal')}</span>
               <div className="summary-price total-price">
-                <span className="price-eur">&euro;{(total >= 100 ? total : total + 9.95).toFixed(2)}</span>
-                <span className="price-bgn">{((total >= 100 ? total : total + 9.95) * 1.95583).toFixed(2)} лв.</span>
+                <span className="price-eur">&euro;{total.toFixed(2)}</span>
+                <span className="price-bgn">{(total * 1.95583).toFixed(2)} лв.</span>
               </div>
             </div>
 

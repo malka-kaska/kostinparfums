@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
+import { trackAddToCart } from '../utils/analytics';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const CART_STORAGE_KEY = 'kostin_cart';
@@ -156,6 +157,9 @@ export const AuthProvider = ({ children }) => {
         currency: 'EUR'
       });
     }
+
+    // GA4: Track add_to_cart event
+    trackAddToCart(product, quantity);
 
     if (user) {
       try {

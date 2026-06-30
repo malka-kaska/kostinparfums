@@ -2,10 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader, Package } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { trackPurchase } from '../utils/analytics';
 import './CheckoutSuccess.css';
 
+// Cart is persisted under 'kostin_cart' (see AuthContext CART_STORAGE_KEY).
 const clearCart = () => {
-  try { localStorage.removeItem('cart'); } catch { /* ignore */ }
+  try {
+    localStorage.removeItem('kostin_cart');
+    localStorage.removeItem('cart'); // legacy key cleanup
+  } catch { /* ignore */ }
 };
 
 const CheckoutSuccess = () => {
@@ -54,14 +59,26 @@ const CheckoutSuccess = () => {
           clearCart();
           window.dispatchEvent(new Event('cartUpdated'));
           
+          // Backend returns amount_total already in EUR (see /payments/status).
+          const orderValue = Number(data.amount_total) || 0;
+          let shippingCost = 0;
+          try {
+            const pending = JSON.parse(sessionStorage.getItem('pending_shipping_address') || '{}');
+            shippingCost = Number(pending.shipping_cost) || 0;
+          } catch { /* ignore malformed pending data */ }
+
           // Meta Pixel: Track Purchase event
-          if (typeof window !== 'undefined' && window.fbq && data.amount) {
+          if (typeof window !== 'undefined' && window.fbq && orderValue > 0) {
             window.fbq('track', 'Purchase', {
-              value: data.amount / 100, // Convert from cents to EUR
+              value: orderValue,
               currency: 'EUR',
               content_type: 'product'
             });
           }
+
+          // GA4: Track purchase event for card (Stripe) payment.
+          // transaction_id = Stripe session id guards against duplicate counting on reload.
+          trackPurchase({ transactionId: sessionId, value: orderValue, shipping: shippingCost });
           return;
         } else if (data.status === 'expired') {
           setStatus('expired');
@@ -101,10 +118,10 @@ const CheckoutSuccess = () => {
               <CheckCircle className="status-icon success-icon" size={64} />
               <h1 className="heading-2">{t('paymentSuccessful')}</h1>
               <p className="status-message">{t('thankYou')}</p>
-              {paymentDetails && (
+              {paymentDetails && paymentDetails.amount_total != null && (
                 <div className="payment-details">
                   <p className="amount">
-                    {t('totalPaid')} <strong>&euro;{paymentDetails.amount_total.toFixed(2)}</strong>
+                    {t('totalPaid')} <strong>&euro;{Number(paymentDetails.amount_total).toFixed(2)}</strong>
                   </p>
                 </div>
               )}

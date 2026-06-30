@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { trackRemoveFromCart } from '../utils/analytics';
 import './Cart.css';
 
 const Cart = () => {
@@ -33,6 +34,9 @@ const Cart = () => {
   };
 
   const handleRemoveItem = async (productId) => {
+    // GA4: Track remove_from_cart with the line being removed (before state changes)
+    const removed = cart.find(item => item.id === productId);
+    if (removed) trackRemoveFromCart(removed, removed.quantity || 1);
     await removeCartItem(productId);
     loadCart();
   };

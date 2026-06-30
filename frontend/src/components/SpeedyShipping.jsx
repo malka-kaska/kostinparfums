@@ -411,8 +411,8 @@ const SpeedyShipping = ({
               <div className="price-main">
                 <span className="price-label">{language === 'bg' ? 'Цена за доставка:' : 'Shipping cost:'}</span>
                 <div className="price-values">
-                  <span className="price-eur">€{shippingPrice.eur.toFixed(2)}</span>
-                  <span className="price-bgn">{shippingPrice.bgn.toFixed(2)} лв.</span>
+                  <span className="price-eur">€{Number(shippingPrice.eur || 0).toFixed(2)}</span>
+                  <span className="price-bgn">{Number(shippingPrice.bgn || 0).toFixed(2)} лв.</span>
                 </div>
               </div>
               {shippingPrice.deliveryDeadline && (

@@ -27,6 +27,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOrder from "./pages/VerifyOrder";
 import DubaiPerfumes from "./pages/DubaiPerfumes";
 import CookieBanner from "./components/CookieBanner";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <AuthProvider>
         <ScrollToTop />
         <Header />
+        <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
@@ -60,6 +62,7 @@ function App() {
           {/* Redirect /collection/dubai to /dubai-perfumes */}
           <Route path="/collection/dubai" element={<Navigate to="/dubai-perfumes" replace />} />
         </Routes>
+        </ErrorBoundary>
         <Footer />
         <CookieBanner />
         </AuthProvider>

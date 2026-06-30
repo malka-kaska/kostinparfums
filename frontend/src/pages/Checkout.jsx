@@ -4,6 +4,7 @@ import { CreditCard, Truck, ArrowLeft, Loader, CheckCircle, User, Lock, Eye, Eye
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDualPrice } from '../utils/currency';
+import { trackBeginCheckout, trackPurchase } from '../utils/analytics';
 import SpeedyShipping from '../components/SpeedyShipping';
 import '../components/SpeedyShipping.css';
 import './Checkout.css';
@@ -209,6 +210,10 @@ const Checkout = () => {
         value: totalValue,
         currency: 'EUR'
       });
+    }
+    // GA4: Track begin_checkout when the checkout page loads with items
+    if (cart.length > 0) {
+      trackBeginCheckout(cart);
     }
   }, [cart.length > 0]); // Only fire once when cart has items
 
@@ -469,7 +474,15 @@ const Checkout = () => {
           currency: 'EUR'
         });
       }
-      
+
+      // GA4: Track purchase event for COD order
+      trackPurchase({
+        transactionId: data.order_number || data.order_id,
+        value: data.total != null ? data.total : getFinalTotal(),
+        shipping: shippingPrice?.eur || 0,
+        items,
+      });
+
       // Clear cart and show success
       await clearCartAll();
       setOrderSuccess(data);

@@ -8,6 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getProductImages, FALLBACK_IMAGE } from '../utils/imageUtils';
 import parseProductName from '../utils/parseProductName';
 import { addToRecentlyViewed } from '../utils/recentlyViewed';
+import { trackViewItem } from '../utils/analytics';
 import './ProductDetail.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -36,6 +37,9 @@ const ProductDetail = () => {
           
           // Add to recently viewed
           addToRecentlyViewed(data);
+
+          // GA4: Track view_item
+          trackViewItem(data);
           
           // Fetch variants (other sizes of same product)
           const varRes = await fetch(`${API_URL}/api/products/${id}/variants`);

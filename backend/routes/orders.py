@@ -361,7 +361,9 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
                 discount_code=discount_code,
                 discount_amount=discount_amount,
                 subtotal=total_amount,
-                shipping_cost=shipping_cost
+                shipping_cost=shipping_cost,
+                order_id=str(order_doc["_id"]),
+                cancellation_token=cancellation_token
             )
             logger.info(f"COD order confirmation email sent to {user_email}")
         except Exception as e:

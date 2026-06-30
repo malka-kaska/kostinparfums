@@ -1,5 +1,5 @@
-import React from 'react';
-import { Package, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Package, ChevronDown, XCircle, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
 import { formatDualPrice } from '../../../utils/currency';
 
@@ -11,11 +11,15 @@ const STATUS_OPTIONS = [
   { id: 'processing', label: 'Processing', color: '#8b5cf6' },
   { id: 'shipped', label: 'Shipped', color: '#06b6d4' },
   { id: 'delivered', label: 'Delivered', color: '#10b981' },
+  { id: 'cancellation_requested', label: 'Cancel Requested', color: '#d97706' },
   { id: 'cancelled', label: 'Cancelled', color: '#ef4444' },
 ];
 
 const OrdersManager = ({ orders, onRefresh }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [cancelOrderId, setCancelOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -29,6 +33,35 @@ const OrdersManager = ({ orders, onRefresh }) => {
       else { const err = await res.json(); alert(err.detail || 'Failed'); }
     } catch (err) {
       alert('Network error: ' + err.message);
+    }
+  };
+
+  const handleAdminCancelOrder = async () => {
+    if (!cancelOrderId || !cancelReason.trim()) {
+      alert(language === 'bg' ? 'Моля, въведете причина' : 'Please enter a reason');
+      return;
+    }
+    
+    setIsCancelling(true);
+    try {
+      const res = await fetch(`${API_URL}/api/orders/admin/${cancelOrderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason: cancelReason }),
+      });
+      if (res.ok) {
+        setCancelOrderId(null);
+        setCancelReason('');
+        onRefresh();
+      } else {
+        const err = await res.json();
+        alert(err.detail || 'Failed to cancel order');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -86,6 +119,58 @@ const OrdersManager = ({ orders, onRefresh }) => {
                 <div className="order-shipping-admin">
                   <span>{t('shipping')}</span>
                   <span>{formatDualPrice(order.shipping_cost)}</span>
+                </div>
+              )}
+              
+              {/* Cancellation Request Alert */}
+              {order.status === 'cancellation_requested' && (
+                <div className="cancellation-alert">
+                  <AlertTriangle size={16} />
+                  <div>
+                    <strong>Заявка за отказ</strong>
+                    {order.cancellation_reason && <p>Причина: &ldquo;{order.cancellation_reason}&rdquo;</p>}
+                  </div>
+                </div>
+              )}
+              
+              {/* Admin Cancel Button */}
+              {!['cancelled', 'delivered'].includes(order.status) && (
+                <div className="admin-cancel-section">
+                  {cancelOrderId === order.id ? (
+                    <div className="admin-cancel-form">
+                      <p className="admin-cancel-title">Защо отказвате тази поръчка?</p>
+                      <textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Опишете накратко причината за отказ..."
+                        className="cancel-reason-input-admin"
+                        rows={3}
+                      />
+                      <div className="admin-cancel-actions">
+                        <button 
+                          onClick={handleAdminCancelOrder}
+                          disabled={isCancelling || !cancelReason.trim()}
+                          className="btn-admin-cancel-confirm"
+                        >
+                          {isCancelling ? '...' : 'Потвърди отказ'}
+                        </button>
+                        <button 
+                          onClick={() => { setCancelOrderId(null); setCancelReason(''); }}
+                          className="btn-admin-cancel-back"
+                        >
+                          Назад
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button 
+                      className="btn-admin-cancel"
+                      onClick={() => setCancelOrderId(order.id)}
+                    >
+                      <XCircle size={14} />
+                      Откажи поръчката
+                    </button>
+                  )}
                 </div>
               )}
             </div>

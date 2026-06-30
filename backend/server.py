@@ -39,7 +39,6 @@ from routes.discounts import router as discounts_router
 from routes.scent_migration import router as scent_migration_router
 from utils.auth import seed_admin
 from utils.email_service import send_order_confirmation_email, send_order_verification_email, send_invoice_email
-from utils.invoice_generator import generate_invoice_pdf
 from utils.invbg_integration import create_official_invoice, get_invoice_pdf_bytes
 from migrations import run_migrations
 
@@ -526,31 +525,9 @@ async def verify_order(token: str):
                         )
                         logger.info(f"Official invoice PDF queued for order {order_id}")
                     else:
-                        # Fallback to our generated PDF
-                        pdf_bytes = generate_invoice_pdf(invoice_order)
-                        asyncio.create_task(
-                            send_invoice_email(
-                                to_email=user_email,
-                                user_name=user_name,
-                                order=invoice_order,
-                                pdf_bytes=pdf_bytes,
-                                lang="bg"
-                            )
-                        )
-                        logger.warning(f"Using fallback PDF for order {order_id} - couldn't get inv.bg PDF")
+                        logger.warning(f"Could not get inv.bg PDF for order {order_id}")
                 else:
-                    # Fallback to our generated PDF if inv.bg fails
                     logger.warning(f"Inv.bg invoice creation failed for order {order_id}: {invbg_result.get('error')}")
-                    pdf_bytes = generate_invoice_pdf(invoice_order)
-                    asyncio.create_task(
-                        send_invoice_email(
-                            to_email=user_email,
-                            user_name=user_name,
-                            order=invoice_order,
-                            pdf_bytes=pdf_bytes,
-                            lang="bg"
-                        )
-                    )
                     
             except Exception as e:
                 logger.error(f"Failed to generate/send invoice for order {order_id}: {e}")

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X, AlertTriangle, Shield, Download } from 'lucide-react';
+import { User, Mail, MapPin, Phone, Package, LogOut, Plus, Trash2, Check, X, AlertTriangle, Shield, Download, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Profile.css';
@@ -22,6 +22,14 @@ const Profile = () => {
   const [deleteError, setDeleteError] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  
+  // Order cancellation state
+  const [cancelOrderId, setCancelOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [cancelError, setCancelError] = useState('');
+  
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
@@ -156,6 +164,47 @@ const Profile = () => {
     const updatedAddresses = addresses.map(a => ({ ...a, isDefault: a.id === id }));
     setAddresses(updatedAddresses);
     localStorage.setItem('userAddresses', JSON.stringify(updatedAddresses));
+  };
+
+  // Handle order cancellation
+  const handleCancelOrder = async () => {
+    if (!cancelOrderId || !cancelReason.trim()) {
+      setCancelError(language === 'bg' ? 'Моля, въведете причина за отказ' : 'Please enter a reason for cancellation');
+      return;
+    }
+    
+    setIsCancelling(true);
+    setCancelError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/orders/${cancelOrderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reason: cancelReason })
+      });
+      
+      if (response.ok) {
+        setCancelSuccess(true);
+        // Update order status locally
+        setOrders(orders.map(o => 
+          o.id === cancelOrderId ? { ...o, status: 'cancellation_requested' } : o
+        ));
+        // Clear form after 3 seconds
+        setTimeout(() => {
+          setCancelOrderId(null);
+          setCancelReason('');
+          setCancelSuccess(false);
+        }, 3000);
+      } else {
+        const data = await response.json();
+        setCancelError(data.detail || (language === 'bg' ? 'Грешка при отказ' : 'Cancellation failed'));
+      }
+    } catch (err) {
+      setCancelError(language === 'bg' ? 'Грешка при свързване със сървъра' : 'Connection error');
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   if (!user) return null;
@@ -390,6 +439,65 @@ const Profile = () => {
                             >
                               {t('trackShipment') || 'Проследи пратката'}
                             </a>
+                          </div>
+                        )}
+                        
+                        {/* Cancel Order Button - only for pending/confirmed orders */}
+                        {['pending', 'confirmed', 'processing'].includes((order.status || '').toLowerCase()) && (
+                          <div className="order-cancel-section">
+                            {cancelOrderId === order.id ? (
+                              cancelSuccess ? (
+                                <div className="cancel-success-message">
+                                  <Check size={18} />
+                                  <span>{language === 'bg' ? 'Ще се свържем с Вас до минути.' : 'We will contact you shortly.'}</span>
+                                </div>
+                              ) : (
+                                <div className="cancel-form">
+                                  <p className="cancel-form-title">
+                                    {language === 'bg' ? 'Защо искате да откажете поръчката?' : 'Why do you want to cancel?'}
+                                  </p>
+                                  <textarea
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    placeholder={language === 'bg' ? 'Опишете накратко причината...' : 'Briefly describe the reason...'}
+                                    className="cancel-reason-input"
+                                    rows={3}
+                                  />
+                                  {cancelError && <p className="cancel-error">{cancelError}</p>}
+                                  <div className="cancel-form-actions">
+                                    <button 
+                                      className="btn-cancel-confirm"
+                                      onClick={handleCancelOrder}
+                                      disabled={isCancelling || !cancelReason.trim()}
+                                    >
+                                      {isCancelling ? (language === 'bg' ? 'Изпращане...' : 'Submitting...') : (language === 'bg' ? 'Потвърди отказ' : 'Confirm Cancel')}
+                                    </button>
+                                    <button 
+                                      className="btn-cancel-back"
+                                      onClick={() => { setCancelOrderId(null); setCancelReason(''); setCancelError(''); }}
+                                    >
+                                      {language === 'bg' ? 'Назад' : 'Back'}
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            ) : (
+                              <button 
+                                className="btn-cancel-order"
+                                onClick={() => setCancelOrderId(order.id)}
+                              >
+                                <XCircle size={16} />
+                                {language === 'bg' ? 'Откажи поръчката' : 'Cancel Order'}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Show cancellation requested status */}
+                        {order.status === 'cancellation_requested' && (
+                          <div className="order-cancellation-pending">
+                            <AlertTriangle size={16} />
+                            <span>{language === 'bg' ? 'Заявка за отказ - очаква обработка' : 'Cancellation requested - pending'}</span>
                           </div>
                         )}
                         

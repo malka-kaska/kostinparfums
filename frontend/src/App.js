@@ -27,6 +27,7 @@ import AboutUs from "./pages/AboutUs";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOrder from "./pages/VerifyOrder";
 import DubaiPerfumes from "./pages/DubaiPerfumes";
+import GuestCancelOrder from "./pages/GuestCancelOrder";
 import CookieBanner from "./components/CookieBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { Toaster } from "./components/ui/sonner";
@@ -62,6 +63,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verify-order" element={<VerifyOrder />} />
           <Route path="/dubai-perfumes" element={<DubaiPerfumes />} />
+          <Route path="/cancel-order" element={<GuestCancelOrder />} />
           {/* Redirect /collection/dubai to /dubai-perfumes */}
           <Route path="/collection/dubai" element={<Navigate to="/dubai-perfumes" replace />} />
         </Routes>

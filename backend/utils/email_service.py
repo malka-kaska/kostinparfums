@@ -625,9 +625,11 @@ async def send_cod_order_confirmation(
     discount_amount: float = 0,
     subtotal: float = None,
     shipping_cost: float = 0,
+    order_id: str = None,
+    cancellation_token: str = None,
     lang: str = "bg"
 ) -> dict:
-    """Send COD order confirmation email with optional tracking info and discount"""
+    """Send COD order confirmation email with optional tracking info, discount, and cancellation link"""
     
     # Calculate subtotal if not provided
     if subtotal is None:
@@ -749,6 +751,14 @@ async def send_cod_order_confirmation(
                         При неразопакован продукт можете да го върнете безплатно. Ваучерът за връщане е включен в пратката.
                     </p>
                 </div>
+                
+                <!-- Order Cancellation Link -->
+                {f'''<div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #f87171;">
+                    <p style="margin: 0; color: #991b1b; font-size: 14px;">
+                        <strong>❌ Искате да откажете поръчката?</strong><br>
+                        Ако желаете да откажете тази поръчка, <a href="{FRONTEND_URL}/cancel-order?order={order_id}&token={cancellation_token}" style="color: #dc2626; text-decoration: underline;">кликнете тук</a>
+                    </p>
+                </div>''' if order_id and cancellation_token else ''}
                 
                 <h3 style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #c9a86c;">{items_label}</h3>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">

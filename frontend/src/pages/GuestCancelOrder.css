@@ -1,0 +1,250 @@
+.guest-cancel-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--bg-primary);
+}
+
+.guest-cancel-container {
+  max-width: 500px;
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  padding: 40px;
+}
+
+.cancel-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.cancel-header .cancel-icon {
+  color: var(--accent-gold);
+  margin-bottom: 16px;
+}
+
+.cancel-header h1 {
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+}
+
+.cancel-header .order-ref {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.cancel-header .order-ref strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Form */
+.cancel-form .form-group {
+  margin-bottom: 20px;
+}
+
+.cancel-form label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.cancel-form textarea {
+  width: 100%;
+  padding: 14px;
+  font-size: 14px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.cancel-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.cancel-form textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-submit-cancel {
+  width: 100%;
+  padding: 14px 24px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-submit-cancel:hover:not(:disabled) {
+  background: var(--accent-gold);
+  color: #fff;
+}
+
+.btn-submit-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-back {
+  width: 100%;
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.cancel-note {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Success State */
+.cancel-success-box,
+.cancel-error-box {
+  text-align: center;
+  padding: 20px;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.success-icon svg {
+  color: #16a34a;
+}
+
+.error-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #fef2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.error-icon svg {
+  color: #dc2626;
+}
+
+.cancel-success-box h1,
+.cancel-error-box h1 {
+  font-size: 22px;
+  font-weight: 400;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+}
+
+.cancel-success-box p,
+.cancel-error-box p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.btn-back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back-home:hover {
+  background: var(--accent-gold);
+  color: #fff;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .form-error {
+  background: #450a0a;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .success-icon {
+  background: #14532d;
+}
+
+[data-theme="dark"] .success-icon svg {
+  color: #86efac;
+}
+
+[data-theme="dark"] .error-icon {
+  background: #450a0a;
+}
+
+[data-theme="dark"] .error-icon svg {
+  color: #fca5a5;
+}
+
+@media (max-width: 600px) {
+  .guest-cancel-container {
+    padding: 24px;
+  }
+  
+  .cancel-header h1 {
+    font-size: 20px;
+  }
+}

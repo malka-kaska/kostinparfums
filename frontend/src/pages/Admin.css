@@ -506,6 +506,123 @@ textarea.form-input {
   border-top: 1px solid var(--border-light);
 }
 
+/* Admin Order Cancellation */
+.cancellation-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  margin-top: 12px;
+}
+
+.cancellation-alert svg {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cancellation-alert strong {
+  color: #92400e;
+  font-size: 13px;
+}
+
+.cancellation-alert p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #a16207;
+  font-style: italic;
+}
+
+.admin-cancel-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.btn-admin-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-admin-cancel:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.admin-cancel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-cancel-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cancel-reason-input-admin {
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fef2f2;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.cancel-reason-input-admin:focus {
+  outline: none;
+  border-color: #dc2626;
+}
+
+.admin-cancel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-admin-cancel-confirm {
+  padding: 6px 14px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-admin-cancel-confirm:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-admin-cancel-confirm:disabled {
+  opacity: 0.5;
+}
+
+.btn-admin-cancel-back {
+  padding: 6px 14px;
+  background: white;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 /* Visibility Toggle */
 .visibility-toggle {
   display: flex;

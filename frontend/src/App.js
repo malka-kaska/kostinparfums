@@ -22,6 +22,7 @@ import TermsOfService from "./pages/TermsOfService";
 import LegalInfo from "./pages/LegalInfo";
 import CookiePolicy from "./pages/CookiePolicy";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import OrderSuccess from "./pages/OrderSuccess";
 import AboutUs from "./pages/AboutUs";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOrder from "./pages/VerifyOrder";
@@ -56,6 +57,7 @@ function App() {
           <Route path="/legal" element={<LegalInfo />} />
           <Route path="/cookies" element={<CookiePolicy />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/order/success" element={<OrderSuccess />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verify-order" element={<VerifyOrder />} />

@@ -53,7 +53,7 @@ const TermsEN = () => (
         <li>We currently ship to all EU countries.</li>
         <li>Standard shipping: 3-5 business days (EUR 6.99)</li>
         <li>Express shipping: 1-2 business days (EUR 14.99)</li>
-        <li>Free shipping on orders over EUR 100.</li>
+        <li>Free shipping on orders over EUR 90.</li>
         <li>Delivery times are estimates and may vary.</li>
       </ul>
     </section>
@@ -149,7 +149,7 @@ const TermsBG = () => (
         <li>В момента доставяме до всички страни от ЕС.</li>
         <li>Стандартна доставка: 3-5 работни дни (EUR 6.99)</li>
         <li>Експресна доставка: 1-2 работни дни (EUR 14.99)</li>
-        <li>Безплатна доставка за поръчки над EUR 100.</li>
+        <li>Безплатна доставка за поръчки над EUR 90.</li>
         <li>Сроковете за доставка са приблизителни и могат да варират.</li>
       </ul>
     </section>

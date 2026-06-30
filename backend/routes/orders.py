@@ -223,6 +223,9 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     if final_total < 0:
         final_total = 0
     
+    # Generate cancellation token for guest orders
+    cancellation_token = secrets.token_urlsafe(32)
+    
     # Create order document
     order_doc = {
         "order_number": order_number,
@@ -239,6 +242,7 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         "payment_method": "cod",
         "payment_status": "pending",
         "status": "pending",
+        "cancellation_token": cancellation_token,  # For guest cancellation
         "shipping_address": {
             "full_name": order_data.shipping_address.full_name,
             "phone": order_data.shipping_address.phone,
@@ -396,3 +400,198 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     
     return response
 
+
+
+# ============= Order Cancellation =============
+
+class CancelOrderRequest:
+    pass
+
+from pydantic import BaseModel
+
+class CancelOrderRequestModel(BaseModel):
+    reason: str
+
+
+@router.post("/{order_id}/cancel")
+async def cancel_order_by_user(order_id: str, request: Request, cancel_request: CancelOrderRequestModel):
+    """Cancel an order - for logged in users via dashboard"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    # Find order
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    except Exception:
+        order = await db.orders.find_one({"order_number": order_id})
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Verify ownership
+    if str(order.get("user_id")) != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this order")
+    
+    # Check if order can be cancelled (only pending or confirmed orders)
+    status = order.get("status", "")
+    if status in ["shipped", "delivered", "cancelled"]:
+        raise HTTPException(status_code=400, detail=f"Cannot cancel order with status: {status}")
+    
+    # Update order status
+    await db.orders.update_one(
+        {"_id": order["_id"]},
+        {
+            "$set": {
+                "status": "cancellation_requested",
+                "cancellation_reason": cancel_request.reason,
+                "cancellation_requested_at": datetime.now(timezone.utc).isoformat(),
+                "cancellation_requested_by": "customer"
+            }
+        }
+    )
+    
+    # Send email to admin
+    from utils.email_service import send_admin_cancellation_notification
+    import asyncio
+    
+    asyncio.create_task(
+        send_admin_cancellation_notification(
+            order_number=order.get("order_number", str(order["_id"])),
+            customer_name=order.get("user_name", "Unknown"),
+            customer_email=order.get("user_email", ""),
+            customer_phone=order.get("shipping_address", {}).get("phone", ""),
+            reason=cancel_request.reason,
+            total=order.get("total", 0),
+            items=order.get("items", [])
+        )
+    )
+    
+    logger.info(f"Cancellation requested for order {order.get('order_number')} by user {user['email']}")
+    
+    return {
+        "success": True,
+        "message": "Cancellation request submitted. We will contact you shortly.",
+        "message_bg": "Заявката за отказ е изпратена. Ще се свържем с Вас до минути."
+    }
+
+
+@router.post("/guest/{order_id}/cancel")
+async def cancel_order_by_guest(order_id: str, request: Request, cancel_request: CancelOrderRequestModel):
+    """Cancel an order - for guest users via email link with token"""
+    db = request.app.state.db
+    
+    # Get token from query params
+    from fastapi import Query
+    token = request.query_params.get("token")
+    
+    if not token:
+        raise HTTPException(status_code=400, detail="Cancellation token required")
+    
+    # Find order by cancellation token
+    order = await db.orders.find_one({
+        "$or": [
+            {"_id": ObjectId(order_id) if len(order_id) == 24 else None},
+            {"order_number": order_id}
+        ],
+        "cancellation_token": token
+    })
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found or invalid token")
+    
+    # Check if order can be cancelled
+    status = order.get("status", "")
+    if status in ["shipped", "delivered", "cancelled"]:
+        raise HTTPException(status_code=400, detail=f"Cannot cancel order with status: {status}")
+    
+    # Update order status
+    await db.orders.update_one(
+        {"_id": order["_id"]},
+        {
+            "$set": {
+                "status": "cancellation_requested",
+                "cancellation_reason": cancel_request.reason,
+                "cancellation_requested_at": datetime.now(timezone.utc).isoformat(),
+                "cancellation_requested_by": "guest"
+            }
+        }
+    )
+    
+    # Send email to admin
+    from utils.email_service import send_admin_cancellation_notification
+    import asyncio
+    
+    asyncio.create_task(
+        send_admin_cancellation_notification(
+            order_number=order.get("order_number", str(order["_id"])),
+            customer_name=order.get("user_name", order.get("shipping_address", {}).get("full_name", "Guest")),
+            customer_email=order.get("user_email", ""),
+            customer_phone=order.get("shipping_address", {}).get("phone", ""),
+            reason=cancel_request.reason,
+            total=order.get("total", 0),
+            items=order.get("items", [])
+        )
+    )
+    
+    logger.info(f"Guest cancellation requested for order {order.get('order_number')}")
+    
+    return {
+        "success": True,
+        "message": "Cancellation request submitted. We will contact you shortly.",
+        "message_bg": "Заявката за отказ е изпратена. Ще се свържем с Вас до минути."
+    }
+
+
+@router.post("/admin/{order_id}/cancel")
+async def admin_cancel_order(order_id: str, request: Request, cancel_request: CancelOrderRequestModel):
+    """Cancel an order - admin only"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    # Verify admin
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find order
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    except Exception:
+        order = await db.orders.find_one({"order_number": order_id})
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Update order status
+    await db.orders.update_one(
+        {"_id": order["_id"]},
+        {
+            "$set": {
+                "status": "cancelled",
+                "cancellation_reason": cancel_request.reason,
+                "cancelled_at": datetime.now(timezone.utc).isoformat(),
+                "cancelled_by": "admin"
+            }
+        }
+    )
+    
+    # Send cancellation email to customer
+    from utils.email_service import send_order_cancelled_email
+    import asyncio
+    
+    customer_email = order.get("user_email")
+    if customer_email:
+        asyncio.create_task(
+            send_order_cancelled_email(
+                to_email=customer_email,
+                user_name=order.get("user_name", "Customer"),
+                order_number=order.get("order_number", str(order["_id"])),
+                reason=cancel_request.reason
+            )
+        )
+    
+    logger.info(f"Order {order.get('order_number')} cancelled by admin {user['email']}")
+    
+    return {
+        "success": True,
+        "message": "Order cancelled successfully"
+    }

@@ -483,9 +483,22 @@ const Checkout = () => {
         items,
       });
 
-      // Clear cart and show success
+      // Clear cart and redirect to success page
       await clearCartAll();
-      setOrderSuccess(data);
+      
+      // Redirect to order success page with order details
+      const isGuest = !user;
+      const orderParams = new URLSearchParams({
+        order: data.order_number || data.order_id,
+        total: (data.total || getFinalTotal()).toFixed(2),
+        guest: isGuest ? 'true' : 'false'
+      });
+      
+      if (data.tracking_number) {
+        orderParams.set('tracking', data.tracking_number);
+      }
+      
+      navigate(`/order/success?${orderParams.toString()}`);
       
     } catch (err) {
       console.error('COD order error:', err);

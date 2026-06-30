@@ -258,9 +258,13 @@ class CreateShipmentRequest(BaseModel):
     delivery_type: str = "OFFICE"  # OFFICE or ADDRESS
     weight: float = 0.5
     cod_amount: Optional[float] = None  # Cash on delivery amount (if COD payment)
+    order_total: Optional[float] = None  # Total order amount in EUR (for determining who pays shipping)
     contents: str = "Парфюми"
     include_return_voucher: bool = True  # Include 14-day return voucher
     fiscal_receipt_items: Optional[List[FiscalReceiptItem]] = None  # Items for касов бон
+
+# Free shipping threshold in EUR
+FREE_SHIPPING_THRESHOLD = 90.0
 
 
 async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dict:
@@ -289,6 +293,10 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             recipient["siteId"] = shipment_data.recipient.city_id
         
         # Build shipment payload using clientId for sender (required by Speedy contract)
+        # Determine who pays for shipping: SENDER (us) if order >= 90 EUR, RECIPIENT if < 90 EUR
+        order_total = shipment_data.order_total or 0
+        shipping_payer = "SENDER" if order_total >= FREE_SHIPPING_THRESHOLD else "RECIPIENT"
+        
         shipment_payload = {
             "sender": {
                 "clientId": SPEEDY_CLIENT_ID,
@@ -306,21 +314,24 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
                 "package": "BOX"
             },
             "payment": {
-                "courierServicePayer": "SENDER"
+                "courierServicePayer": shipping_payer
             },
             "ref1": shipment_data.order_number  # Link to our order
         }
         
+        logger.info(f"Shipment for order {shipment_data.order_number}: total={order_total} EUR, shipping payer={shipping_payer}")
+        
         # Add COD with fiscal receipt (касов бон) if applicable
+        # ВАЖНО: При наложен платеж ВИНАГИ трябва да има касов бон!
         if shipment_data.cod_amount and shipment_data.cod_amount > 0:
             cod_service = {
                 "amount": shipment_data.cod_amount,
                 "processingType": "CASH"
             }
             
-            # Add fiscal receipt items for касов бон
+            # Add fiscal receipt items for касов бон - ЗАДЪЛЖИТЕЛНО при COD
+            fiscal_items = []
             if shipment_data.fiscal_receipt_items:
-                fiscal_items = []
                 for item in shipment_data.fiscal_receipt_items:
                     fiscal_items.append({
                         "itemName": item.name[:50],  # Max 50 chars
@@ -328,10 +339,19 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
                         "unitPrice": round(item.unit_price, 2),
                         "vatClass": "B"  # B = 20% VAT in Bulgaria
                     })
-                cod_service["codFiscalReceiptItems"] = fiscal_items
-                logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон")
+            else:
+                # Fallback: add generic item if no specific items provided
+                fiscal_items.append({
+                    "itemName": "Парфюм / Perfume",
+                    "quantity": 1,
+                    "unitPrice": round(shipment_data.cod_amount, 2),
+                    "vatClass": "B"
+                })
             
-            # COD goes in service.additionalServices, not payment
+            cod_service["codFiscalReceiptItems"] = fiscal_items
+            logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон (COD: {shipment_data.cod_amount})")
+            
+            # COD goes in service.additionalServices
             shipment_payload["service"]["additionalServices"] = {
                 "cod": cod_service
             }
@@ -482,12 +502,16 @@ async def create_shipment_for_order(order: dict) -> dict:
         )
         
         # Create shipment request with fiscal items for касов бон
+        # Include order_total to determine who pays for shipping (>= 90 EUR = SENDER, < 90 EUR = RECIPIENT)
+        order_total = float(order.get("total", 0))
+        
         shipment_request = CreateShipmentRequest(
             order_number=order.get("order_number", ""),
             recipient=recipient,
             delivery_type=speedy_data.get("delivery_type", "OFFICE"),
             weight=0.5,  # Default weight for perfumes
             cod_amount=cod_amount,
+            order_total=order_total,
             contents="Парфюми / Perfumes",
             fiscal_receipt_items=fiscal_items
         )

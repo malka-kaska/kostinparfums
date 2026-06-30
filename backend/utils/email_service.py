@@ -944,3 +944,162 @@ async def send_invoice_email(
         logger.error(f"Failed to send invoice email to {to_email}: {result.get('error')}")
     
     return result
+
+
+
+# Admin email for notifications
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "konstantin.kirchev.bs@gmail.com")
+
+
+async def send_admin_cancellation_notification(
+    order_number: str,
+    customer_name: str,
+    customer_email: str,
+    customer_phone: str,
+    reason: str,
+    total: float,
+    items: list
+):
+    """Send email to admin when a customer requests order cancellation"""
+    
+    items_html = ""
+    for item in items:
+        items_html += f"""
+        <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">{item.get('brand', '')} {item.get('name', '')}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">{item.get('quantity', 1)}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">€{item.get('price', 0):.2f}</td>
+        </tr>
+        """
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #dc2626; margin: 0;">⚠️ Заявка за отказ от поръчка</h1>
+            </div>
+            
+            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
+                <h2 style="margin: 0 0 10px 0; color: #991b1b;">Поръчка: {order_number}</h2>
+                <p style="margin: 0; color: #991b1b;"><strong>Причина за отказ:</strong></p>
+                <p style="margin: 10px 0 0 0; color: #7f1d1d; font-style: italic;">"{reason}"</p>
+            </div>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 15px 0; color: #374151;">Данни за клиента:</h3>
+                <p style="margin: 5px 0;"><strong>Име:</strong> {customer_name}</p>
+                <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:{customer_email}">{customer_email}</a></p>
+                <p style="margin: 5px 0;"><strong>Телефон:</strong> <a href="tel:{customer_phone}">{customer_phone}</a></p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #374151;">Продукти в поръчката:</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f3f4f6;">
+                            <th style="padding: 10px; text-align: left;">Продукт</th>
+                            <th style="padding: 10px; text-align: center;">Кол.</th>
+                            <th style="padding: 10px; text-align: right;">Цена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items_html}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f3f4f6; font-weight: bold;">
+                            <td colspan="2" style="padding: 10px;">Обща сума:</td>
+                            <td style="padding: 10px; text-align: right;">{format_dual_price(total)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <p style="margin: 0; color: #92400e;">
+                    <strong>Действие:</strong> Моля, свържете се с клиента възможно най-скоро за потвърждение на отказа.
+                    След това изтрийте товарителницата от Speedy ръчно.
+                </p>
+            </div>
+            
+            <p style="margin-top: 30px; color: #6b7280; font-size: 12px; text-align: center;">
+                Този имейл е автоматично генериран от KOSTIN Parfums системата.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    subject = f"⚠️ Заявка за отказ - Поръчка {order_number}"
+    
+    result = await send_email(ADMIN_EMAIL, subject, html_content)
+    
+    if result.get("status") == "success":
+        logger.info(f"Admin cancellation notification sent for order {order_number}")
+    else:
+        logger.error(f"Failed to send admin cancellation notification: {result.get('error')}")
+    
+    return result
+
+
+async def send_order_cancelled_email(
+    to_email: str,
+    user_name: str,
+    order_number: str,
+    reason: str
+):
+    """Send email to customer when their order is cancelled by admin"""
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px;">
+            {get_email_header('bg')}
+            
+            <h2 style="color: #1a1a1a; text-align: center;">Поръчката Ви е отменена</h2>
+            
+            <p style="color: #666;">Здравейте, <strong>{user_name}</strong>,</p>
+            
+            <p style="color: #666;">
+                За съжаление, Вашата поръчка <strong>{order_number}</strong> беше отменена.
+            </p>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0; color: #374151;"><strong>Причина:</strong></p>
+                <p style="margin: 10px 0 0 0; color: #6b7280; font-style: italic;">"{reason}"</p>
+            </div>
+            
+            <p style="color: #666;">
+                Ако имате въпроси или смятате, че това е грешка, моля свържете се с нас.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{FRONTEND_URL}/products" style="display: inline-block; background: #c9a86c; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+                    Продължи пазаруването
+                </a>
+            </div>
+            
+            {get_email_footer('bg')}
+        </div>
+    </body>
+    </html>
+    """
+    
+    subject = f"Поръчка {order_number} - Отменена"
+    
+    result = await send_email(to_email, subject, html_content)
+    
+    if result.get("status") == "success":
+        logger.info(f"Order cancelled email sent to {to_email} for order {order_number}")
+    else:
+        logger.error(f"Failed to send order cancelled email: {result.get('error')}")
+    
+    return result

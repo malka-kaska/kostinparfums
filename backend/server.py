@@ -315,7 +315,7 @@ async def stripe_webhook(request: Request):
                                 "quantity": int(item.get("quantity", 1)),
                             })
                         total = transaction.get("amount", 0)
-                        shipping = transaction.get("shipping_cost", 0) if transaction.get("shipping_cost") else (0 if total >= 100 else 9.95)
+                        shipping = transaction.get("shipping_cost", 0) if transaction.get("shipping_cost") else (0 if total >= 90 else 9.95)
                         discount_code = transaction.get("discount_code")
                         discount_amount = transaction.get("discount_amount", 0)
                         

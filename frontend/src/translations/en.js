@@ -1,6 +1,6 @@
 export const en = {
   // Header
-  announcement: "FREE SHIPPING ON ORDERS OVER €100 | AUTHENTIC LUXURY FRAGRANCES",
+  announcement: "FREE SHIPPING ON ORDERS OVER €90 | AUTHENTIC LUXURY FRAGRANCES",
   shopAll: "SHOP ALL",
   perfumes: "PERFUMES",
   mensFragrances: "MEN",

@@ -1,7 +1,9 @@
 import os
 import asyncio
 import logging
+import base64
 import resend
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,14 +28,18 @@ def format_dual_price(eur_amount: float) -> str:
     bgn_amount = eur_amount * EUR_TO_BGN_RATE
     return f"€{eur_amount:.2f} / {bgn_amount:.2f} лв."
 
-async def send_email(to_email: str, subject: str, html_content: str) -> dict:
-    """Send email using Resend API (non-blocking)"""
+async def send_email(to_email: str, subject: str, html_content: str, attachments: list = None) -> dict:
+    """Send email using Resend API (non-blocking) with optional attachments"""
     params = {
         "from": f"KOSTIN <{SENDER_EMAIL}>",
         "to": [to_email],
         "subject": subject,
         "html": html_content
     }
+    
+    # Add attachments if provided
+    if attachments:
+        params["attachments"] = attachments
     
     try:
         # Run sync SDK in thread to keep FastAPI non-blocking
@@ -841,3 +847,100 @@ async def send_password_reset_email(to_email: str, name: str, token: str):
     """
     
     return await send_email(to_email, subject, html_content)
+
+
+
+async def send_invoice_email(
+    to_email: str,
+    user_name: str,
+    order: dict,
+    pdf_bytes: bytes,
+    lang: str = "bg"
+):
+    """Send invoice/receipt email with PDF attachment for card payments"""
+    
+    order_number = order.get("order_number", order.get("_id", "N/A"))
+    total = order.get("total", 0)
+    tracking_number = order.get("tracking_number", "")
+    tracking_url = order.get("tracking_url", "")
+    
+    subject = f"Вашата разписка от KOSTIN - Поръчка {order_number}" if lang == "bg" else f"Your receipt from KOSTIN - Order {order_number}"
+    
+    # Build tracking section
+    tracking_section = ""
+    if tracking_number:
+        tracking_section = f"""
+        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
+            <p style="margin: 0; color: #0369a1; font-weight: 500;">📦 {"Информация за доставка" if lang == "bg" else "Shipping Information"}</p>
+            <p style="margin: 10px 0 5px 0; color: #0369a1;">{"Номер за проследяване" if lang == "bg" else "Tracking Number"}: <strong>{tracking_number}</strong></p>
+            <a href="{tracking_url}" style="display: inline-block; background: #0ea5e9; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-top: 10px;">{"Проследи пратката" if lang == "bg" else "Track Shipment"}</a>
+        </div>
+        """
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px;">
+            {get_email_header(lang)}
+            
+            <h2 style="font-size: 24px; color: #1a1a1a; margin-bottom: 20px; text-align: center;">
+                {"Благодарим за поръчката!" if lang == "bg" else "Thank you for your order!"}
+            </h2>
+            
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                {"Здравейте" if lang == "bg" else "Hello"}, <strong>{user_name}</strong>!
+            </p>
+            
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                {"Вашето плащане е успешно обработено. Приложена е електронна разписка за Вашата поръчка." if lang == "bg" else "Your payment has been successfully processed. Please find your electronic receipt attached."}
+            </p>
+            
+            <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 25px; border-radius: 8px; margin: 20px 0; color: white;">
+                <p style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.8;">{"Номер на поръчка" if lang == "bg" else "Order Number"}</p>
+                <p style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">{order_number}</p>
+                <p style="margin: 15px 0 0 0; font-size: 18px; color: #c9a86c;">
+                    {"Обща сума" if lang == "bg" else "Total"}: {format_dual_price(total)}
+                </p>
+            </div>
+            
+            {tracking_section}
+            
+            <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #c9a86c;">
+                <p style="margin: 0; color: #92400e; font-weight: 500;">📎 {"Приложение" if lang == "bg" else "Attachment"}</p>
+                <p style="margin: 10px 0 0 0; color: #92400e;">
+                    {"Вашата електронна разписка е приложена към този имейл като PDF файл." if lang == "bg" else "Your electronic receipt is attached to this email as a PDF file."}
+                </p>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 30px;">
+                {"При въпроси, не се колебайте да се свържете с нас." if lang == "bg" else "If you have any questions, please don't hesitate to contact us."}
+            </p>
+            
+            {get_email_footer(lang)}
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Prepare PDF attachment
+    pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+    attachments = [
+        {
+            "filename": f"KOSTIN_Receipt_{order_number}.pdf",
+            "content": pdf_base64
+        }
+    ]
+    
+    result = await send_email(to_email, subject, html_content, attachments)
+    
+    if result.get("status") == "success":
+        logger.info(f"Invoice email sent to {to_email} for order {order_number}")
+    else:
+        logger.error(f"Failed to send invoice email to {to_email}: {result.get('error')}")
+    
+    return result

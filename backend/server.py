@@ -38,7 +38,8 @@ from routes.speedy import router as speedy_router
 from routes.discounts import router as discounts_router
 from routes.scent_migration import router as scent_migration_router
 from utils.auth import seed_admin
-from utils.email_service import send_order_confirmation_email, send_order_verification_email
+from utils.email_service import send_order_confirmation_email, send_order_verification_email, send_invoice_email
+from utils.invoice_generator import generate_invoice_pdf
 from migrations import run_migrations
 
 # MongoDB connection
@@ -475,6 +476,33 @@ async def verify_order(token: str):
                 lang="bg"
             )
         )
+        
+        # Generate and send invoice PDF for card payments
+        if order.get("payment_method") == "card":
+            try:
+                # Prepare order data with tracking info
+                invoice_order = {
+                    **order,
+                    "order_number": order_id,
+                    "tracking_number": tracking_number,
+                    "tracking_url": tracking_url
+                }
+                # Remove MongoDB _id before processing
+                invoice_order.pop("_id", None)
+                
+                pdf_bytes = generate_invoice_pdf(invoice_order)
+                asyncio.create_task(
+                    send_invoice_email(
+                        to_email=user_email,
+                        user_name=user_name,
+                        order=invoice_order,
+                        pdf_bytes=pdf_bytes,
+                        lang="bg"
+                    )
+                )
+                logger.info(f"Invoice generated and queued for order {order_id}")
+            except Exception as e:
+                logger.error(f"Failed to generate/send invoice for order {order_id}: {e}")
     
     logger.info(f"Order {order_id} verified by user")
     return {"message": "Order confirmed successfully!", "order_id": order_id, "verified": True, "tracking_number": tracking_number}

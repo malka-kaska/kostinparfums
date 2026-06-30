@@ -4,6 +4,7 @@ from bson import ObjectId
 from typing import Optional
 from utils.auth import get_current_user, get_current_user_optional
 from models.schemas import CODOrderRequest
+from utils.invbg_integration import create_official_invoice
 import logging
 import secrets
 
@@ -306,6 +307,40 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
                 logger.info(f"Auto-created Speedy shipment for COD order {order_number}: {tracking_number}")
         except Exception as e:
             logger.error(f"Failed to auto-create Speedy shipment for order {order_number}: {e}")
+    
+    # Create official invoice in inv.bg for COD orders
+    try:
+        invoice_order = {
+            **order_doc,
+            "order_number": order_number,
+            "tracking_number": tracking_number,
+            "tracking_url": tracking_url
+        }
+        # Remove MongoDB _id
+        invoice_order.pop("_id", None)
+        
+        invbg_result = await create_official_invoice(invoice_order, payment_method="cod")
+        
+        if invbg_result.get("success"):
+            invbg_invoice_id = invbg_result.get("invoice_id")
+            invbg_invoice_number = invbg_result.get("invoice_number")
+            
+            # Update order with inv.bg invoice info
+            await db.orders.update_one(
+                {"_id": order_doc["_id"]},
+                {
+                    "$set": {
+                        "invbg_invoice_id": invbg_invoice_id,
+                        "invbg_invoice_number": invbg_invoice_number,
+                        "official_invoice_created": True
+                    }
+                }
+            )
+            logger.info(f"Official invoice #{invbg_invoice_number} created in inv.bg for COD order {order_number}")
+        else:
+            logger.warning(f"Inv.bg invoice creation failed for COD order {order_number}: {invbg_result.get('error')}")
+    except Exception as e:
+        logger.error(f"Failed to create inv.bg invoice for COD order {order_number}: {e}")
     
     # Send confirmation email
     if user_email:

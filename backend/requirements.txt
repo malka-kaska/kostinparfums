@@ -125,3 +125,4 @@ zipp==3.23.0
 cloudinary==1.44.2
 resend==2.32.2
 reportlab==5.0.0
+httpx==0.28.1

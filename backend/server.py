@@ -40,6 +40,7 @@ from routes.scent_migration import router as scent_migration_router
 from utils.auth import seed_admin
 from utils.email_service import send_order_confirmation_email, send_order_verification_email, send_invoice_email
 from utils.invoice_generator import generate_invoice_pdf
+from utils.invbg_integration import create_official_invoice, get_invoice_pdf_bytes
 from migrations import run_migrations
 
 # MongoDB connection
@@ -490,17 +491,67 @@ async def verify_order(token: str):
                 # Remove MongoDB _id before processing
                 invoice_order.pop("_id", None)
                 
-                pdf_bytes = generate_invoice_pdf(invoice_order)
-                asyncio.create_task(
-                    send_invoice_email(
-                        to_email=user_email,
-                        user_name=user_name,
-                        order=invoice_order,
-                        pdf_bytes=pdf_bytes,
-                        lang="bg"
+                # Create official invoice in inv.bg
+                invbg_result = await create_official_invoice(invoice_order, payment_method="card")
+                
+                if invbg_result.get("success"):
+                    invbg_invoice_id = invbg_result.get("invoice_id")
+                    invbg_invoice_number = invbg_result.get("invoice_number")
+                    
+                    # Update order with inv.bg invoice info
+                    await db.orders.update_one(
+                        {"_id": order["_id"]},
+                        {
+                            "$set": {
+                                "invbg_invoice_id": invbg_invoice_id,
+                                "invbg_invoice_number": invbg_invoice_number,
+                                "official_invoice_created": True
+                            }
+                        }
                     )
-                )
-                logger.info(f"Invoice generated and queued for order {order_id}")
+                    logger.info(f"Official invoice #{invbg_invoice_number} created in inv.bg for order {order_id}")
+                    
+                    # Get official PDF from inv.bg
+                    pdf_bytes = await get_invoice_pdf_bytes(invbg_invoice_id)
+                    
+                    if pdf_bytes:
+                        asyncio.create_task(
+                            send_invoice_email(
+                                to_email=user_email,
+                                user_name=user_name,
+                                order=invoice_order,
+                                pdf_bytes=pdf_bytes,
+                                lang="bg"
+                            )
+                        )
+                        logger.info(f"Official invoice PDF queued for order {order_id}")
+                    else:
+                        # Fallback to our generated PDF
+                        pdf_bytes = generate_invoice_pdf(invoice_order)
+                        asyncio.create_task(
+                            send_invoice_email(
+                                to_email=user_email,
+                                user_name=user_name,
+                                order=invoice_order,
+                                pdf_bytes=pdf_bytes,
+                                lang="bg"
+                            )
+                        )
+                        logger.warning(f"Using fallback PDF for order {order_id} - couldn't get inv.bg PDF")
+                else:
+                    # Fallback to our generated PDF if inv.bg fails
+                    logger.warning(f"Inv.bg invoice creation failed for order {order_id}: {invbg_result.get('error')}")
+                    pdf_bytes = generate_invoice_pdf(invoice_order)
+                    asyncio.create_task(
+                        send_invoice_email(
+                            to_email=user_email,
+                            user_name=user_name,
+                            order=invoice_order,
+                            pdf_bytes=pdf_bytes,
+                            lang="bg"
+                        )
+                    )
+                    
             except Exception as e:
                 logger.error(f"Failed to generate/send invoice for order {order_id}: {e}")
     

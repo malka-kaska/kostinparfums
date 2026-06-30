@@ -254,13 +254,11 @@ class CreateShipmentRequest(BaseModel):
     include_return_voucher: bool = True  # Include 14-day return voucher
 
 
-@router.post("/shipment")
-async def create_shipment(request: Request, shipment_data: CreateShipmentRequest):
-    """Create a shipment (waybill) in Speedy system with COD, receipt, and return voucher support"""
-    # SEC-003 FIX: Require admin auth for shipment creation
-    db = request.app.state.db
-    await verify_admin_speedy(request, db)
-    
+async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dict:
+    """
+    Internal function to create a shipment (waybill) in Speedy system.
+    Used for automatic shipment creation from orders - no auth required.
+    """
     try:
         # Build recipient based on delivery type
         recipient = {
@@ -346,11 +344,20 @@ async def create_shipment(request: Request, shipment_data: CreateShipmentRequest
             "pickup_date": data.get("pickupDate"),
             "delivery_deadline": data.get("deliveryDeadline")
         }
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error creating shipment: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create shipment: {str(e)}")
+
+
+@router.post("/shipment")
+async def create_shipment(request: Request, shipment_data: CreateShipmentRequest):
+    """Create a shipment (waybill) in Speedy system with COD, receipt, and return voucher support"""
+    # SEC-003 FIX: Require admin auth for shipment creation
+    db = request.app.state.db
+    await verify_admin_speedy(request, db)
+    
+    # Use internal function for actual shipment creation
+    return await _create_shipment_internal(shipment_data)
 
 
 # ============= Track Shipment =============
@@ -435,7 +442,7 @@ async def create_shipment_for_order(order: dict) -> dict:
         )
         
         # Create shipment request
-        request = CreateShipmentRequest(
+        shipment_request = CreateShipmentRequest(
             order_number=order.get("order_number", ""),
             recipient=recipient,
             delivery_type=speedy_data.get("delivery_type", "OFFICE"),
@@ -444,8 +451,8 @@ async def create_shipment_for_order(order: dict) -> dict:
             contents="Парфюми / Perfumes"
         )
         
-        # Call the shipment creation
-        result = await create_shipment(request)
+        # Call the internal shipment creation function (no auth required)
+        result = await _create_shipment_internal(shipment_request)
         
         return result
         

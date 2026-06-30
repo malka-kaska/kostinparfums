@@ -418,6 +418,44 @@ async def verify_order(token: str):
     
     order_id = str(order["_id"])
     
+    # Auto-create Speedy shipment for verified card orders
+    tracking_number = None
+    tracking_url = None
+    speedy_data = order.get("speedy_data", {})
+    if speedy_data and speedy_data.get("city_id"):
+        try:
+            from routes.speedy import create_shipment_for_order
+            # Convert order to dict format expected by function
+            order_dict = {
+                "order_number": order_id,
+                "speedy_data": speedy_data,
+                "shipping_address": order.get("shipping_address", {}),
+                "payment_method": order.get("payment_method", "card"),
+                "total": order.get("total", 0)
+            }
+            shipment_result = await create_shipment_for_order(order_dict)
+            
+            if shipment_result and shipment_result.get("success"):
+                tracking_number = shipment_result.get("tracking_number")
+                tracking_url = shipment_result.get("tracking_url")
+                
+                # Update order with tracking info
+                await db.orders.update_one(
+                    {"_id": order["_id"]},
+                    {
+                        "$set": {
+                            "tracking_number": tracking_number,
+                            "tracking_url": tracking_url,
+                            "shipment_id": shipment_result.get("shipment_id"),
+                            "shipment_created_at": datetime.now(timezone.utc).isoformat(),
+                            "status": "processing"
+                        }
+                    }
+                )
+                logger.info(f"Auto-created Speedy shipment for verified order {order_id}: {tracking_number}")
+        except Exception as e:
+            logger.error(f"Failed to auto-create Speedy shipment for verified order {order_id}: {e}")
+    
     # Send final confirmation email
     user_email = order.get("user_email", "")
     user_name = order.get("user_name", "Customer")
@@ -432,12 +470,14 @@ async def verify_order(token: str):
                 shipping_cost=order.get("shipping_cost", 0),
                 discount_code=order.get("discount_code"),
                 discount_amount=order.get("discount_amount", 0),
+                tracking_number=tracking_number,
+                tracking_url=tracking_url,
                 lang="bg"
             )
         )
     
     logger.info(f"Order {order_id} verified by user")
-    return {"message": "Order confirmed successfully!", "order_id": order_id, "verified": True}
+    return {"message": "Order confirmed successfully!", "order_id": order_id, "verified": True, "tracking_number": tracking_number}
 
 
 # Include routers

@@ -172,9 +172,11 @@ async def send_order_confirmation_email(
     shipping_cost: float,
     discount_code: str = None,
     discount_amount: float = 0,
+    tracking_number: str = None,
+    tracking_url: str = None,
     lang: str = "bg"
 ):
-    """Send order confirmation email with optional discount info"""
+    """Send order confirmation email with optional discount info and tracking"""
     
     header = get_email_header(lang)
     footer = get_email_footer(lang)
@@ -253,9 +255,17 @@ async def send_order_confirmation_email(
                     </table>
                 </div>
                 
+                {"" if not tracking_number else f'''
+                <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #0ea5e9;">
+                    <p style="margin: 0; color: #0369a1; font-weight: 500;">📦 Информация за доставка</p>
+                    <p style="margin: 10px 0 5px 0; color: #0369a1;">Номер на товарителницата: <strong>{tracking_number}</strong></p>
+                    <a href="{tracking_url or f"https://www.speedy.bg/bg/track-shipment?shipmentNumber={tracking_number}"}" style="display: inline-block; background: #0ea5e9; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-top: 10px;">Проследи пратката</a>
+                </div>
+                '''}
+                
                 <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #c9a86c;">
                     <p style="margin: 0; color: #92400e; font-weight: 500;">Какво следва?</p>
-                    <p style="margin: 10px 0 0 0; color: #92400e;">Ще получите имейл с информация за доставката, когато поръчката Ви бъде изпратена.</p>
+                    <p style="margin: 10px 0 0 0; color: #92400e;">{"Пратката Ви вече е създадена и ще бъде изпратена скоро!" if tracking_number else "Ще получите имейл с информация за доставката, когато поръчката Ви бъде изпратена."}</p>
                 </div>
                 
                 <p style="color: #888; font-size: 13px;">При въпроси, свържете се с нас на <a href="mailto:contact@kostinparfums.com" style="color: #c9a86c;">contact@kostinparfums.com</a> или на телефон +359 889 567 870</p>

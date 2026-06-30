@@ -28,6 +28,7 @@ import VerifyOrder from "./pages/VerifyOrder";
 import DubaiPerfumes from "./pages/DubaiPerfumes";
 import CookieBanner from "./components/CookieBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { Toaster } from "./components/ui/sonner";
 
 function App() {
   return (
@@ -65,6 +66,7 @@ function App() {
         </ErrorBoundary>
         <Footer />
         <CookieBanner />
+        <Toaster position="top-center" richColors closeButton />
         </AuthProvider>
         </LanguageProvider>
         </ThemeProvider>

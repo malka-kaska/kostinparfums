@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getMainImage, FALLBACK_IMAGE } from '../utils/imageUtils';
 import parseProductName from '../utils/parseProductName';
+import { toast } from './ui/sonner';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
@@ -18,6 +19,7 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = async (e) => {
     e.preventDefault();
     await addToCart(product, 1);
+    toast.success(t('addedToCart', { qty: 1, name: product.name }));
   };
 
   const handleImageError = () => {

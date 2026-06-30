@@ -9,6 +9,7 @@ import { getProductImages, FALLBACK_IMAGE } from '../utils/imageUtils';
 import parseProductName from '../utils/parseProductName';
 import { addToRecentlyViewed } from '../utils/recentlyViewed';
 import { trackViewItem } from '../utils/analytics';
+import { toast } from '../components/ui/sonner';
 import './ProductDetail.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -72,7 +73,7 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     await addToCart(product, quantity);
-    alert(t('addedToCart', { qty: quantity, name: product.name }));
+    toast.success(t('addedToCart', { qty: quantity, name: product.name }));
   };
 
   const getDescription = () => {

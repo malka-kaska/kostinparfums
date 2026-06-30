@@ -103,7 +103,6 @@ class InvBgClient:
     async def create_invoice(
         self,
         order: dict,
-        client_id: int = None,
         payment_method: str = "card"
     ) -> dict:
         """
@@ -111,23 +110,13 @@ class InvBgClient:
         
         Args:
             order: Order data with items, shipping_address, total, etc.
-            client_id: Optional existing client ID
             payment_method: Payment method (card, cash, bank)
         
         Returns:
             Invoice data including ID and number
         """
-        # Get or create client
+        # Get shipping address data
         shipping_address = order.get("shipping_address", {})
-        
-        if not client_id:
-            client_data = {
-                "name": shipping_address.get("full_name", "Клиент"),
-                "address": shipping_address.get("address", ""),
-                "city": shipping_address.get("city", ""),
-                "email": shipping_address.get("email", order.get("user_email", ""))
-            }
-            client_id = await self.find_or_create_client(client_data)
         
         # Build invoice items
         invoice_items = []
@@ -176,19 +165,20 @@ class InvBgClient:
         }
         inv_payment_method = payment_method_map.get(payment_method, "card")
         
-        # Build invoice payload
+        # Build invoice payload - use inline client data (to_name, to_address, etc.)
         order_number = order.get("order_number", str(order.get("_id", "")))
         
         invoice_data = {
             "type": "dan",  # "dan" = данъчна фактура (tax invoice)
-            "client_id": client_id,
+            "to_name": shipping_address.get("full_name", "Клиент"),
+            "to_address": shipping_address.get("address", ""),
+            "to_town": shipping_address.get("city", ""),
+            "to_country": "BG",
             "currency": "EUR",
             "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "payment_method": inv_payment_method,
             "items": invoice_items,
-            "note": f"Онлайн поръчка: {order_number}\nOnline order: {order_number}",
-            "is_draft": False,  # Create as final invoice, not draft
-            "send_email": False  # We'll send via our own email system
+            "note": f"Онлайн поръчка: {order_number}\nOnline order: {order_number}"
         }
         
         # Add tracking info if available

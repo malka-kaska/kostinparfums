@@ -95,6 +95,7 @@ const SpeedyShipping = ({
       }
       
       setLoadingOffices(true);
+      setShowOfficeDropdown(true); // Show dropdown while loading
       try {
         const response = await fetch(`${API_URL}/api/speedy/offices?cityId=${selectedCity.id}`);
         const data = await response.json();
@@ -204,11 +205,13 @@ const SpeedyShipping = ({
     }
   };
 
-  // Filter offices by search
-  const filteredOffices = offices.filter(office => 
-    office.name.toLowerCase().includes(officeSearch.toLowerCase()) ||
-    office.address.toLowerCase().includes(officeSearch.toLowerCase())
-  );
+  // Filter offices by search - with null safety
+  const filteredOffices = offices.filter(office => {
+    const officeName = (office?.name || '').toLowerCase();
+    const officeAddress = (office?.address || '').toLowerCase();
+    const search = (officeSearch || '').toLowerCase();
+    return officeName.includes(search) || officeAddress.includes(search);
+  });
 
   return (
     <div className="speedy-shipping">
@@ -333,28 +336,40 @@ const SpeedyShipping = ({
             <ChevronDown size={18} className="dropdown-icon" />
             {loadingOffices && <Loader size={18} className="spinning search-loader" />}
             
-            {showOfficeDropdown && filteredOffices.length > 0 && (
+            {/* Show dropdown when focused - even while loading or with results */}
+            {showOfficeDropdown && (
               <div className="speedy-dropdown speedy-dropdown-offices">
-                {filteredOffices.slice(0, 50).map(office => (
-                  <div
-                    key={office.id || Math.random()}
-                    className={`speedy-dropdown-item ${selectedOffice?.id === office.id ? 'selected' : ''}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleSelectOffice(office);
-                    }}
-                  >
-                    <Package size={16} />
-                    <div>
-                      <span className="office-name">{office.name || 'Офис'}</span>
-                      <span className="office-address">{office.address || ''}</span>
-                      {office.workingTimeFrom && office.workingTimeTo && (
-                        <span className="office-hours">{office.workingTimeFrom} - {office.workingTimeTo}</span>
-                      )}
-                    </div>
+                {loadingOffices ? (
+                  <div className="speedy-dropdown-loading">
+                    <Loader size={18} className="spinning" />
+                    <span>{language === 'bg' ? 'Зареждане на офиси...' : 'Loading offices...'}</span>
                   </div>
-                ))}
+                ) : filteredOffices.length > 0 ? (
+                  filteredOffices.slice(0, 50).map(office => (
+                    <div
+                      key={office.id || Math.random()}
+                      className={`speedy-dropdown-item ${selectedOffice?.id === office.id ? 'selected' : ''}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSelectOffice(office);
+                      }}
+                    >
+                      <Package size={16} />
+                      <div>
+                        <span className="office-name">{office.name || 'Офис'}</span>
+                        <span className="office-address">{office.address || ''}</span>
+                        {office.workingTimeFrom && office.workingTimeTo && (
+                          <span className="office-hours">{office.workingTimeFrom} - {office.workingTimeTo}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="speedy-dropdown-empty">
+                    {language === 'bg' ? 'Няма намерени офиси' : 'No offices found'}
+                  </div>
+                )}
               </div>
             )}
           </div>

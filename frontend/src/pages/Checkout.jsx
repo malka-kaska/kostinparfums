@@ -318,7 +318,7 @@ const Checkout = () => {
 
   const getFinalTotal = () => {
     const discountedSubtotal = getDiscountedTotal();
-    return discountedSubtotal + (shippingPrice || 0);
+    return discountedSubtotal + (shippingPrice?.eur || 0);
   };
 
   const handleCardCheckout = async () => {

@@ -199,6 +199,26 @@
   margin-top: 2px;
 }
 
+/* Loading and Empty states for dropdown */
+.speedy-dropdown-loading,
+.speedy-dropdown-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  color: var(--text-secondary, #666);
+  font-size: 0.9rem;
+}
+
+.speedy-dropdown-loading svg {
+  color: var(--accent-color, #c9a96e);
+}
+
+.speedy-dropdown-empty {
+  font-style: italic;
+}
+
 .field-hint {
   display: block;
   font-size: 0.75rem;

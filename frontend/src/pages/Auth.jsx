@@ -143,7 +143,7 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="form-input"
-                  placeholder="••••••••"
+                  placeholder=""
                 />
               </div>
 

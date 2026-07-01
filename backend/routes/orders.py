@@ -289,9 +289,12 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     tracking_number = None
     tracking_url = None
     if order_data.speedy_data and order_data.speedy_data.city_id:
+        logger.info(f"Attempting to create Speedy shipment for order {order_number}")
         try:
             from routes.speedy import create_shipment_for_order
             shipment_result = await create_shipment_for_order(order_doc)
+            
+            logger.info(f"Speedy shipment result for {order_number}: {shipment_result}")
             
             if shipment_result and shipment_result.get("success"):
                 tracking_number = shipment_result.get("tracking_number")
@@ -311,8 +314,14 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
                     }
                 )
                 logger.info(f"Auto-created Speedy shipment for COD order {order_number}: {tracking_number}")
+            else:
+                logger.error(f"Speedy shipment creation failed for {order_number}: {shipment_result}")
         except Exception as e:
+            import traceback
             logger.error(f"Failed to auto-create Speedy shipment for order {order_number}: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+    else:
+        logger.warning(f"No Speedy data for order {order_number}, skipping shipment creation")
     
     # Create official invoice in inv.bg for COD orders
     try:

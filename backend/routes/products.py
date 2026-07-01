@@ -879,8 +879,9 @@ async def get_order_recommendations(request: Request, order_id: str, limit: int 
         async for p in cursor:
             ordered_products.append(p)
     
-    # Extract scent profiles and check if any product is Dubai
+    # Extract scent profiles, gender, and check if any product is Dubai
     all_scent_profiles = set()
+    all_genders = set()
     has_dubai_product = False
     ordered_brands = set()
     
@@ -889,6 +890,13 @@ async def get_order_recommendations(request: Request, order_id: str, limit: int 
         profiles = product.get("scent_profiles", [])
         if profiles:
             all_scent_profiles.update(profiles)
+        
+        # Collect gender - handle list format ["men"] or ["women"]
+        gender_raw = product.get("gender", [])
+        if isinstance(gender_raw, list):
+            all_genders.update(gender_raw)
+        elif gender_raw:
+            all_genders.add(gender_raw)
         
         # Check if Dubai product
         collections = product.get("collections", [])
@@ -907,13 +915,19 @@ async def get_order_recommendations(request: Request, order_id: str, limit: int 
         
         ordered_brands.add(product.get("brand", ""))
     
-    logger.info(f"Order {order_id}: scent_profiles={list(all_scent_profiles)}, has_dubai={has_dubai_product}, brands={ordered_brands}")
+    logger.info(f"Order {order_id}: scent_profiles={list(all_scent_profiles)}, genders={list(all_genders)}, has_dubai={has_dubai_product}")
     
     # Build query for recommendations
     query = {
         "is_visible": True,
         "_id": {"$nin": ordered_product_ids}  # Exclude ordered products
     }
+    
+    # Filter by gender if available (exact match)
+    if all_genders:
+        # Handle both list format ["men"] and potential string format
+        gender_list = list(all_genders)
+        query["gender"] = {"$in": gender_list}
     
     # Filter by scent profiles if available
     if all_scent_profiles:
@@ -932,18 +946,22 @@ async def get_order_recommendations(request: Request, order_id: str, limit: int 
         # Exclude Dubai products
         query["brand"] = {"$not": {"$regex": "|".join(dubai_brands), "$options": "i"}}
     
-    # First try with scent profile match
-    cursor = db.products.find(query).limit(limit * 2)
+    # First try with all filters, sorted by purchase count
+    cursor = db.products.find(query).sort("purchase_count", -1).limit(limit * 3)
     products = []
     async for p in cursor:
         products.append(product_doc_to_response(p))
     
-    # If not enough products, relax the scent profile constraint
+    # If not enough products, relax the scent profile constraint but keep gender + dubai filter
     if len(products) < limit:
         relaxed_query = {
             "is_visible": True,
             "_id": {"$nin": ordered_product_ids}
         }
+        
+        # Keep gender filter
+        if all_genders:
+            relaxed_query["gender"] = {"$in": list(all_genders)}
         
         if has_dubai_product:
             relaxed_query["$or"] = [
@@ -956,17 +974,16 @@ async def get_order_recommendations(request: Request, order_id: str, limit: int 
         existing_ids = [ObjectId(p["id"]) for p in products]
         relaxed_query["_id"]["$nin"].extend(existing_ids)
         
-        cursor = db.products.find(relaxed_query).limit(limit - len(products))
+        cursor = db.products.find(relaxed_query).sort("purchase_count", -1).limit(limit - len(products))
         async for p in cursor:
             products.append(product_doc_to_response(p))
     
-    # Shuffle for variety
-    import random
-    random.shuffle(products)
+    # Don't shuffle - keep sorted by purchase count
     
     return {
         "products": products[:limit],
         "source": "smart",
         "scent_profiles_matched": list(all_scent_profiles),
+        "genders_matched": list(all_genders),
         "is_dubai_context": has_dubai_product
     }

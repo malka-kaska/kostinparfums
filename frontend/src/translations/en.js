@@ -137,7 +137,7 @@ export const en = {
   processingPayment: "Processing...",
   continueShopping: "Continue Shopping",
   items: "items",
-  secureCheckout: "Secure checkout powered by Stripe",
+  secureCheckout: "Cash on delivery or secure card payment",
 
   // Auth
   welcomeBack: "Welcome Back",

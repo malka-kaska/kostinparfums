@@ -79,8 +79,14 @@ def transform_product_for_meta(product: dict) -> dict:
     # Build product URL
     product_url = f"{FRONTEND_URL}/product/{product_id}"
     
-    # Get gender for Google product category
-    gender = product.get("gender", "unisex")
+    # Get gender - handle both list and string formats
+    # Schema stores gender as list: ["women"], ["men"], ["unisex"] or []
+    gender_raw = product.get("gender", [])
+    if isinstance(gender_raw, list):
+        gender = gender_raw[0] if gender_raw else "unisex"
+    else:
+        gender = gender_raw if gender_raw else "unisex"
+    
     gender_map = {
         "men": "male",
         "women": "female", 
@@ -116,7 +122,7 @@ def transform_product_for_meta(product: dict) -> dict:
     # Product category - Perfumes
     meta_product["google_product_category"] = "Health & Beauty > Personal Care > Cosmetics > Perfume & Cologne"
     
-    # Gender targeting
+    # Gender targeting - use extracted string gender
     if gender in gender_map:
         meta_product["gender"] = gender_map[gender]
     
@@ -127,13 +133,13 @@ def transform_product_for_meta(product: dict) -> dict:
     
     # Custom labels for filtering in Ads Manager
     meta_product["custom_label_0"] = product.get("brand", "")  # Brand
-    meta_product["custom_label_1"] = gender  # Gender
+    meta_product["custom_label_1"] = gender  # Gender (string, not list)
     meta_product["custom_label_2"] = "perfume"  # Category
     
-    # Scent profile as custom label
-    scent_profile = product.get("scent_profile", [])
-    if scent_profile:
-        meta_product["custom_label_3"] = ",".join(scent_profile[:3])  # Top 3 scents
+    # Scent profiles as custom label (NOTE: field is "scent_profiles" plural!)
+    scent_profiles = product.get("scent_profiles", [])
+    if scent_profiles and isinstance(scent_profiles, list):
+        meta_product["custom_label_3"] = ",".join(scent_profiles[:3])  # Top 3 scents
     
     return meta_product
 

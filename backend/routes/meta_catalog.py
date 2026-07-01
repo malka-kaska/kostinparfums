@@ -9,7 +9,7 @@ from bson import ObjectId
 import logging
 
 from utils.auth import get_current_user
-from utils.meta_catalog import meta_catalog, transform_product_for_meta
+from utils.meta_catalog import meta_catalog, transform_product_for_meta, to_batch_feed_item
 
 logger = logging.getLogger(__name__)
 
@@ -165,14 +165,14 @@ async def sync_batch_products(request: Request):
     if not products:
         return {"success": True, "message": "No valid products found", "synced": 0}
     
-    # Build batch requests
+    # Build batch requests (feed schema required by /items_batch)
     requests = []
     for product in products:
         meta_product = transform_product_for_meta(product)
         requests.append({
             "retailer_id": meta_product["retailer_id"],
             "method": "UPDATE",
-            "data": meta_product
+            "data": to_batch_feed_item(meta_product)
         })
     
     result = await meta_catalog.batch_sync(requests)

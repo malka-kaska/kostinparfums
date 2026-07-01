@@ -416,13 +416,11 @@ class MetaCatalogClient:
                 for product in batch:
                     try:
                         meta_product = transform_product_for_meta(product)
-                        # Convert lists to JSON strings for batch API
-                        if "additional_image_urls" in meta_product and isinstance(meta_product["additional_image_urls"], list):
-                            meta_product["additional_image_urls"] = json.dumps(meta_product["additional_image_urls"])
+                        feed_item = to_batch_feed_item(meta_product)
                         requests.append({
                             "retailer_id": meta_product["retailer_id"],
                             "method": "UPDATE",
-                            "data": meta_product
+                            "data": feed_item
                         })
                     except Exception as transform_err:
                         logger.warning(f"Failed to transform product {product.get('_id', 'unknown')}: {transform_err}")

@@ -41,6 +41,7 @@ const OrdersManager = ({ orders, onRefresh }) => {
   const [cancelOrderId, setCancelOrderId] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [creatingShipment, setCreatingShipment] = useState(null);
 
   // Get translated status options
   const STATUS_OPTIONS = STATUS_OPTIONS_BASE.map(opt => ({
@@ -50,6 +51,27 @@ const OrdersManager = ({ orders, onRefresh }) => {
 
   const getStatusLabel = (statusId) => {
     return STATUS_LABELS[language]?.[statusId] || STATUS_LABELS['en']?.[statusId] || statusId;
+  };
+
+  const handleCreateShipment = async (orderId) => {
+    setCreatingShipment(orderId);
+    try {
+      const res = await fetch(`${API_URL}/api/orders/admin/${orderId}/create-shipment`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(`✅ Товарителница създадена: ${data.tracking_number}`);
+        onRefresh?.();
+      } else {
+        alert(`❌ Грешка: ${data.detail || data.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      alert(`❌ Грешка: ${err.message}`);
+    } finally {
+      setCreatingShipment(null);
+    }
   };
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
@@ -152,6 +174,33 @@ const OrdersManager = ({ orders, onRefresh }) => {
                   <span>{formatDualPrice(order.shipping_cost)}</span>
                 </div>
               )}
+              
+              {/* Tracking Info / Create Shipment */}
+              <div className="order-tracking-section">
+                {order.tracking_number ? (
+                  <div className="tracking-info">
+                    <span className="tracking-label">🚚 Товарителница:</span>
+                    <a 
+                      href={order.tracking_url || `https://www.speedy.bg/bg/track-shipment?shipmentNumber=${order.tracking_number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tracking-link"
+                    >
+                      {order.tracking_number}
+                    </a>
+                  </div>
+                ) : (
+                  order.payment_method === 'cod' && order.speedy_data && (
+                    <button
+                      className="btn-create-shipment"
+                      onClick={() => handleCreateShipment(order.id)}
+                      disabled={creatingShipment === order.id}
+                    >
+                      {creatingShipment === order.id ? '⏳ Създаване...' : '📦 Създай товарителница'}
+                    </button>
+                  )
+                )}
+              </div>
               
               {/* Cancellation Request Alert */}
               {order.status === 'cancellation_requested' && (

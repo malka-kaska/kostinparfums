@@ -617,3 +617,79 @@ async def admin_cancel_order(order_id: str, request: Request, cancel_request: Ca
         "success": True,
         "message": "Order cancelled successfully"
     }
+
+
+
+@router.post("/admin/{order_id}/create-shipment")
+async def admin_create_shipment(order_id: str, request: Request):
+    """Manually create Speedy shipment for an order - admin only"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    # Verify admin
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find order
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    except Exception:
+        order = await db.orders.find_one({"order_number": order_id})
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Check if shipment already exists
+    if order.get("tracking_number"):
+        return {
+            "success": True,
+            "message": "Shipment already exists",
+            "tracking_number": order.get("tracking_number"),
+            "tracking_url": order.get("tracking_url")
+        }
+    
+    # Check if speedy_data exists
+    if not order.get("speedy_data") or not order.get("speedy_data", {}).get("city_id"):
+        raise HTTPException(status_code=400, detail="Order doesn't have Speedy delivery data")
+    
+    # Create shipment
+    try:
+        from routes.speedy import create_shipment_for_order
+        shipment_result = await create_shipment_for_order(order)
+        
+        if shipment_result and shipment_result.get("success"):
+            tracking_number = shipment_result.get("tracking_number")
+            tracking_url = shipment_result.get("tracking_url")
+            
+            # Update order with tracking info
+            await db.orders.update_one(
+                {"_id": order["_id"]},
+                {
+                    "$set": {
+                        "tracking_number": tracking_number,
+                        "tracking_url": tracking_url,
+                        "shipment_id": shipment_result.get("shipment_id"),
+                        "shipment_created_at": datetime.now(timezone.utc).isoformat(),
+                        "status": "processing"
+                    }
+                }
+            )
+            
+            logger.info(f"Admin manually created Speedy shipment for order {order.get('order_number')}: {tracking_number}")
+            
+            return {
+                "success": True,
+                "message": "Shipment created successfully",
+                "tracking_number": tracking_number,
+                "tracking_url": tracking_url
+            }
+        else:
+            error_msg = shipment_result.get("error", "Unknown error") if shipment_result else "No response from Speedy"
+            logger.error(f"Failed to create shipment for order {order.get('order_number')}: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to create shipment: {error_msg}")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating shipment for order {order.get('order_number')}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating shipment: {str(e)}")

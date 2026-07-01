@@ -506,6 +506,54 @@ textarea.form-input {
   border-top: 1px solid var(--border-light);
 }
 
+/* Tracking Section */
+.order-tracking-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+.tracking-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.tracking-label {
+  color: var(--text-secondary);
+}
+
+.tracking-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tracking-link:hover {
+  text-decoration: underline;
+}
+
+.btn-create-shipment {
+  padding: 8px 14px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  color: #166534;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-create-shipment:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+.btn-create-shipment:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Admin Order Cancellation */
 .cancellation-alert {
   display: flex;

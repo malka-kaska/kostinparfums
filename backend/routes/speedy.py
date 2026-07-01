@@ -324,9 +324,11 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
         
         # Add COD with fiscal receipt (касов бон) if applicable
         # ВАЖНО: При наложен платеж ВИНАГИ трябва да има касов бон!
+        # КРИТИЧНО: sum(amountWithVat) ТРЯБВА да е ТОЧНО равна на cod_amount!
         if shipment_data.cod_amount and shipment_data.cod_amount > 0:
+            cod_amount = round(shipment_data.cod_amount, 2)
             cod_service = {
-                "amount": shipment_data.cod_amount,
+                "amount": cod_amount,
                 "processingType": "CASH"
             }
             
@@ -334,11 +336,14 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             # Speedy изисква: description, vatGroup (кирилица "Б"), amount (без ДДС), amountWithVat (с ДДС)
             # COD amount ТРЯБВА да съвпада точно със сбора на amountWithVat от всички елементи
             fiscal_items = []
-            fiscal_total = 0  # Track total to ensure it matches COD amount
+            fiscal_total = 0.0  # Track total to ensure it matches COD amount
+            
+            shipping_cost = float(getattr(shipment_data, 'shipping_cost', 0) or 0)
             
             if shipment_data.fiscal_receipt_items:
+                # Build fiscal items from the pre-calculated (already discounted) prices
                 for item in shipment_data.fiscal_receipt_items:
-                    # Price is already with VAT (20%), calculate amount without VAT
+                    # Price is already with VAT (20%) and already discounted proportionally
                     amount_with_vat = round(item.unit_price * item.quantity, 2)
                     amount_without_vat = round(amount_with_vat / 1.20, 2)
                     fiscal_total += amount_with_vat
@@ -349,24 +354,36 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
                         "amount": amount_without_vat,
                         "amountWithVat": amount_with_vat
                     })
-            
-            # Add shipping as separate fiscal item if COD includes shipping
-            shipping_cost = getattr(shipment_data, 'shipping_cost', 0) or 0
-            if shipping_cost > 0:
-                shipping_with_vat = round(shipping_cost, 2)
-                shipping_without_vat = round(shipping_with_vat / 1.20, 2)
-                fiscal_total += shipping_with_vat
                 
-                fiscal_items.append({
-                    "description": "Доставка / Shipping",
-                    "vatGroup": "Б",
-                    "amount": shipping_without_vat,
-                    "amountWithVat": shipping_with_vat
-                })
+                # Add shipping as separate fiscal item if COD includes shipping
+                if shipping_cost > 0:
+                    shipping_with_vat = round(shipping_cost, 2)
+                    shipping_without_vat = round(shipping_with_vat / 1.20, 2)
+                    fiscal_total += shipping_with_vat
+                    
+                    fiscal_items.append({
+                        "description": "Доставка / Shipping",
+                        "vatGroup": "Б",
+                        "amount": shipping_without_vat,
+                        "amountWithVat": shipping_with_vat
+                    })
+                
+                # CRITICAL: Adjust for rounding errors to ensure fiscal_total == cod_amount exactly
+                # This handles cases where proportional distribution + rounding causes small mismatches
+                rounding_diff = round(cod_amount - fiscal_total, 2)
+                if abs(rounding_diff) > 0 and abs(rounding_diff) <= 0.10 and fiscal_items:
+                    # Apply the rounding adjustment to the last item (usually shipping, or last product)
+                    last_item = fiscal_items[-1]
+                    adjusted_with_vat = round(last_item["amountWithVat"] + rounding_diff, 2)
+                    adjusted_without_vat = round(adjusted_with_vat / 1.20, 2)
+                    last_item["amountWithVat"] = adjusted_with_vat
+                    last_item["amount"] = adjusted_without_vat
+                    fiscal_total = cod_amount  # Now matches exactly
+                    logger.info(f"Applied rounding adjustment of {rounding_diff} EUR to last fiscal item")
             
-            # Fallback: if no items, add generic item for full COD amount
+            # Fallback: if no items provided, create a single generic item for the full COD amount
             if not fiscal_items:
-                amount_with_vat = round(shipment_data.cod_amount, 2)
+                amount_with_vat = cod_amount
                 amount_without_vat = round(amount_with_vat / 1.20, 2)
                 fiscal_items.append({
                     "description": "Парфюм / Perfume",
@@ -376,8 +393,20 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
                 })
                 fiscal_total = amount_with_vat
             
+            # ASSERTION: Verify fiscal_total matches cod_amount within 0.01 EUR tolerance
+            fiscal_mismatch = abs(fiscal_total - cod_amount)
+            if fiscal_mismatch > 0.01:
+                error_msg = (
+                    f"FISCAL RECEIPT MISMATCH for order {shipment_data.order_number}: "
+                    f"cod_amount={cod_amount} EUR, fiscal_total={fiscal_total} EUR, "
+                    f"difference={rounding_diff} EUR. "
+                    f"Speedy API will reject this shipment. Check discount calculation logic."
+                )
+                logger.error(error_msg)
+                raise HTTPException(status_code=400, detail=error_msg)
+            
             cod_service["fiscalReceiptItems"] = fiscal_items
-            logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон (COD: {shipment_data.cod_amount}, fiscal_total: {fiscal_total})")
+            logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон (COD: {cod_amount}, fiscal_total: {fiscal_total}, match: {fiscal_mismatch <= 0.01})")
             
             # COD goes in service.additionalServices
             shipment_payload["service"]["additionalServices"] = {
@@ -491,37 +520,78 @@ async def create_shipment_for_order(order: dict) -> dict:
     Create a Speedy shipment for an order.
     Called automatically after COD order or Stripe payment success.
     Returns shipment data or None if failed.
+    
+    IMPORTANT: Speedy API requires that sum(amountWithVat) across all fiscalReceiptItems
+    equals cod_amount EXACTLY. On discounted orders, we must proportionally distribute
+    the discount across all items using a discount_factor.
     """
     try:
         speedy_data = order.get("speedy_data", {})
         shipping_address = order.get("shipping_address", {})
+        order_number = order.get("order_number", "UNKNOWN")
         
         if not speedy_data or not speedy_data.get("city_id"):
-            logger.warning(f"Order {order.get('order_number')} has no speedy_data, skipping shipment creation")
+            logger.warning(f"Order {order_number} has no speedy_data, skipping shipment creation")
             return None
         
         # Determine COD amount (only for COD orders)
         cod_amount = None
         fiscal_items = None
-        shipping_cost = 0
+        shipping_cost = 0.0
         if order.get("payment_method") == "cod":
-            cod_amount = order.get("total", 0)
-            shipping_cost = order.get("shipping_cost", 0)
+            cod_amount = float(order.get("total", 0))
+            shipping_cost = float(order.get("shipping_cost", 0))
+            discount_amount = float(order.get("discount_amount", 0))
             
             # Build fiscal receipt items from order items
             # Prices from items are WITH VAT (20%)
             order_items = order.get("items", [])
             if order_items:
+                # Calculate the sum of undiscounted item prices (subtotal)
+                # Use order.subtotal if available, otherwise calculate from items
+                subtotal = float(order.get("subtotal", 0))
+                if subtotal <= 0:
+                    subtotal = sum(
+                        float(item.get("price", 0)) * int(item.get("quantity", 1))
+                        for item in order_items
+                    )
+                
+                # Calculate the discount factor to distribute the discount proportionally
+                # order.total = subtotal + shipping_cost - discount_amount
+                # So: cod_amount = subtotal + shipping_cost - discount_amount
+                # We need to scale item prices so that scaled_items + shipping = cod_amount
+                # 
+                # If shipping is paid by customer (in COD), it must be in fiscal receipt
+                # items_share = cod_amount - shipping_cost (what items should sum to after discount)
+                items_share = cod_amount - shipping_cost
+                
+                # discount_factor scales item prices from subtotal to items_share
+                if subtotal > 0:
+                    discount_factor = items_share / subtotal
+                else:
+                    discount_factor = 1.0
+                
+                logger.info(f"Order {order_number}: cod_amount={cod_amount}, subtotal={subtotal}, shipping_cost={shipping_cost}, discount_amount={discount_amount}, items_share={items_share}, discount_factor={discount_factor:.4f}")
+                
                 fiscal_items = []
-                for item in order_items:
+                running_fiscal_total = 0.0
+                
+                for idx, item in enumerate(order_items):
                     item_name = f"{item.get('brand', '')} {item.get('name', 'Парфюм')}"[:50]
-                    # unit_price is already with VAT
+                    original_price = float(item.get("price", 0))
+                    quantity = int(item.get("quantity", 1))
+                    
+                    # Apply discount factor to get the proportionally reduced price
+                    discounted_unit_price = round(original_price * discount_factor, 2)
+                    
                     fiscal_items.append(FiscalReceiptItem(
                         name=item_name,
-                        quantity=item.get("quantity", 1),
-                        unit_price=float(item.get("price", 0))  # Price with VAT
+                        quantity=quantity,
+                        unit_price=discounted_unit_price  # Discounted price with VAT
                     ))
-                logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order.get('order_number')}, shipping_cost: {shipping_cost}")
+                    running_fiscal_total += discounted_unit_price * quantity
+                
+                logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order_number}, shipping_cost: {shipping_cost}, running_fiscal_total: {running_fiscal_total}")
         
         # Build recipient info
         recipient = RecipientInfo(

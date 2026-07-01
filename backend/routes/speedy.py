@@ -259,6 +259,7 @@ class CreateShipmentRequest(BaseModel):
     weight: float = 0.5
     cod_amount: Optional[float] = None  # Cash on delivery amount (if COD payment)
     order_total: Optional[float] = None  # Total order amount in EUR (for determining who pays shipping)
+    shipping_cost: Optional[float] = None  # Shipping cost to include in fiscal receipt
     contents: str = "Парфюми"
     include_return_voucher: bool = True  # Include 14-day return voucher
     fiscal_receipt_items: Optional[List[FiscalReceiptItem]] = None  # Items for касов бон
@@ -330,26 +331,53 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             }
             
             # Add fiscal receipt items for касов бон - ЗАДЪЛЖИТЕЛНО при COD
+            # Speedy изисква: description, vatGroup (кирилица "Б"), amount (без ДДС), amountWithVat (с ДДС)
+            # COD amount ТРЯБВА да съвпада точно със сбора на amountWithVat от всички елементи
             fiscal_items = []
+            fiscal_total = 0  # Track total to ensure it matches COD amount
+            
             if shipment_data.fiscal_receipt_items:
                 for item in shipment_data.fiscal_receipt_items:
+                    # Price is already with VAT (20%), calculate amount without VAT
+                    amount_with_vat = round(item.unit_price * item.quantity, 2)
+                    amount_without_vat = round(amount_with_vat / 1.20, 2)
+                    fiscal_total += amount_with_vat
+                    
                     fiscal_items.append({
-                        "itemName": item.name[:50],  # Max 50 chars
-                        "quantity": item.quantity,
-                        "unitPrice": round(item.unit_price, 2),
-                        "vatClass": "B"  # B = 20% VAT in Bulgaria
+                        "description": item.name[:50],  # Max 50 chars
+                        "vatGroup": "Б",  # Кирилица Б = 20% ДДС
+                        "amount": amount_without_vat,
+                        "amountWithVat": amount_with_vat
                     })
-            else:
-                # Fallback: add generic item if no specific items provided
+            
+            # Add shipping as separate fiscal item if COD includes shipping
+            shipping_cost = getattr(shipment_data, 'shipping_cost', 0) or 0
+            if shipping_cost > 0:
+                shipping_with_vat = round(shipping_cost, 2)
+                shipping_without_vat = round(shipping_with_vat / 1.20, 2)
+                fiscal_total += shipping_with_vat
+                
                 fiscal_items.append({
-                    "itemName": "Парфюм / Perfume",
-                    "quantity": 1,
-                    "unitPrice": round(shipment_data.cod_amount, 2),
-                    "vatClass": "B"
+                    "description": "Доставка / Shipping",
+                    "vatGroup": "Б",
+                    "amount": shipping_without_vat,
+                    "amountWithVat": shipping_with_vat
                 })
             
-            cod_service["codFiscalReceiptItems"] = fiscal_items
-            logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон (COD: {shipment_data.cod_amount})")
+            # Fallback: if no items, add generic item for full COD amount
+            if not fiscal_items:
+                amount_with_vat = round(shipment_data.cod_amount, 2)
+                amount_without_vat = round(amount_with_vat / 1.20, 2)
+                fiscal_items.append({
+                    "description": "Парфюм / Perfume",
+                    "vatGroup": "Б",
+                    "amount": amount_without_vat,
+                    "amountWithVat": amount_with_vat
+                })
+                fiscal_total = amount_with_vat
+            
+            cod_service["fiscalReceiptItems"] = fiscal_items
+            logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон (COD: {shipment_data.cod_amount}, fiscal_total: {fiscal_total})")
             
             # COD goes in service.additionalServices
             shipment_payload["service"]["additionalServices"] = {
@@ -475,21 +503,25 @@ async def create_shipment_for_order(order: dict) -> dict:
         # Determine COD amount (only for COD orders)
         cod_amount = None
         fiscal_items = None
+        shipping_cost = 0
         if order.get("payment_method") == "cod":
             cod_amount = order.get("total", 0)
+            shipping_cost = order.get("shipping_cost", 0)
             
             # Build fiscal receipt items from order items
+            # Prices from items are WITH VAT (20%)
             order_items = order.get("items", [])
             if order_items:
                 fiscal_items = []
                 for item in order_items:
                     item_name = f"{item.get('brand', '')} {item.get('name', 'Парфюм')}"[:50]
+                    # unit_price is already with VAT
                     fiscal_items.append(FiscalReceiptItem(
                         name=item_name,
                         quantity=item.get("quantity", 1),
-                        unit_price=float(item.get("price", 0))
+                        unit_price=float(item.get("price", 0))  # Price with VAT
                     ))
-                logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order.get('order_number')}")
+                logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order.get('order_number')}, shipping_cost: {shipping_cost}")
         
         # Build recipient info
         recipient = RecipientInfo(
@@ -512,6 +544,7 @@ async def create_shipment_for_order(order: dict) -> dict:
             weight=0.5,  # Default weight for perfumes
             cod_amount=cod_amount,
             order_total=order_total,
+            shipping_cost=shipping_cost,  # For fiscal receipt
             contents="Парфюми / Perfumes",
             fiscal_receipt_items=fiscal_items
         )

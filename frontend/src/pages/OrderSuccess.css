@@ -172,11 +172,18 @@
 .recommended-section h3 {
   font-size: 1.2rem;
   color: var(--text-primary);
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 10px;
   justify-content: center;
+}
+
+.recommendation-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 24px;
 }
 
 .recommended-section h3 svg {

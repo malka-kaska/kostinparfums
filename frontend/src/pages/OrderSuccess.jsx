@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle, Package, Heart, Truck } from 'lucide-react';
+import { CheckCircle, Package, Heart, Truck, Sparkles } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import './OrderSuccess.css';
@@ -10,6 +10,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const OrderSuccess = () => {
   const [searchParams] = useSearchParams();
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [recommendationSource, setRecommendationSource] = useState(null);
   const { t, language } = useLanguage();
   const { user } = useAuth();
   
@@ -19,12 +20,27 @@ const OrderSuccess = () => {
   const isGuest = searchParams.get('guest') === 'true';
 
   useEffect(() => {
-    // Fetch recommended products
+    // Fetch smart recommendations based on order
     const fetchRecommended = async () => {
       try {
+        // First try smart recommendations based on order
+        if (orderNumber) {
+          const response = await fetch(`${API_URL}/api/products/recommendations/order/${orderNumber}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.products?.length > 0) {
+              setRelatedProducts(data.products);
+              setRecommendationSource(data.is_dubai_context ? 'dubai' : 'regular');
+              return;
+            }
+          }
+        }
+        
+        // Fallback to popular products
         const response = await fetch(`${API_URL}/api/products?limit=4&sort=popularity`);
         const data = await response.json();
         setRelatedProducts(data.products || []);
+        setRecommendationSource('popular');
       } catch (error) {
         console.error('Failed to fetch recommendations:', error);
       }
@@ -38,7 +54,7 @@ const OrderSuccess = () => {
       localStorage.removeItem('cart');
       window.dispatchEvent(new Event('cartUpdated'));
     } catch { /* ignore */ }
-  }, []);
+  }, [orderNumber]);
 
   return (
     <div className="order-success-page">
@@ -140,9 +156,23 @@ const OrderSuccess = () => {
           {relatedProducts.length > 0 && (
             <div className="recommended-section">
               <h3>
-                <Heart size={20} />
-                {language === 'bg' ? 'Може да Ви хареса' : 'You May Also Like'}
+                {recommendationSource === 'dubai' ? (
+                  <>
+                    <Sparkles size={20} />
+                    {language === 'bg' ? 'Още Dubai аромати за Вас' : 'More Dubai Fragrances for You'}
+                  </>
+                ) : (
+                  <>
+                    <Heart size={20} />
+                    {language === 'bg' ? 'Може да Ви хареса' : 'You May Also Like'}
+                  </>
+                )}
               </h3>
+              <p className="recommendation-subtitle">
+                {language === 'bg' 
+                  ? 'Базирано на вашата поръчка и ароматни предпочитания'
+                  : 'Based on your order and scent preferences'}
+              </p>
               <div className="recommended-grid">
                 {relatedProducts.map(product => (
                   <Link 

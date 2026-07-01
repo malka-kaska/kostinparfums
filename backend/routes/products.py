@@ -833,3 +833,140 @@ async def update_product_collections(request: Request, product_id: str):
 
     logger.info(f"Product {product_id} collections updated to {collections}")
     return product_doc_to_response(result)
+
+
+
+@router.get("/recommendations/order/{order_id}")
+async def get_order_recommendations(request: Request, order_id: str, limit: int = 4):
+    """
+    Get smart product recommendations based on ordered items.
+    Rules:
+    1. Match by scent profiles from ordered products
+    2. If ordered Dubai perfume -> recommend Dubai
+    3. If ordered non-Dubai -> recommend non-Dubai only
+    """
+    db = request.app.state.db
+    
+    # Find order by ID or order number
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    except Exception:
+        order = await db.orders.find_one({"order_number": order_id})
+    
+    if not order:
+        # Fallback to popular products
+        cursor = db.products.find({"is_visible": True}).limit(limit)
+        products = []
+        async for p in cursor:
+            products.append(product_doc_to_response(p))
+        return {"products": products, "source": "fallback"}
+    
+    # Extract ordered product IDs
+    ordered_items = order.get("items", [])
+    ordered_product_ids = []
+    for item in ordered_items:
+        pid = item.get("product_id") or item.get("id")
+        if pid:
+            try:
+                ordered_product_ids.append(ObjectId(pid))
+            except Exception:
+                pass
+    
+    # Get ordered products details
+    ordered_products = []
+    if ordered_product_ids:
+        cursor = db.products.find({"_id": {"$in": ordered_product_ids}})
+        async for p in cursor:
+            ordered_products.append(p)
+    
+    # Extract scent profiles and check if any product is Dubai
+    all_scent_profiles = set()
+    has_dubai_product = False
+    ordered_brands = set()
+    
+    for product in ordered_products:
+        # Collect scent profiles
+        profiles = product.get("scent_profiles", [])
+        if profiles:
+            all_scent_profiles.update(profiles)
+        
+        # Check if Dubai product
+        collections = product.get("collections", [])
+        if isinstance(collections, list):
+            for col in collections:
+                col_name = col.get("name", "") if isinstance(col, dict) else str(col)
+                if "dubai" in col_name.lower() or "дубай" in col_name.lower():
+                    has_dubai_product = True
+                    break
+        
+        # Also check brand for Dubai indicators
+        brand = product.get("brand", "").lower()
+        dubai_brands = ["lattafa", "maison alhambra", "fragrance world", "pendora", "armaf", "al haramain"]
+        if any(db in brand for db in dubai_brands):
+            has_dubai_product = True
+        
+        ordered_brands.add(product.get("brand", ""))
+    
+    logger.info(f"Order {order_id}: scent_profiles={list(all_scent_profiles)}, has_dubai={has_dubai_product}, brands={ordered_brands}")
+    
+    # Build query for recommendations
+    query = {
+        "is_visible": True,
+        "_id": {"$nin": ordered_product_ids}  # Exclude ordered products
+    }
+    
+    # Filter by scent profiles if available
+    if all_scent_profiles:
+        query["scent_profiles"] = {"$in": list(all_scent_profiles)}
+    
+    # Dubai/non-Dubai filter
+    dubai_brands = ["lattafa", "maison alhambra", "fragrance world", "pendora", "armaf", "al haramain", "ajmal", "rasasi"]
+    
+    if has_dubai_product:
+        # Recommend only Dubai products
+        query["$or"] = [
+            {"brand": {"$regex": "|".join(dubai_brands), "$options": "i"}},
+            {"collections.name": {"$regex": "dubai|дубай", "$options": "i"}}
+        ]
+    else:
+        # Exclude Dubai products
+        query["brand"] = {"$not": {"$regex": "|".join(dubai_brands), "$options": "i"}}
+    
+    # First try with scent profile match
+    cursor = db.products.find(query).limit(limit * 2)
+    products = []
+    async for p in cursor:
+        products.append(product_doc_to_response(p))
+    
+    # If not enough products, relax the scent profile constraint
+    if len(products) < limit:
+        relaxed_query = {
+            "is_visible": True,
+            "_id": {"$nin": ordered_product_ids}
+        }
+        
+        if has_dubai_product:
+            relaxed_query["$or"] = [
+                {"brand": {"$regex": "|".join(dubai_brands), "$options": "i"}},
+                {"collections.name": {"$regex": "dubai|дубай", "$options": "i"}}
+            ]
+        else:
+            relaxed_query["brand"] = {"$not": {"$regex": "|".join(dubai_brands), "$options": "i"}}
+        
+        existing_ids = [ObjectId(p["id"]) for p in products]
+        relaxed_query["_id"]["$nin"].extend(existing_ids)
+        
+        cursor = db.products.find(relaxed_query).limit(limit - len(products))
+        async for p in cursor:
+            products.append(product_doc_to_response(p))
+    
+    # Shuffle for variety
+    import random
+    random.shuffle(products)
+    
+    return {
+        "products": products[:limit],
+        "source": "smart",
+        "scent_profiles_matched": list(all_scent_profiles),
+        "is_dubai_context": has_dubai_product
+    }

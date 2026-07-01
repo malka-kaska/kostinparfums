@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Request, HTTPException, Query
+from fastapi import APIRouter, Request, HTTPException, Query, BackgroundTasks
 from bson import ObjectId
 from typing import Optional
 from models.schemas import ProductCreate, ProductUpdate, ProductResponse, ProductVisibilityUpdate
@@ -10,6 +10,15 @@ import uuid
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/products", tags=["products"])
+
+# Meta Catalog sync helper
+async def sync_product_to_meta(db, product_id: str):
+    """Background task to sync product to Meta Catalog"""
+    try:
+        from routes.meta_catalog import on_product_updated
+        await on_product_updated(db, product_id, {})
+    except Exception as e:
+        logger.error(f"Failed to sync product {product_id} to Meta: {e}")
 
 # Global popularity scores based on market research
 # Higher score = more popular (scale 1-100)
@@ -671,7 +680,7 @@ async def get_related_products(request: Request, product_id: str, limit: int = 5
 
 # Admin-only endpoints
 @router.post("")
-async def create_product(request: Request, data: ProductCreate):
+async def create_product(request: Request, data: ProductCreate, background_tasks: BackgroundTasks):
     db = request.app.state.db
     user = await get_current_user(request, db)
     if user.get("role") != "admin":
@@ -685,11 +694,15 @@ async def create_product(request: Request, data: ProductCreate):
     result = await db.products.insert_one(product_doc)
     product_doc["_id"] = result.inserted_id
     logger.info(f"Product created: {data.name}")
+    
+    # Sync to Meta Catalog in background
+    background_tasks.add_task(sync_product_to_meta, db, str(result.inserted_id))
+    
     return product_doc_to_response(product_doc)
 
 
 @router.put("/{product_id}")
-async def update_product(request: Request, product_id: str, data: ProductUpdate):
+async def update_product(request: Request, product_id: str, data: ProductUpdate, background_tasks: BackgroundTasks):
     db = request.app.state.db
     user = await get_current_user(request, db)
     if user.get("role") != "admin":
@@ -715,11 +728,14 @@ async def update_product(request: Request, product_id: str, data: ProductUpdate)
     if not result:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    # Sync to Meta Catalog in background
+    background_tasks.add_task(sync_product_to_meta, db, product_id)
+    
     return product_doc_to_response(result)
 
 
 @router.delete("/{product_id}")
-async def delete_product(request: Request, product_id: str):
+async def delete_product(request: Request, product_id: str, background_tasks: BackgroundTasks):
     db = request.app.state.db
     user = await get_current_user(request, db)
     if user.get("role") != "admin":
@@ -733,11 +749,21 @@ async def delete_product(request: Request, product_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    # Delete from Meta Catalog in background
+    async def delete_from_meta():
+        try:
+            from routes.meta_catalog import on_product_deleted
+            await on_product_deleted(db, product_id)
+        except Exception as e:
+            logger.error(f"Failed to delete product {product_id} from Meta: {e}")
+    
+    background_tasks.add_task(delete_from_meta)
+    
     return {"message": "Product deleted"}
 
 
 @router.patch("/{product_id}/visibility")
-async def toggle_product_visibility(request: Request, product_id: str, data: ProductVisibilityUpdate):
+async def toggle_product_visibility(request: Request, product_id: str, data: ProductVisibilityUpdate, background_tasks: BackgroundTasks):
     """Toggle product visibility - Admin only"""
     db = request.app.state.db
     user = await get_current_user(request, db)
@@ -762,6 +788,10 @@ async def toggle_product_visibility(request: Request, product_id: str, data: Pro
         raise HTTPException(status_code=404, detail="Product not found")
 
     logger.info(f"Product {product_id} visibility set to {data.is_visible}")
+    
+    # Sync visibility change to Meta Catalog
+    background_tasks.add_task(sync_product_to_meta, db, product_id)
+    
     return product_doc_to_response(result)
 
 

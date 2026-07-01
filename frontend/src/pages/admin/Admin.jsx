@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Package, Filter, Home, Percent, Sparkles } from 'lucide-react';
+import { ShoppingBag, Package, Filter, Home, Percent, Sparkles, Cloud } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import ProductsManager from './components/ProductsManager';
@@ -9,6 +9,7 @@ import CollectionsManager from './components/CollectionsManager';
 import HomepageManager from './components/HomepageManager';
 import DiscountCodesManager from './components/DiscountCodesManager';
 import ScentMigrationManager from './components/ScentMigrationManager';
+import MetaCatalogManager from './components/MetaCatalogManager';
 import '../Admin.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -152,6 +153,14 @@ const Admin = () => {
             <Sparkles size={18} />
             <span>{t('scentAnalysis') || 'Аромати'}</span>
           </button>
+          <button
+            className={`admin-tab ${activeTab === 'meta' ? 'active' : ''}`}
+            onClick={() => setActiveTab('meta')}
+            data-testid="admin-tab-meta"
+          >
+            <Cloud size={18} />
+            <span>Meta Catalog</span>
+          </button>
         </div>
 
         {activeTab === 'products' && (
@@ -180,6 +189,10 @@ const Admin = () => {
 
         {activeTab === 'scent' && (
           <ScentMigrationManager token={user?.token} />
+        )}
+
+        {activeTab === 'meta' && (
+          <MetaCatalogManager />
         )}
       </div>
     </div>

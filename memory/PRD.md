@@ -23,7 +23,25 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
   - No minimum order amount
   - No additional fees
 
-### Speedy Courier Integration (NEW - December 2025)
+### Meta Catalog Integration (NEW - July 2026)
+- [x] **Live API integration** with Meta (Facebook) Catalog API
+- [x] **System User authentication** with appsecret_proof
+- [x] **Product sync endpoints**:
+  - `POST /api/meta-catalog/sync/product/{id}` - sync single product
+  - `POST /api/meta-catalog/sync/all` - batch sync all products (7347+)
+  - `DELETE /api/meta-catalog/product/{id}` - remove product
+- [x] **Auto-sync on changes** - products automatically sync when created/updated/deleted
+- [x] **Admin UI** - Meta Catalog tab in Admin panel with:
+  - Connection status indicator
+  - Local vs Meta product count comparison
+  - Catalog info (ID, name, type)
+  - Direct link to Meta Business Manager
+  - Manual sync buttons
+  - Products preview from Meta
+- [x] **Batch processing** - 1000 products per batch via items_batch API
+- [x] **Product data mapping**: name, price, images, availability, brand, category
+
+### Speedy Courier Integration (December 2025)
 - [x] **Live API integration** with Speedy Bulgaria (api.speedy.bg)
 - [x] **City search** - autocomplete from Speedy API
 - [x] **Office selection** - dropdown with all offices in selected city
@@ -130,6 +148,7 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] ~~Order Cancellation with Reason~~ (DONE - July 2026)
 - [x] ~~Guest Cancel Order Page~~ (DONE - July 2026)
 - [ ] НЕкоректен БГ API integration (BLOCKED - awaiting IP whitelist confirmation)
+- [x] ~~Meta Catalog Integration~~ (DONE - July 2026)
 
 ## Recently Added (June-July 2026)
 

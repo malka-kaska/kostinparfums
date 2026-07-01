@@ -371,6 +371,24 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         except Exception as e:
             logger.error(f"Failed to send COD confirmation email: {e}")
     
+    # Send admin notification email
+    try:
+        from utils.email_service import send_admin_new_order_notification
+        await send_admin_new_order_notification(
+            order_number=order_number,
+            customer_name=user_name or order_doc["shipping_address"].get("full_name", ""),
+            customer_email=user_email or "Гост",
+            customer_phone=order_doc["shipping_address"].get("phone", ""),
+            payment_method="cod",
+            total=final_total,
+            shipping_cost=shipping_cost,
+            items=items_for_db,
+            shipping_address=order_doc["shipping_address"],
+            tracking_number=tracking_number
+        )
+    except Exception as e:
+        logger.error(f"Failed to send admin new order notification: {e}")
+    
     response = {
         "success": True,
         "order_id": str(order_doc["_id"]),

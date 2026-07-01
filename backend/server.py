@@ -477,6 +477,26 @@ async def verify_order(token: str):
                 lang="bg"
             )
         )
+    
+    # Send admin notification email for new order
+    try:
+        from utils.email_service import send_admin_new_order_notification
+        asyncio.create_task(
+            send_admin_new_order_notification(
+                order_number=order_id,
+                customer_name=user_name,
+                customer_email=user_email or "Гост",
+                customer_phone=order.get("shipping_address", {}).get("phone", ""),
+                payment_method="card",
+                total=order.get("total", 0),
+                shipping_cost=order.get("shipping_cost", 0),
+                items=order.get("items", []),
+                shipping_address=order.get("shipping_address", {}),
+                tracking_number=tracking_number
+            )
+        )
+    except Exception as e:
+        logger.error(f"Failed to send admin new order notification for {order_id}: {e}")
         
         # Generate and send invoice PDF for card payments
         if order.get("payment_method") == "card":

@@ -1114,3 +1114,165 @@ async def send_order_cancelled_email(
         logger.error(f"Failed to send order cancelled email: {result.get('error')}")
     
     return result
+
+
+
+async def send_admin_new_order_notification(
+    order_number: str,
+    customer_name: str,
+    customer_email: str,
+    customer_phone: str,
+    payment_method: str,
+    total: float,
+    shipping_cost: float,
+    items: list,
+    shipping_address: dict,
+    tracking_number: str = None
+):
+    """Send email to admin when a new order is placed"""
+    
+    items_html = ""
+    subtotal = 0
+    for item in items:
+        item_total = float(item.get('price', 0)) * int(item.get('quantity', 1))
+        subtotal += item_total
+        items_html += f"""
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                <strong>{item.get('brand', '')}</strong><br>
+                <span style="color: #666;">{item.get('name', '')}</span>
+            </td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{item.get('quantity', 1)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€{float(item.get('price', 0)):.2f}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€{item_total:.2f}</td>
+        </tr>
+        """
+    
+    payment_label = "💵 Наложен платеж (COD)" if payment_method == "cod" else "💳 Карта (Stripe)"
+    payment_color = "#f59e0b" if payment_method == "cod" else "#10b981"
+    
+    # Format address
+    address_parts = []
+    if shipping_address.get('full_name'):
+        address_parts.append(f"<strong>{shipping_address.get('full_name')}</strong>")
+    if shipping_address.get('phone'):
+        address_parts.append(f"📞 {shipping_address.get('phone')}")
+    if shipping_address.get('office_name'):
+        address_parts.append(f"📍 Офис: {shipping_address.get('office_name')}")
+    elif shipping_address.get('address'):
+        address_parts.append(f"📍 {shipping_address.get('address')}")
+    if shipping_address.get('city'):
+        address_parts.append(f"🏙️ {shipping_address.get('city')}")
+    if shipping_address.get('notes'):
+        address_parts.append(f"📝 {shipping_address.get('notes')}")
+    
+    address_html = "<br>".join(address_parts)
+    
+    tracking_html = ""
+    if tracking_number:
+        tracking_html = f"""
+        <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #10b981;">
+            <p style="margin: 0; color: #065f46;">
+                <strong>🚚 Товарителница:</strong> {tracking_number}<br>
+                <a href="https://www.speedy.bg/bg/track-shipment?shipmentNumber={tracking_number}" style="color: #059669;">Проследи в Speedy →</a>
+            </p>
+        </div>
+        """
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #10b981; margin: 0;">🎉 Нова поръчка!</h1>
+                <p style="color: #666; margin-top: 10px;">Получена е нова поръчка в KOSTIN</p>
+            </div>
+            
+            <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #10b981;">
+                <h2 style="margin: 0 0 10px 0; color: #166534;">Поръчка: {order_number}</h2>
+                <p style="margin: 0; color: #166534;">
+                    <span style="display: inline-block; background: {payment_color}; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px;">
+                        {payment_label}
+                    </span>
+                </p>
+            </div>
+            
+            <!-- Customer Info -->
+            <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">👤 Клиент</h3>
+                <p style="margin: 0; color: #4b5563;">
+                    <strong>{customer_name}</strong><br>
+                    📧 {customer_email}<br>
+                    📞 {customer_phone}
+                </p>
+            </div>
+            
+            <!-- Shipping Address -->
+            <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">📦 Адрес за доставка</h3>
+                <p style="margin: 0; color: #4b5563; line-height: 1.6;">
+                    {address_html}
+                </p>
+                {tracking_html}
+            </div>
+            
+            <!-- Items -->
+            <h3 style="margin: 20px 0 10px 0; color: #374151;">🛒 Поръчани продукти</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr style="background: #f3f4f6;">
+                        <th style="padding: 10px; text-align: left; font-size: 13px;">Продукт</th>
+                        <th style="padding: 10px; text-align: center; font-size: 13px;">Кол.</th>
+                        <th style="padding: 10px; text-align: right; font-size: 13px;">Цена</th>
+                        <th style="padding: 10px; text-align: right; font-size: 13px;">Общо</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items_html}
+                </tbody>
+            </table>
+            
+            <!-- Totals -->
+            <div style="background: #1a1a1a; color: white; padding: 20px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Междинна сума:</span>
+                    <span>€{subtotal:.2f}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Доставка:</span>
+                    <span>€{shipping_cost:.2f}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px;">
+                    <span>ОБЩО:</span>
+                    <span style="color: #c9a86c;">€{total:.2f}</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="{FRONTEND_URL}/admin" style="display: inline-block; background: #c9a86c; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+                    Виж в Admin Panel →
+                </a>
+            </div>
+            
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 30px;">
+                Този имейл е автоматично генериран от KOSTIN система.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    subject = f"🎉 Нова поръчка #{order_number} - €{total:.2f}"
+    
+    result = await send_email(ADMIN_EMAIL, subject, html_content)
+    
+    if result.get("status") == "success":
+        logger.info(f"Admin new order notification sent for order {order_number} to {ADMIN_EMAIL}")
+    else:
+        logger.error(f"Failed to send admin new order notification: {result.get('error')}")
+    
+    return result

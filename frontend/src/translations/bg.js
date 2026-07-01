@@ -137,7 +137,7 @@ export const bg = {
   processingPayment: "\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u0432\u0430 \u0441\u0435...",
   continueShopping: "Продължи пазаруването",
   items: "артикула",
-  secureCheckout: "Доставка с наложен платеж или сигурно плащане чрез карта",
+  secureCheckout: "Доставка с наложен платеж или сигурно плащане чрез Stripe",
 
   // Auth
   welcomeBack: "\u0414\u043e\u0431\u0440\u0435 \u0434\u043e\u0448\u043b\u0438 \u043e\u0442\u043d\u043e\u0432\u043e",

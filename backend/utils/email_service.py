@@ -957,8 +957,9 @@ async def send_invoice_email(
 
 
 
-# Admin email for notifications
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "konstantin.kirchev.bs@gmail.com")
+# Admin email for notifications - reload env to ensure latest value
+_admin_email_from_env = os.environ.get("ADMIN_EMAIL")
+ADMIN_EMAIL = _admin_email_from_env if _admin_email_from_env else "contact@kostinparfums.com"
 
 
 async def send_admin_cancellation_notification(

@@ -223,6 +223,8 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     if final_total < 0:
         final_total = 0
     
+    logger.info(f"COD Order calculation: subtotal={total_amount}, shipping={shipping_cost}, discount={discount_amount}, final_total={final_total}")
+    
     # Generate cancellation token for guest orders
     cancellation_token = secrets.token_urlsafe(32)
     

@@ -489,7 +489,7 @@ const Checkout = () => {
       // Redirect to order success page with order details
       const isGuest = !user;
       const orderParams = new URLSearchParams({
-        order: data.order_number || data.order_id,
+        order: data.order_number || data.order_id || 'unknown',
         total: (data.total || getFinalTotal()).toFixed(2),
         guest: isGuest ? 'true' : 'false'
       });
@@ -498,7 +498,8 @@ const Checkout = () => {
         orderParams.set('tracking', data.tracking_number);
       }
       
-      navigate(`/order/success?${orderParams.toString()}`);
+      // Use window.location for more reliable redirect
+      window.location.href = `/order/success?${orderParams.toString()}`;
       
     } catch (err) {
       console.error('COD order error:', err);

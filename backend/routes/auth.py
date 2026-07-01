@@ -165,9 +165,12 @@ async def login(request: Request, response: Response, data: UserLogin):
 
     # Check if email is verified (skip for admin users)
     if user.get("role") != "admin" and not user.get("email_verified", True):
-        # Resend verification email
+        # Check if existing token is still valid or create new one
         verification_token = user.get("verification_token")
-        if not verification_token:
+        token_expires = user.get("verification_expires", "")
+        
+        # Generate new token if none exists OR if existing token expired
+        if not verification_token or (token_expires and datetime.now(timezone.utc).isoformat() > token_expires):
             verification_token = secrets.token_urlsafe(32)
             await db.users.update_one(
                 {"_id": user["_id"]},
@@ -176,6 +179,7 @@ async def login(request: Request, response: Response, data: UserLogin):
                     "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
                 }}
             )
+        
         asyncio.create_task(send_email_verification(email, user.get("name", ""), verification_token, "bg"))
         raise HTTPException(status_code=403, detail="Please verify your email first. A new verification email has been sent.")
 

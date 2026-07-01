@@ -48,6 +48,9 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] **Dynamic price calculation** - real-time shipping cost from Speedy
 - [x] **Delivery types**: Office pickup (€3.32) / Address delivery (€4.46)
 - [x] **speedy_data** stored in orders (city_id, office_id, delivery_type)
+- [x] **Auto waybill creation** - товарителница създава се автоматично при COD поръчка
+- [x] **Office ID validation** - автоматично валидира и коригира невалидни офис ID-та по име (July 2026)
+- [x] **Discount support** - правилно разпределяне на отстъпки във фискалните позиции (July 2026)
 - [x] **Auto shipment creation** - товарителница създадена автоматично при COD поръчка
 - [x] **COD with receipt** - касов бон при наложен платеж
 - [x] **Tracking in Profile** - номер и линк за проследяване в "Моите поръчки"

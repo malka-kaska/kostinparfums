@@ -513,6 +513,60 @@ async def track_shipment(tracking_number: str):
         raise HTTPException(status_code=500, detail="Failed to track shipment")
 
 
+# ============= Helper function to validate and fix office ID =============
+
+async def validate_and_fix_office_id(city_id: int, office_id: int, office_name: str) -> int:
+    """
+    Validate that the office ID exists for the given city.
+    If not, try to find a matching office by name.
+    Returns the valid office ID or None if not found.
+    """
+    try:
+        # Get offices for the city
+        data = await speedy_request("location/office", {"siteId": city_id})
+        offices = data.get("offices", [])
+        
+        if not offices:
+            logger.warning(f"No offices found for city_id {city_id}")
+            return None
+        
+        # Check if the office_id exists
+        office = next((o for o in offices if o["id"] == office_id), None)
+        if office:
+            logger.info(f"Office ID {office_id} is valid for city {city_id}")
+            return office_id
+        
+        # Office ID not found - try to find by name
+        logger.warning(f"Office ID {office_id} not found for city {city_id}, searching by name: '{office_name}'")
+        
+        if office_name:
+            # Normalize names for comparison
+            office_name_lower = office_name.lower().strip()
+            
+            # Try exact match first
+            for o in offices:
+                if o.get("name", "").lower().strip() == office_name_lower:
+                    logger.info(f"Found exact match: {o['name']} (ID: {o['id']})")
+                    return o["id"]
+            
+            # Try partial match (contains)
+            for o in offices:
+                o_name = o.get("name", "").lower()
+                # Check if key words match
+                if any(word in o_name for word in office_name_lower.split() if len(word) > 3):
+                    logger.info(f"Found partial match: {o['name']} (ID: {o['id']})")
+                    return o["id"]
+        
+        # No match found - use the first office as fallback
+        fallback_office = offices[0]
+        logger.warning(f"No match found, using fallback office: {fallback_office['name']} (ID: {fallback_office['id']})")
+        return fallback_office["id"]
+        
+    except Exception as e:
+        logger.error(f"Error validating office ID: {e}")
+        return None
+
+
 # ============= Helper function for auto-shipment creation =============
 
 async def create_shipment_for_order(order: dict) -> dict:
@@ -593,13 +647,30 @@ async def create_shipment_for_order(order: dict) -> dict:
                 
                 logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order_number}, shipping_cost: {shipping_cost}, running_fiscal_total: {running_fiscal_total}")
         
+        # Validate and fix office ID if needed (for OFFICE delivery type)
+        delivery_type = speedy_data.get("delivery_type", "OFFICE")
+        office_id = speedy_data.get("office_id")
+        city_id = speedy_data.get("city_id")
+        
+        if delivery_type == "OFFICE" and office_id and city_id:
+            validated_office_id = await validate_and_fix_office_id(
+                city_id=city_id,
+                office_id=office_id,
+                office_name=speedy_data.get("office_name", "")
+            )
+            if validated_office_id and validated_office_id != office_id:
+                logger.info(f"Order {order_number}: Corrected office ID from {office_id} to {validated_office_id}")
+                office_id = validated_office_id
+            elif not validated_office_id:
+                logger.error(f"Order {order_number}: Could not validate office ID {office_id}, shipment will likely fail")
+        
         # Build recipient info
         recipient = RecipientInfo(
             name=shipping_address.get("full_name", ""),
             phone=shipping_address.get("phone", ""),
-            city_id=speedy_data.get("city_id"),
+            city_id=city_id,
             city_name=speedy_data.get("city_name", ""),
-            office_id=speedy_data.get("office_id"),
+            office_id=office_id,  # Use validated office_id
             address=speedy_data.get("address") or shipping_address.get("address", "")
         )
         

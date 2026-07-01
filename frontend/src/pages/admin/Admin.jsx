@@ -61,7 +61,8 @@ const Admin = () => {
 
   const fetchProductCount = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/products/admin/all?limit=200`, { credentials: 'include' });
+      // Fetch all visible products for discount codes dropdown
+      const res = await fetch(`${API_URL}/api/products/admin/all?limit=10000&visibility=visible`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setTotalProducts(data.total);

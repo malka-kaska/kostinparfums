@@ -5,21 +5,52 @@ import { formatDualPrice } from '../../../utils/currency';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const STATUS_OPTIONS = [
-  { id: 'pending', label: 'Pending', color: '#f59e0b' },
-  { id: 'confirmed', label: 'Confirmed', color: '#3b82f6' },
-  { id: 'processing', label: 'Processing', color: '#8b5cf6' },
-  { id: 'shipped', label: 'Shipped', color: '#06b6d4' },
-  { id: 'delivered', label: 'Delivered', color: '#10b981' },
-  { id: 'cancellation_requested', label: 'Cancel Requested', color: '#d97706' },
-  { id: 'cancelled', label: 'Cancelled', color: '#ef4444' },
+const STATUS_OPTIONS_BASE = [
+  { id: 'pending', color: '#f59e0b' },
+  { id: 'confirmed', color: '#3b82f6' },
+  { id: 'processing', color: '#8b5cf6' },
+  { id: 'shipped', color: '#06b6d4' },
+  { id: 'delivered', color: '#10b981' },
+  { id: 'cancellation_requested', color: '#d97706' },
+  { id: 'cancelled', color: '#ef4444' },
 ];
+
+const STATUS_LABELS = {
+  bg: {
+    'pending': 'Изчаква',
+    'confirmed': 'Потвърдена',
+    'processing': 'Обработва се',
+    'shipped': 'Изпратена',
+    'delivered': 'Доставена',
+    'cancellation_requested': 'Заявка за отказ',
+    'cancelled': 'Отказана'
+  },
+  en: {
+    'pending': 'Pending',
+    'confirmed': 'Confirmed',
+    'processing': 'Processing',
+    'shipped': 'Shipped',
+    'delivered': 'Delivered',
+    'cancellation_requested': 'Cancel Requested',
+    'cancelled': 'Cancelled'
+  }
+};
 
 const OrdersManager = ({ orders, onRefresh }) => {
   const { t, language } = useLanguage();
   const [cancelOrderId, setCancelOrderId] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+
+  // Get translated status options
+  const STATUS_OPTIONS = STATUS_OPTIONS_BASE.map(opt => ({
+    ...opt,
+    label: STATUS_LABELS[language]?.[opt.id] || STATUS_LABELS['en'][opt.id]
+  }));
+
+  const getStatusLabel = (statusId) => {
+    return STATUS_LABELS[language]?.[statusId] || STATUS_LABELS['en']?.[statusId] || statusId;
+  };
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {

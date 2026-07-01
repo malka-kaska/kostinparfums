@@ -33,6 +33,39 @@ const Profile = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
+  // Order status translations
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      bg: {
+        'pending': 'Изчаква',
+        'confirmed': 'Потвърдена',
+        'processing': 'Обработва се',
+        'shipped': 'Изпратена',
+        'delivered': 'Доставена',
+        'cancelled': 'Отказана',
+        'cancellation_requested': 'Заявка за отказ',
+        'refunded': 'Възстановена',
+        'paid': 'Платена',
+        'cod_pending': 'Наложен платеж'
+      },
+      en: {
+        'pending': 'Pending',
+        'confirmed': 'Confirmed',
+        'processing': 'Processing',
+        'shipped': 'Shipped',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled',
+        'cancellation_requested': 'Cancellation Requested',
+        'refunded': 'Refunded',
+        'paid': 'Paid',
+        'cod_pending': 'COD Pending'
+      }
+    };
+    const lang = language || 'bg';
+    const normalizedStatus = (status || 'pending').toLowerCase().replace(/ /g, '_');
+    return statusMap[lang]?.[normalizedStatus] || statusMap['en']?.[normalizedStatus] || status;
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
@@ -412,7 +445,7 @@ const Profile = () => {
                               {order.created_at ? new Date(order.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
                             </p>
                           </div>
-                          <span className={`order-status status-${(order.status || 'pending').toLowerCase()}`}>{order.status}</span>
+                          <span className={`order-status status-${(order.status || 'pending').toLowerCase().replace(/ /g, '-')}`}>{getStatusLabel(order.status)}</span>
                         </div>
                         <div className="order-items-list">
                           {(order.items || []).map((item, index) => (

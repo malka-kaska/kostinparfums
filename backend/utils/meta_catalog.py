@@ -144,6 +144,60 @@ def transform_product_for_meta(product: dict) -> dict:
     return meta_product
 
 
+def to_batch_feed_item(meta_product: dict) -> dict:
+    """
+    Convert the interactive-Products-API shape (from transform_product_for_meta,
+    used by POST /{catalog_id}/products) into the field schema required by the
+    /items_batch feed endpoint.
+
+    Meta validates /items_batch payloads against the *feed* field names, which
+    differ from the interactive endpoint:
+      - id            (NOT retailer_id)
+      - title         (NOT name)
+      - link          (NOT url)
+      - image_link    (NOT image_url)
+      - additional_image_link: comma-separated string (NOT additional_image_urls list)
+      - price / sale_price: "12.34 EUR" string (NOT integer minor units + separate currency)
+
+    Sending the interactive shape directly to /items_batch causes Meta to reject
+    the whole batch with "Can not find required field id" (no hard error surfaced
+    by status code, since Meta still returns HTTP 200), which silently drops
+    every product from Dynamic Ads sync.
+    """
+    currency = meta_product.get("currency", "EUR")
+
+    def money(cents: int) -> str:
+        return f"{cents / 100:.2f} {currency}"
+
+    feed_item = {
+        "id": meta_product["retailer_id"],
+        "title": meta_product.get("name", ""),
+        "description": meta_product.get("description", ""),
+        "availability": meta_product.get("availability", "in stock"),
+        "condition": meta_product.get("condition", "new"),
+        "price": money(meta_product.get("price", 0)),
+        "link": meta_product.get("url", ""),
+        "image_link": meta_product.get("image_url", ""),
+        "brand": meta_product.get("brand", "KOSTIN"),
+    }
+
+    if meta_product.get("sale_price") is not None:
+        feed_item["sale_price"] = money(meta_product["sale_price"])
+
+    if meta_product.get("additional_image_urls"):
+        feed_item["additional_image_link"] = ",".join(meta_product["additional_image_urls"])
+
+    # Fields that use the same name/shape in both APIs - pass through as-is
+    for key in (
+        "google_product_category", "gender", "size",
+        "custom_label_0", "custom_label_1", "custom_label_2", "custom_label_3",
+    ):
+        if key in meta_product:
+            feed_item[key] = meta_product[key]
+
+    return feed_item
+
+
 class MetaCatalogClient:
     """Client for Meta Catalog API operations"""
     
@@ -222,10 +276,12 @@ class MetaCatalogClient:
         """Delete a product from Meta Catalog by retailer_id"""
         try:
             # Use batch API with DELETE method
+            # NOTE: /items_batch validates the nested `data` object against feed
+            # field names, so the id must be under "id", not "retailer_id".
             requests = [{
                 "retailer_id": retailer_id,
                 "method": "DELETE",
-                "data": {"retailer_id": retailer_id}
+                "data": {"id": retailer_id}
             }]
             
             return await self.batch_sync(requests)
@@ -263,13 +319,21 @@ class MetaCatalogClient:
                 
                 result = response.json()
                 
-                if response.status_code == 200:
-                    handle = result.get("handles", [None])[0]
+                # IMPORTANT: Meta's /items_batch returns HTTP 200 even when the
+                # whole batch is rejected (e.g. "Can not find required field id").
+                # A 200 with no "handles" and/or hard errors in validation_status
+                # means nothing was actually queued - treat that as a failure
+                # instead of silently reporting success.
+                validation_status = result.get("validation_status", []) if isinstance(result, dict) else []
+                hard_errors = [e for v in validation_status for e in v.get("errors", [])]
+                handle = result.get("handles", [None])[0] if isinstance(result, dict) else None
+                
+                if response.status_code == 200 and handle and not hard_errors:
                     logger.info(f"Batch sync initiated, handle: {handle}")
                     return {"success": True, "handle": handle, "result": result}
                 else:
-                    logger.error(f"Batch sync failed: {result}")
-                    return {"success": False, "error": result}
+                    logger.error(f"Batch sync rejected by Meta (status={response.status_code}, handle={handle}): {result}")
+                    return {"success": False, "error": result, "handle": handle}
                     
         except Exception as e:
             logger.error(f"Error in batch sync: {e}")

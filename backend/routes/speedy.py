@@ -142,6 +142,8 @@ class CalculatePriceRequest(BaseModel):
     recipient_post_code: Optional[str] = None
     weight: float = 0.5  # Default weight in kg
     delivery_type: str = "OFFICE"  # OFFICE or ADDRESS
+    payment_method: str = "cod"  # cod or card - affects COD premium fee
+    order_subtotal: float = 0  # For COD calculation (product cost, not including shipping)
 
 
 @router.post("/calculate")
@@ -176,16 +178,29 @@ async def calculate_price(request: CalculatePriceRequest):
             }
         
         # Build calculation payload
+        # IMPORTANT: For COD orders, we must include COD service to get accurate price including codPremium fee
+        service_config = {
+            "serviceIds": [SERVICE_TO_OFFICE if request.delivery_type == "OFFICE" else SERVICE_TO_ADDRESS],
+            "autoAdjustPickupDate": True
+        }
+        
+        # If payment method is COD, add COD service to calculate the codPremium fee
+        # This fee is charged when Speedy collects cash on delivery
+        if request.payment_method == "cod" and request.order_subtotal > 0:
+            service_config["additionalServices"] = {
+                "cod": {
+                    "amount": request.order_subtotal,  # The amount Speedy will collect (product cost only)
+                    "processingType": "CASH"
+                }
+            }
+        
         calc_payload = {
             "sender": {
                 "siteId": sender_city_id,
                 "addressNote": SPEEDY_SENDER_ADDRESS
             },
             "recipient": recipient,
-            "service": {
-                "serviceIds": [SERVICE_TO_OFFICE if request.delivery_type == "OFFICE" else SERVICE_TO_ADDRESS],
-                "autoAdjustPickupDate": True
-            },
+            "service": service_config,
             "content": {
                 "parcelsCount": 1,
                 "totalWeight": request.weight,
@@ -193,7 +208,7 @@ async def calculate_price(request: CalculatePriceRequest):
                 "package": "BOX"
             },
             "payment": {
-                "courierServicePayer": "SENDER"  # Sender pays shipping
+                "courierServicePayer": "RECIPIENT"  # Customer pays Speedy directly
             }
         }
         
@@ -298,8 +313,12 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
         else:
             recipient["siteId"] = shipment_data.recipient.city_id
         
-        # Build shipment payload using clientId for sender (required by Speedy contract)
-        # Determine who pays for shipping: SENDER (us) if order >= 90 EUR, RECIPIENT if < 90 EUR
+        # Determine who pays for courier service:
+        # - Orders >= 90 EUR: Free shipping (SENDER pays Speedy)
+        # - Orders < 90 EUR: Customer pays (RECIPIENT pays Speedy directly)
+        # 
+        # IMPORTANT: COD amount contains ONLY product cost, NOT shipping!
+        # Speedy collects shipping fee directly from customer when courierServicePayer = RECIPIENT
         order_total = shipment_data.order_total or 0
         shipping_payer = "SENDER" if order_total >= FREE_SHIPPING_THRESHOLD else "RECIPIENT"
         
@@ -325,7 +344,7 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             "ref1": shipment_data.order_number  # Link to our order
         }
         
-        logger.info(f"Shipment for order {shipment_data.order_number}: total={order_total} EUR, shipping payer={shipping_payer}")
+        logger.info(f"Shipment for order {shipment_data.order_number}: order_total={order_total} EUR, courier payer={shipping_payer}")
         
         # Add COD with fiscal receipt (касов бон) if applicable
         # ВАЖНО: При наложен платеж ВИНАГИ трябва да има касов бон!
@@ -583,6 +602,10 @@ async def create_shipment_for_order(order: dict) -> dict:
     IMPORTANT: Speedy API requires that sum(amountWithVat) across all fiscalReceiptItems
     equals cod_amount EXACTLY. On discounted orders, we must proportionally distribute
     the discount across all items using a discount_factor.
+    
+    IMPORTANT: COD amount should be ONLY for products (subtotal - discount), NOT including shipping.
+    Speedy will collect the shipping fee directly from the customer (courierServicePayer = RECIPIENT).
+    For free shipping orders (>= €90), we pay Speedy (courierServicePayer = SENDER).
     """
     try:
         speedy_data = order.get("speedy_data", {})
@@ -594,48 +617,49 @@ async def create_shipment_for_order(order: dict) -> dict:
             return None
         
         # Determine COD amount (only for COD orders)
+        # COD = product cost only (subtotal - discount), WITHOUT shipping
+        # Speedy will collect shipping directly from customer
         cod_amount = None
         fiscal_items = None
-        shipping_cost = 0.0
+        order_total_for_shipping = 0.0  # Used to determine free shipping threshold
+        
         if order.get("payment_method") == "cod":
-            cod_amount = float(order.get("total", 0))
+            subtotal = float(order.get("subtotal", 0))
             shipping_cost = float(order.get("shipping_cost", 0))
-            discount_amount = float(order.get("discount_amount", 0))
+            discount_amount = float(order.get("discount_amount") or 0)
+            
+            # Calculate subtotal from items if not available
+            order_items = order.get("items", [])
+            if subtotal <= 0 and order_items:
+                subtotal = sum(
+                    float(item.get("price", 0)) * int(item.get("quantity", 1))
+                    for item in order_items
+                )
+            
+            # COD amount = products only (subtotal - discount), NO shipping
+            # Shipping is collected by Speedy directly from customer
+            cod_amount = subtotal - discount_amount
+            if cod_amount < 0:
+                cod_amount = 0
+            
+            # order_total determines free shipping (includes shipping for threshold check)
+            order_total_for_shipping = subtotal + shipping_cost - discount_amount
+            
+            logger.info(f"Order {order_number}: subtotal={subtotal}, discount={discount_amount}, shipping={shipping_cost}, cod_amount={cod_amount} (products only), order_total={order_total_for_shipping}")
             
             # Build fiscal receipt items from order items
             # Prices from items are WITH VAT (20%)
-            order_items = order.get("items", [])
+            # Fiscal items = only products (no shipping, since Speedy collects it separately)
             if order_items:
-                # Calculate the sum of undiscounted item prices (subtotal)
-                # Use order.subtotal if available, otherwise calculate from items
-                subtotal = float(order.get("subtotal", 0))
-                if subtotal <= 0:
-                    subtotal = sum(
-                        float(item.get("price", 0)) * int(item.get("quantity", 1))
-                        for item in order_items
-                    )
-                
-                # Calculate the discount factor to distribute the discount proportionally
-                # order.total = subtotal + shipping_cost - discount_amount
-                # So: cod_amount = subtotal + shipping_cost - discount_amount
-                # We need to scale item prices so that scaled_items + shipping = cod_amount
-                # 
-                # If shipping is paid by customer (in COD), it must be in fiscal receipt
-                # items_share = cod_amount - shipping_cost (what items should sum to after discount)
-                items_share = cod_amount - shipping_cost
-                
-                # discount_factor scales item prices from subtotal to items_share
+                # Calculate discount factor to distribute discount proportionally across items
                 if subtotal > 0:
-                    discount_factor = items_share / subtotal
+                    discount_factor = cod_amount / subtotal
                 else:
                     discount_factor = 1.0
                 
-                logger.info(f"Order {order_number}: cod_amount={cod_amount}, subtotal={subtotal}, shipping_cost={shipping_cost}, discount_amount={discount_amount}, items_share={items_share}, discount_factor={discount_factor:.4f}")
-                
                 fiscal_items = []
-                running_fiscal_total = 0.0
                 
-                for idx, item in enumerate(order_items):
+                for item in order_items:
                     item_name = f"{item.get('brand', '')} {item.get('name', 'Парфюм')}"[:50]
                     original_price = float(item.get("price", 0))
                     quantity = int(item.get("quantity", 1))
@@ -648,9 +672,8 @@ async def create_shipment_for_order(order: dict) -> dict:
                         quantity=quantity,
                         unit_price=discounted_unit_price  # Discounted price with VAT
                     ))
-                    running_fiscal_total += discounted_unit_price * quantity
                 
-                logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order_number}, shipping_cost: {shipping_cost}, running_fiscal_total: {running_fiscal_total}")
+                logger.info(f"Prepared {len(fiscal_items)} fiscal receipt items for order {order_number}, discount_factor={discount_factor:.4f}")
         
         # Validate and fix office ID if needed (for OFFICE delivery type)
         delivery_type = speedy_data.get("delivery_type", "OFFICE")

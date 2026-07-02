@@ -21,7 +21,9 @@ const SpeedyShipping = ({
   shippingPrice,
   setShippingPrice,
   address,
-  setAddress
+  setAddress,
+  paymentMethod = 'cod',  // Payment method affects COD premium fee
+  cartSubtotal = 0  // Product cost (before shipping, after discount) for COD calculation
 }) => {
   const { t, language } = useLanguage();
   
@@ -135,7 +137,9 @@ const SpeedyShipping = ({
       const payload = {
         recipient_city_id: selectedCity.id,
         weight: 0.5,
-        delivery_type: deliveryType
+        delivery_type: deliveryType,
+        payment_method: paymentMethod,  // COD or card - affects codPremium fee
+        order_subtotal: cartSubtotal  // Product cost for COD amount calculation
       };
       
       if (deliveryType === 'OFFICE' && selectedOffice) {
@@ -170,7 +174,7 @@ const SpeedyShipping = ({
     } finally {
       setLoadingPrice(false);
     }
-  }, [selectedCity, selectedOffice, address, deliveryType, setShippingPrice]);
+  }, [selectedCity, selectedOffice, address, deliveryType, paymentMethod, cartSubtotal, setShippingPrice]);
 
   // Trigger price calculation when dependencies change
   useEffect(() => {

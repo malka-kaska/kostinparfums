@@ -612,6 +612,8 @@ const Checkout = () => {
                 setShippingPrice={setShippingPrice}
                 address={deliveryAddress}
                 setAddress={setDeliveryAddress}
+                paymentMethod={paymentMethod}
+                cartSubtotal={getDiscountedTotal()}
               />
               
               {formErrors.city && <span className="form-error">{formErrors.city}</span>}

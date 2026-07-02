@@ -1127,7 +1127,9 @@ async def send_admin_new_order_notification(
     shipping_cost: float,
     items: list,
     shipping_address: dict,
-    tracking_number: str = None
+    tracking_number: str = None,
+    discount_code: str = None,
+    discount_amount: float = 0
 ):
     """Send email to admin when a new order is placed"""
     
@@ -1179,6 +1181,15 @@ async def send_admin_new_order_notification(
         </div>
         """
     
+    # Discount HTML for totals section
+    discount_html = ""
+    if discount_code and discount_amount > 0:
+        discount_html = f"""
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #22c55e;">
+                    <span>🏷️ Отстъпка ({discount_code}):</span>
+                    <span>-€{discount_amount:.2f}</span>
+                </div>"""
+    
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -1198,6 +1209,7 @@ async def send_admin_new_order_notification(
                     <span style="display: inline-block; background: {payment_color}; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px;">
                         {payment_label}
                     </span>
+                    {f'<span style="display: inline-block; background: #22c55e; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; margin-left: 8px;">🏷️ Код: {discount_code}</span>' if discount_code else ''}
                 </p>
             </div>
             
@@ -1245,7 +1257,7 @@ async def send_admin_new_order_notification(
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                     <span>Доставка:</span>
                     <span>€{shipping_cost:.2f}</span>
-                </div>
+                </div>{discount_html}
                 <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px;">
                     <span>ОБЩО:</span>
                     <span style="color: #c9a86c;">€{total:.2f}</span>

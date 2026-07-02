@@ -498,7 +498,9 @@ async def verify_order(token: str):
                 shipping_cost=order.get("shipping_cost", 0),
                 items=order.get("items", []),
                 shipping_address=order.get("shipping_address", {}),
-                tracking_number=tracking_number
+                tracking_number=tracking_number,
+                discount_code=order.get("discount_code"),
+                discount_amount=order.get("discount_amount", 0)
             )
         )
     except Exception as e:

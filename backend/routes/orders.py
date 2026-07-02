@@ -393,7 +393,9 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
             shipping_cost=shipping_cost,
             items=items_for_db,
             shipping_address=order_doc["shipping_address"],
-            tracking_number=tracking_number
+            tracking_number=tracking_number,
+            discount_code=discount_code,
+            discount_amount=discount_amount
         )
     except Exception as e:
         logger.error(f"Failed to send admin new order notification: {e}")

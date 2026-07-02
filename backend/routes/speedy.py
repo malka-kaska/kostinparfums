@@ -685,6 +685,26 @@ async def create_shipment_for_order(order: dict) -> dict:
         # Include order_total to determine who pays for shipping (>= 90 EUR = SENDER, < 90 EUR = RECIPIENT)
         order_total = float(order.get("total", 0))
         
+        # Build detailed contents string with product names and quantities
+        order_items = order.get("items", [])
+        if order_items:
+            contents_parts = []
+            for item in order_items:
+                brand = item.get("brand", "")
+                name = item.get("name", "Парфюм")
+                quantity = item.get("quantity", 1)
+                # Format: "Brand Name x2" or just "Brand Name" if qty is 1
+                item_desc = f"{brand} {name}".strip()
+                if quantity > 1:
+                    item_desc += f" x{quantity}"
+                contents_parts.append(item_desc)
+            # Join with semicolon, limit to ~100 chars for Speedy
+            contents_str = "; ".join(contents_parts)
+            if len(contents_str) > 100:
+                contents_str = contents_str[:97] + "..."
+        else:
+            contents_str = "Парфюми / Perfumes"
+        
         shipment_request = CreateShipmentRequest(
             order_number=order.get("order_number", ""),
             recipient=recipient,
@@ -693,7 +713,7 @@ async def create_shipment_for_order(order: dict) -> dict:
             cod_amount=cod_amount,
             order_total=order_total,
             shipping_cost=shipping_cost,  # For fiscal receipt
-            contents="Парфюми / Perfumes",
+            contents=contents_str,
             fiscal_receipt_items=fiscal_items
         )
         

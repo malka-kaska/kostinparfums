@@ -150,18 +150,6 @@ class CalculatePriceRequest(BaseModel):
 async def calculate_price(request: CalculatePriceRequest):
     """Calculate shipping price"""
     try:
-        # First, get sender city ID
-        sender_city_data = await speedy_request("location/site", {
-            "name": SPEEDY_SENDER_CITY,
-            "countryId": 100
-        })
-        
-        sender_sites = sender_city_data.get("sites", [])
-        if not sender_sites:
-            raise HTTPException(status_code=500, detail="Sender city not found")
-        
-        sender_city_id = sender_sites[0]["id"]
-        
         # Build recipient based on delivery type
         recipient = {
             "privatePerson": True,  # Customer is always private person
@@ -178,7 +166,8 @@ async def calculate_price(request: CalculatePriceRequest):
             }
         
         # Build calculation payload
-        # IMPORTANT: For COD orders, we must include COD service to get accurate price including codPremium fee
+        # IMPORTANT: Use clientId for sender to match actual shipment creation
+        # This ensures calculate price matches the real shipment price
         service_config = {
             "serviceIds": [SERVICE_TO_OFFICE if request.delivery_type == "OFFICE" else SERVICE_TO_ADDRESS],
             "autoAdjustPickupDate": True
@@ -196,8 +185,8 @@ async def calculate_price(request: CalculatePriceRequest):
         
         calc_payload = {
             "sender": {
-                "siteId": sender_city_id,
-                "addressNote": SPEEDY_SENDER_ADDRESS
+                "clientId": SPEEDY_CLIENT_ID,  # Use clientId to match actual shipment
+                "phone1": {"number": SPEEDY_SENDER_PHONE}
             },
             "recipient": recipient,
             "service": service_config,

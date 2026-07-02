@@ -242,6 +242,7 @@ class RecipientInfo(BaseModel):
     office_id: Optional[int] = None
     address: Optional[str] = None
     post_code: Optional[str] = None
+    email: Optional[str] = None  # Email on recipient for waybill
 
 
 class FiscalReceiptItem(BaseModel):
@@ -280,6 +281,10 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             "clientName": shipment_data.recipient.name,
             "privatePerson": True,
         }
+        
+        # Add email if provided
+        if shipment_data.recipient.email:
+            recipient["email"] = shipment_data.recipient.email
         
         if shipment_data.delivery_type == "OFFICE" and shipment_data.recipient.office_id:
             recipient["siteId"] = shipment_data.recipient.city_id
@@ -664,14 +669,16 @@ async def create_shipment_for_order(order: dict) -> dict:
             elif not validated_office_id:
                 logger.error(f"Order {order_number}: Could not validate office ID {office_id}, shipment will likely fail")
         
-        # Build recipient info
+        # Build recipient info - include email from order
+        recipient_email = order.get("user_email") or shipping_address.get("email", "")
         recipient = RecipientInfo(
             name=shipping_address.get("full_name", ""),
             phone=shipping_address.get("phone", ""),
             city_id=city_id,
             city_name=speedy_data.get("city_name", ""),
             office_id=office_id,  # Use validated office_id
-            address=speedy_data.get("address") or shipping_address.get("address", "")
+            address=speedy_data.get("address") or shipping_address.get("address", ""),
+            email=recipient_email
         )
         
         # Create shipment request with fiscal items for касов бон

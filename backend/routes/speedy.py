@@ -379,18 +379,9 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
                         "amountWithVat": amount_with_vat
                     })
                 
-                # Add shipping as separate fiscal item if COD includes shipping
-                if shipping_cost > 0:
-                    shipping_with_vat = round(shipping_cost, 2)
-                    shipping_without_vat = round(shipping_with_vat / 1.20, 2)
-                    fiscal_total += shipping_with_vat
-                    
-                    fiscal_items.append({
-                        "description": "Доставка / Shipping",
-                        "vatGroup": "Б",
-                        "amount": shipping_without_vat,
-                        "amountWithVat": shipping_with_vat
-                    })
+                # NOTE: We do NOT add shipping as a fiscal item anymore!
+                # COD amount = products only (without shipping)
+                # Speedy collects shipping fee directly from customer (courierServicePayer = RECIPIENT)
                 
                 # CRITICAL: Adjust for rounding errors to ensure fiscal_total == cod_amount exactly
                 # This handles cases where proportional distribution + rounding causes small mismatches

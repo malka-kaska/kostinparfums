@@ -309,7 +309,7 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
                             "tracking_url": tracking_url,
                             "shipment_id": shipment_result.get("shipment_id"),
                             "shipment_created_at": datetime.now(timezone.utc).isoformat(),
-                            "status": "processing"  # Update status to processing
+                            "status": "processing"  # Still processing until courier picks up
                         }
                     }
                 )
@@ -681,7 +681,7 @@ async def admin_create_shipment(order_id: str, request: Request):
                         "tracking_url": tracking_url,
                         "shipment_id": shipment_result.get("shipment_id"),
                         "shipment_created_at": datetime.now(timezone.utc).isoformat(),
-                        "status": "processing"
+                        "status": "processing"  # Still processing until courier picks up
                     }
                 }
             )

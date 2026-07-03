@@ -42,6 +42,7 @@ const OrdersManager = ({ orders, onRefresh }) => {
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
   const [creatingShipment, setCreatingShipment] = useState(null);
+  const [syncingStatuses, setSyncingStatuses] = useState(false);
 
   // Get translated status options
   const STATUS_OPTIONS = STATUS_OPTIONS_BASE.map(opt => ({
@@ -51,6 +52,32 @@ const OrdersManager = ({ orders, onRefresh }) => {
 
   const getStatusLabel = (statusId) => {
     return STATUS_LABELS[language]?.[statusId] || STATUS_LABELS['en']?.[statusId] || statusId;
+  };
+
+  const handleSyncStatuses = async () => {
+    setSyncingStatuses(true);
+    try {
+      const res = await fetch(`${API_URL}/api/speedy/sync-statuses`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const msg = language === 'bg' 
+          ? `✅ Проверени: ${data.checked}, Обновени: ${data.updated}`
+          : `✅ Checked: ${data.checked}, Updated: ${data.updated}`;
+        alert(msg);
+        if (data.updated > 0) {
+          onRefresh?.();
+        }
+      } else {
+        alert(`❌ ${data.detail || 'Error syncing statuses'}`);
+      }
+    } catch (err) {
+      alert(`❌ Error: ${err.message}`);
+    } finally {
+      setSyncingStatuses(false);
+    }
   };
 
   const handleCreateShipment = async (orderId) => {
@@ -120,6 +147,29 @@ const OrdersManager = ({ orders, onRefresh }) => {
 
   return (
     <div className="orders-management" data-testid="orders-management">
+      {/* Sync statuses button */}
+      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+        <button
+          onClick={handleSyncStatuses}
+          disabled={syncingStatuses}
+          style={{
+            padding: '8px 16px',
+            background: syncingStatuses ? '#9ca3af' : '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: syncingStatuses ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+          data-testid="sync-statuses-btn"
+        >
+          {syncingStatuses ? '⏳' : '🔄'} {language === 'bg' ? 'Синхронизирай статуси от Speedy' : 'Sync Speedy statuses'}
+        </button>
+      </div>
+      
       {orders.length === 0 ? (
         <div className="empty-orders">
           <Package size={48} strokeWidth={1} />

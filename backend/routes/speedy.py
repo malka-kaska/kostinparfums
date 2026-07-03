@@ -351,8 +351,6 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             fiscal_items = []
             fiscal_total = 0.0  # Track total to ensure it matches COD amount
             
-            shipping_cost = float(getattr(shipment_data, 'shipping_cost', 0) or 0)
-            
             if shipment_data.fiscal_receipt_items:
                 # Build fiscal items from the pre-calculated (already discounted) prices
                 for item in shipment_data.fiscal_receipt_items:
@@ -465,56 +463,6 @@ async def create_shipment(request: Request, shipment_data: CreateShipmentRequest
     
     # Use internal function for actual shipment creation
     return await _create_shipment_internal(shipment_data)
-
-
-# ============= Track Shipment =============
-
-@router.get("/track/{tracking_number}")
-async def track_shipment(tracking_number: str):
-    """Get shipment tracking information"""
-    try:
-        data = await speedy_request("track", {
-            "parcels": [tracking_number]
-        })
-        
-        parcels = data.get("parcels", [])
-        if not parcels:
-            return {"status": "NOT_FOUND", "events": []}
-        
-        parcel = parcels[0]
-        operations = parcel.get("operations", [])
-        
-        # Map Speedy status to user-friendly status
-        status_map = {
-            "PENDING_PICKUP": "Очаква вземане",
-            "PICKED_UP": "Взета от куриер",
-            "IN_TRANSIT": "В транзит",
-            "OUT_FOR_DELIVERY": "За доставка",
-            "DELIVERED": "Доставена",
-            "RETURNED": "Върната"
-        }
-        
-        last_status = operations[-1].get("operationType") if operations else "UNKNOWN"
-        
-        return {
-            "tracking_number": tracking_number,
-            "status": last_status,
-            "status_text": status_map.get(last_status, last_status),
-            "events": [
-                {
-                    "date": op.get("dateTime"),
-                    "type": op.get("operationType"),
-                    "description": op.get("operationDescription"),
-                    "location": op.get("siteName", "")
-                }
-                for op in operations
-            ]
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error tracking shipment: {e}")
-        raise HTTPException(status_code=500, detail="Failed to track shipment")
 
 
 # ============= Helper function to validate and fix office ID =============
@@ -793,4 +741,167 @@ async def create_shipment_for_order_id(request: Request, order_id: str):
         raise
     except Exception as e:
         logger.error(f"Error creating shipment for order {order_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# ============= Tracking Status Sync =============
+
+async def get_speedy_tracking_status(tracking_number: str) -> dict:
+    """
+    Get tracking status from Speedy API for a parcel.
+    Returns the latest operation/status.
+    """
+    try:
+        data = await speedy_request("track", {
+            "parcels": [{"id": tracking_number}]
+        })
+        
+        parcels = data.get("parcels", [])
+        if not parcels:
+            return {"status": "unknown", "operations": []}
+        
+        parcel = parcels[0]
+        operations = parcel.get("operations", [])
+        
+        # Determine status based on operations
+        # Common Speedy operation codes:
+        # - "Приета" (Accepted) = waybill created, waiting for pickup
+        # - "Изпратена от подател" = picked up from sender
+        # - "В движение" = in transit
+        # - "Пристигнала" = arrived at destination office
+        # - "Доставена" = delivered
+        # - "Върната" = returned
+        
+        status = "processing"  # Default
+        last_operation = None
+        
+        if operations:
+            last_operation = operations[-1]
+            op_desc = last_operation.get("operationDescription", "").lower()
+            
+            # Check for delivery
+            if "доставен" in op_desc or "delivered" in op_desc:
+                status = "delivered"
+            # Check for in transit / picked up
+            elif any(keyword in op_desc for keyword in ["изпратен", "движение", "транзит", "пристигнал", "приет в офис", "picked", "transit"]):
+                status = "shipped"
+            # Check for returned/cancelled
+            elif "върнат" in op_desc or "отказ" in op_desc or "return" in op_desc:
+                status = "cancelled"
+        
+        return {
+            "status": status,
+            "last_operation": last_operation,
+            "operations_count": len(operations)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting tracking status for {tracking_number}: {e}")
+        return {"status": "unknown", "error": str(e)}
+
+
+@router.post("/sync-statuses")
+async def sync_order_statuses(request: Request):
+    """
+    Sync order statuses from Speedy tracking API.
+    Updates orders that have tracking numbers but status is still 'processing'.
+    """
+    from motor.motor_asyncio import AsyncIOMotorClient
+    import os
+    
+    MONGO_URL = os.environ.get("MONGO_URL")
+    DB_NAME = os.environ.get("DB_NAME", "kostin_cosmetics")
+    
+    client = AsyncIOMotorClient(MONGO_URL)
+    db = client[DB_NAME]
+    
+    # Verify admin access
+    await verify_admin_speedy(request, db)
+    
+    # Find orders with tracking but still processing
+    orders = await db.orders.find({
+        "tracking_number": {"$exists": True, "$nin": [None, ""]},
+        "status": {"$in": ["processing", "confirmed", "pending"]}
+    }).to_list(100)
+    
+    updated_count = 0
+    results = []
+    
+    for order in orders:
+        tracking_number = order.get("tracking_number")
+        order_number = order.get("order_number")
+        
+        if not tracking_number:
+            continue
+        
+        # Get status from Speedy
+        tracking_result = await get_speedy_tracking_status(tracking_number)
+        new_status = tracking_result.get("status")
+        
+        if new_status and new_status != order.get("status") and new_status != "unknown":
+            # Update order status
+            await db.orders.update_one(
+                {"_id": order["_id"]},
+                {
+                    "$set": {
+                        "status": new_status,
+                        "status_updated_at": datetime.now(timezone.utc).isoformat(),
+                        "last_tracking_check": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+            )
+            updated_count += 1
+            results.append({
+                "order_number": order_number,
+                "tracking_number": tracking_number,
+                "old_status": order.get("status"),
+                "new_status": new_status
+            })
+            logger.info(f"Updated order {order_number} status: {order.get('status')} -> {new_status}")
+    
+    return {
+        "success": True,
+        "checked": len(orders),
+        "updated": updated_count,
+        "results": results
+    }
+
+
+@router.get("/track/{tracking_number}")
+async def track_shipment(tracking_number: str):
+    """Get tracking info for a shipment"""
+    try:
+        data = await speedy_request("track", {
+            "parcels": [{"id": tracking_number}]
+        })
+        
+        parcels = data.get("parcels", [])
+        if not parcels:
+            return {"tracking_number": tracking_number, "status": "not_found", "operations": []}
+        
+        parcel = parcels[0]
+        operations = parcel.get("operations", [])
+        
+        # Format operations for display
+        formatted_ops = []
+        for op in operations:
+            formatted_ops.append({
+                "date": op.get("dateTime"),
+                "description": op.get("operationDescription"),
+                "place": op.get("siteName") or op.get("officeName")
+            })
+        
+        # Determine current status
+        tracking_result = await get_speedy_tracking_status(tracking_number)
+        
+        return {
+            "tracking_number": tracking_number,
+            "status": tracking_result.get("status"),
+            "operations": formatted_ops,
+            "tracking_url": f"https://www.speedy.bg/bg/track-shipment?shipmentNumber={tracking_number}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error tracking shipment {tracking_number}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

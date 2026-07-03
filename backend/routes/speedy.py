@@ -765,30 +765,41 @@ async def get_speedy_tracking_status(tracking_number: str) -> dict:
         operations = parcel.get("operations", [])
         
         # Determine status based on operations
-        # Common Speedy operation codes:
-        # - "Приета" (Accepted) = waybill created, waiting for pickup
-        # - "Изпратена от подател" = picked up from sender
-        # - "В движение" = in transit
-        # - "Пристигнала" = arrived at destination office
+        # Speedy operation descriptions (Bulgarian):
+        # - "Получена информация за пратка" = waybill created, waiting for pickup
+        # - "Изпратена от подател" / "Приета в офис" = picked up from sender
+        # - "В движение" / "Товарене" = in transit
+        # - "Пристигнала" / "Разтоварване" = arrived at destination
         # - "Доставена" = delivered
-        # - "Върната" = returned
+        # - "Анулиране" / "Върната" = cancelled/returned
         
         status = "processing"  # Default
         last_operation = None
         
         if operations:
             last_operation = operations[-1]
-            op_desc = last_operation.get("operationDescription", "").lower()
+            # Use 'description' field, not 'operationDescription'
+            op_desc = (last_operation.get("description") or "").lower()
+            op_code = last_operation.get("operationCode", 0)
             
-            # Check for delivery
-            if "доставен" in op_desc or "delivered" in op_desc:
+            logger.info(f"Tracking {tracking_number}: last op = '{op_desc}' (code: {op_code})")
+            
+            # Check for delivered (operation codes 4, 15, 45 are delivery-related)
+            if "доставен" in op_desc or "delivered" in op_desc or op_code in [4, 15, 45]:
                 status = "delivered"
-            # Check for in transit / picked up
-            elif any(keyword in op_desc for keyword in ["изпратен", "движение", "транзит", "пристигнал", "приет в офис", "picked", "transit"]):
-                status = "shipped"
-            # Check for returned/cancelled
-            elif "върнат" in op_desc or "отказ" in op_desc or "return" in op_desc:
+            # Check for cancelled/returned
+            elif "анулир" in op_desc or "върнат" in op_desc or "отказ" in op_desc or op_code == 128:
                 status = "cancelled"
+            # Check for in transit / picked up (various operation codes)
+            elif any(keyword in op_desc for keyword in [
+                "изпратен", "движение", "транзит", "пристигнал", 
+                "приет в офис", "товарене", "разтовар", "курие",
+                "picked", "transit", "приета"
+            ]) or op_code in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17]:
+                status = "shipped"
+            # Still at "Получена информация" = processing
+            elif "получена информация" in op_desc or op_code == 148:
+                status = "processing"
         
         return {
             "status": status,
@@ -888,8 +899,9 @@ async def track_shipment(tracking_number: str):
         for op in operations:
             formatted_ops.append({
                 "date": op.get("dateTime"),
-                "description": op.get("operationDescription"),
-                "place": op.get("siteName") or op.get("officeName")
+                "description": op.get("description"),  # Correct field name
+                "code": op.get("operationCode"),
+                "place": op.get("place")
             })
         
         # Determine current status

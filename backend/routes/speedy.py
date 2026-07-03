@@ -790,12 +790,16 @@ async def get_speedy_tracking_status(tracking_number: str) -> dict:
             # Check for cancelled/returned
             elif "анулир" in op_desc or "върнат" in op_desc or "отказ" in op_desc or op_code == 128:
                 status = "cancelled"
-            # Check for in transit / picked up (various operation codes)
+            # Check for in transit / picked up
+            # Code 2 = Изпращане от офис (sent from office)
+            # Code 11 = Приемане от куриер (accepted by courier)
+            # Code 39 = Приемане от подател (picked up from sender)
+            # Codes 5-17 are generally transit-related
             elif any(keyword in op_desc for keyword in [
-                "изпратен", "движение", "транзит", "пристигнал", 
-                "приет в офис", "товарене", "разтовар", "курие",
-                "picked", "transit", "приета"
-            ]) or op_code in [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17]:
+                "изпратен", "изпращане", "движение", "транзит", "пристигнал", 
+                "приет в офис", "приемане", "товарене", "разтовар", "курие",
+                "picked", "transit", "приета", "подател"
+            ]) or op_code in [2, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 39]:
                 status = "shipped"
             # Still at "Получена информация" = processing
             elif "получена информация" in op_desc or op_code == 148:

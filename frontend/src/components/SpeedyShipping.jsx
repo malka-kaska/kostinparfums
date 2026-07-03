@@ -287,15 +287,21 @@ const SpeedyShipping = ({
             onChange={(e) => {
               setCitySearch(e.target.value);
               setSelectedCity(null);
+              setShowOfficeDropdown(false);  // Close office dropdown when typing in city
             }}
-            onFocus={() => cities.length > 0 && setShowCityDropdown(true)}
+            onFocus={() => {
+              if (cities.length > 0) {
+                setShowCityDropdown(true);
+                setShowOfficeDropdown(false);  // Close office dropdown
+              }
+            }}
             placeholder={language === 'bg' ? 'Въведете град...' : 'Enter city...'}
             className="speedy-search-input"
             data-testid="speedy-city-search"
           />
           {loadingCities && <Loader size={18} className="spinning search-loader" />}
           
-          {showCityDropdown && cities.length > 0 && (
+          {showCityDropdown && cities.length > 0 && !showOfficeDropdown && (
             <div className="speedy-dropdown">
               {cities.map(city => (
                 <div
@@ -331,8 +337,12 @@ const SpeedyShipping = ({
               onChange={(e) => {
                 setOfficeSearch(e.target.value);
                 setShowOfficeDropdown(true);
+                setShowCityDropdown(false);  // Close city dropdown
               }}
-              onFocus={() => setShowOfficeDropdown(true)}
+              onFocus={() => {
+                setShowOfficeDropdown(true);
+                setShowCityDropdown(false);  // Close city dropdown
+              }}
               placeholder={language === 'bg' ? 'Изберете офис...' : 'Select office...'}
               className="speedy-search-input"
               data-testid="speedy-office-search"

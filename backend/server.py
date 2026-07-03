@@ -626,3 +626,68 @@ async def seed_nav_collections(database):
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+
+# ============= Background Task: Auto-sync Speedy statuses =============
+async def auto_sync_speedy_statuses():
+    """
+    Background task that periodically syncs order statuses from Speedy API.
+    Runs every 10 minutes.
+    """
+    from routes.speedy import get_speedy_tracking_status
+    
+    while True:
+        try:
+            # Wait 10 minutes between checks
+            await asyncio.sleep(600)  # 600 seconds = 10 minutes
+            
+            logger.info("Starting auto-sync of Speedy statuses...")
+            
+            # Find orders with tracking but still processing
+            orders = await db.orders.find({
+                "tracking_number": {"$exists": True, "$nin": [None, ""]},
+                "status": {"$in": ["processing", "confirmed", "pending"]}
+            }).to_list(100)
+            
+            updated_count = 0
+            
+            for order in orders:
+                tracking_number = order.get("tracking_number")
+                if not tracking_number:
+                    continue
+                
+                try:
+                    # Get status from Speedy
+                    tracking_result = await get_speedy_tracking_status(tracking_number)
+                    new_status = tracking_result.get("status")
+                    
+                    if new_status and new_status != order.get("status") and new_status != "unknown":
+                        # Update order status
+                        await db.orders.update_one(
+                            {"_id": order["_id"]},
+                            {
+                                "$set": {
+                                    "status": new_status,
+                                    "status_updated_at": datetime.now(timezone.utc).isoformat(),
+                                    "last_tracking_check": datetime.now(timezone.utc).isoformat()
+                                }
+                            }
+                        )
+                        updated_count += 1
+                        logger.info(f"Auto-updated order {order.get('order_number')} status: {order.get('status')} -> {new_status}")
+                except Exception as e:
+                    logger.error(f"Error checking tracking for {tracking_number}: {e}")
+                    continue
+            
+            logger.info(f"Auto-sync complete: checked {len(orders)} orders, updated {updated_count}")
+            
+        except Exception as e:
+            logger.error(f"Error in auto-sync task: {e}")
+            await asyncio.sleep(60)  # Wait a minute before retrying on error
+
+
+@app.on_event("startup")
+async def start_background_tasks():
+    """Start background tasks on application startup"""
+    asyncio.create_task(auto_sync_speedy_statuses())
+    logger.info("Started Speedy status auto-sync background task (every 10 minutes)")

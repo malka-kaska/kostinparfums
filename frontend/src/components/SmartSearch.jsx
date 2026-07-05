@@ -4,6 +4,7 @@ import { Search, X, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { getMainImage, FALLBACK_IMAGE } from '../utils/imageUtils';
 import parseProductName from '../utils/parseProductName';
+import { pixelSearch } from '../utils/metaPixel';
 import './SmartSearch.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -157,6 +158,8 @@ const SmartSearch = ({ isOpen, onClose }) => {
       setShowDropdown(false);
       onClose();
     } else if (e.key === 'Enter' && query.trim()) {
+      // Track the search event
+      pixelSearch(query.trim());
       // Navigate to products page with search
       setShowDropdown(false);
       onClose();

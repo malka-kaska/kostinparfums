@@ -23,12 +23,13 @@ BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
 
 # Frontend URL for product links
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://kostinparfums.com")
-PDP_BASE_URL = "https://kostinparfums.com"
+PDP_BASE_URL = os.environ.get("META_PDP_BASE_URL", "https://kostinparfums.com")
 FREE_SHIPPING_THRESHOLD_EUR = 90.0
 
 MIN_IMAGE_SIZE_PX = 100
 RECOMMENDED_IMAGE_SIZE_PX = 500
 BACKGROUND_HINTS = ("white", "clean", "isolated", "transparent", "studio", "no-bg", "nobg")
+JPEG_SOF_MARKERS = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
 
 
 def get_appsecret_proof(token: str) -> str:
@@ -98,11 +99,13 @@ def transform_product_for_meta(product: dict) -> dict:
         "women": "female", 
         "unisex": "unisex"
     }
+
+    description = product.get("description_bg") or product.get("description") or product.get("name", "")
     
     meta_product = {
         "retailer_id": product_id,
         "name": product.get("name", "")[:150],  # Max 150 chars for name
-        "description": product.get("description_bg", product.get("description", product.get("name", "")))[:5000],  # Max 5000 chars
+        "description": description[:5000],  # Max 5000 chars
         "availability": availability,
         "condition": "new",
         "price": price_cents,  # Price in cents (integer)
@@ -213,11 +216,11 @@ def to_batch_feed_item(meta_product: dict) -> dict:
 
 def _parse_image_dimensions(image_bytes: bytes) -> Optional[Tuple[int, int]]:
     """Parse common image headers and return (width, height)."""
-    if len(image_bytes) < 24:
+    if len(image_bytes) < 10:
         return None
 
     # PNG
-    if image_bytes.startswith(b"\x89PNG\r\n\x1a\n") and image_bytes[12:16] == b"IHDR":
+    if len(image_bytes) >= 24 and image_bytes.startswith(b"\x89PNG\r\n\x1a\n") and image_bytes[12:16] == b"IHDR":
         width = int.from_bytes(image_bytes[16:20], "big")
         height = int.from_bytes(image_bytes[20:24], "big")
         return width, height
@@ -237,7 +240,7 @@ def _parse_image_dimensions(image_bytes: bytes) -> Optional[Tuple[int, int]]:
                 i += 1
                 continue
             marker = image_bytes[i + 1]
-            if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+            if marker in JPEG_SOF_MARKERS:
                 if i + 9 >= length:
                     return None
                 height = int.from_bytes(image_bytes[i + 5:i + 7], "big")
@@ -259,7 +262,11 @@ def _has_clean_background_hint(image_url: str) -> bool:
     return any(hint in lowered for hint in BACKGROUND_HINTS)
 
 
-async def validate_image_for_meta(image_url: str, timeout_seconds: float = 15.0) -> Dict[str, Any]:
+async def validate_image_for_meta(
+    image_url: str,
+    timeout_seconds: float = 15.0,
+    client: Optional[httpx.AsyncClient] = None,
+) -> Dict[str, Any]:
     """
     Validate image requirements for Meta feed:
     - hard minimum 100x100
@@ -281,36 +288,40 @@ async def validate_image_for_meta(image_url: str, timeout_seconds: float = 15.0)
         return report
 
     try:
-        async with httpx.AsyncClient(timeout=timeout_seconds, follow_redirects=True) as client:
+        if client is None:
+            async with httpx.AsyncClient(timeout=timeout_seconds, follow_redirects=True) as local_client:
+                response = await local_client.get(image_url)
+        else:
             response = await client.get(image_url)
-            if response.status_code != 200:
+
+        if response.status_code != 200:
+            report["is_valid"] = False
+            report["violations"].append(f"Снимката не е достъпна (HTTP {response.status_code}).")
+            return report
+
+        dimensions = _parse_image_dimensions(response.content)
+        if not dimensions:
+            report["warnings"].append("Неуспешно автоматично разпознаване на размерите на снимката.")
+        else:
+            width, height = dimensions
+            report["width"] = width
+            report["height"] = height
+            if width < MIN_IMAGE_SIZE_PX or height < MIN_IMAGE_SIZE_PX:
                 report["is_valid"] = False
-                report["violations"].append(f"Снимката не е достъпна (HTTP {response.status_code}).")
-                return report
-
-            dimensions = _parse_image_dimensions(response.content)
-            if not dimensions:
-                report["warnings"].append("Неуспешно автоматично разпознаване на размерите на снимката.")
-            else:
-                width, height = dimensions
-                report["width"] = width
-                report["height"] = height
-                if width < MIN_IMAGE_SIZE_PX or height < MIN_IMAGE_SIZE_PX:
-                    report["is_valid"] = False
-                    report["violations"].append(
-                        f"Снимката е под абсолютния минимум {MIN_IMAGE_SIZE_PX}x{MIN_IMAGE_SIZE_PX} px."
-                    )
-                elif width < RECOMMENDED_IMAGE_SIZE_PX or height < RECOMMENDED_IMAGE_SIZE_PX:
-                    report["warnings"].append(
-                        f"Препоръчителният минимум е {RECOMMENDED_IMAGE_SIZE_PX}x{RECOMMENDED_IMAGE_SIZE_PX} px."
-                    )
-
-            if not _has_clean_background_hint(image_url):
+                report["violations"].append(
+                    f"Снимката е под абсолютния минимум {MIN_IMAGE_SIZE_PX}x{MIN_IMAGE_SIZE_PX} px."
+                )
+            elif width < RECOMMENDED_IMAGE_SIZE_PX or height < RECOMMENDED_IMAGE_SIZE_PX:
                 report["warnings"].append(
-                    "Липсва автоматичен индикатор за чист фон в URL; нужна е визуална проверка."
+                    f"Препоръчителният минимум е {RECOMMENDED_IMAGE_SIZE_PX}x{RECOMMENDED_IMAGE_SIZE_PX} px."
                 )
 
-            return report
+        if not _has_clean_background_hint(image_url):
+            report["warnings"].append(
+                "Липсва автоматичен индикатор за чист фон в URL; нужна е визуална проверка."
+            )
+
+        return report
     except Exception as e:
         report["is_valid"] = False
         report["violations"].append(f"Грешка при проверка на снимка: {str(e)}")

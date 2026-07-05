@@ -77,6 +77,21 @@ def test_parse_image_dimensions_png():
     assert _parse_image_dimensions(png_header) == (500, 500)
 
 
+def test_parse_image_dimensions_gif():
+    gif_header = b"GIF89a" + b"\xf4\x01" + b"\xf4\x01" + b"\x80\x00\x00"
+    assert _parse_image_dimensions(gif_header) == (500, 500)
+
+
+def test_parse_image_dimensions_jpeg():
+    jpeg_bytes = (
+        b"\xff\xd8"  # SOI
+        b"\xff\xe0\x00\x10" + b"JFIF\x00" + b"\x00" * 9
+        + b"\xff\xc0\x00\x11\x08\x01\xf4\x01\xf4\x03\x01\x11\x00\x02\x11\x00\x03\x11\x00"
+        + b"\xff\xd9"
+    )
+    assert _parse_image_dimensions(jpeg_bytes) == (500, 500)
+
+
 def test_clean_background_hint_detection():
     assert _has_clean_background_hint("https://cdn.example.com/products/white-bg-image.jpg") is True
     assert _has_clean_background_hint("https://cdn.example.com/products/item-01.jpg") is False

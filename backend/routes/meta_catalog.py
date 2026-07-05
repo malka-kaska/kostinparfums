@@ -8,6 +8,8 @@ from typing import Optional
 from bson import ObjectId
 import logging
 from datetime import datetime, timezone
+import asyncio
+import httpx
 
 from utils.auth import get_current_user
 from utils.meta_catalog import (
@@ -22,6 +24,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/meta-catalog", tags=["meta-catalog"])
 
 ORDER_STATUSES_FOR_BESTSELLER = ["completed", "shipped", "delivered", "paid", "pending"]
+MAX_PRODUCTS_FOR_RANKING = 10000
 
 
 async def _build_bestseller_rank_map(db) -> dict:
@@ -33,7 +36,7 @@ async def _build_bestseller_rank_map(db) -> dict:
         {"$sort": {"total_sold": -1}},
     ]
     try:
-        sales_data = await db.orders.aggregate(pipeline).to_list(10000)
+        sales_data = await db.orders.aggregate(pipeline).to_list(MAX_PRODUCTS_FOR_RANKING)
     except Exception:
         return {}
     return {str(item["_id"]): idx + 1 for idx, item in enumerate(sales_data)}
@@ -192,6 +195,7 @@ async def generate_meta_feed(request: Request, validate_images: bool = False):
     rank_map = await _build_bestseller_rank_map(db)
     feed_items = []
     violations = []
+    image_checks = []
 
     for product in products:
         product["bestseller_rank"] = rank_map.get(product.get("_id"), "unranked")
@@ -208,10 +212,30 @@ async def generate_meta_feed(request: Request, validate_images: bool = False):
             })
 
         if validate_images:
-            image_report = await validate_image_for_meta(feed_item.get("image_link", ""))
+            image_checks.append((feed_item.get("id"), feed_item.get("image_link", "")))
+
+    if validate_images and image_checks:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as shared_client:
+            image_reports = await asyncio.gather(
+                *(validate_image_for_meta(image_url, client=shared_client) for _, image_url in image_checks),
+                return_exceptions=True,
+            )
+        for (product_id, image_url), image_report in zip(image_checks, image_reports):
+            if isinstance(image_report, Exception):
+                violations.append({
+                    "product_id": product_id,
+                    "type": "image_validation",
+                    "report": {
+                        "image_url": image_url,
+                        "is_valid": False,
+                        "violations": [f"Грешка при проверка на снимка: {str(image_report)}"],
+                        "warnings": [],
+                    },
+                })
+                continue
             if image_report.get("violations") or image_report.get("warnings"):
                 violations.append({
-                    "product_id": feed_item.get("id"),
+                    "product_id": product_id,
                     "type": "image_validation",
                     "report": image_report,
                 })

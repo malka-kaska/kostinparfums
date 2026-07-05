@@ -1,6 +1,8 @@
 # Финални карусел креативи — готово копи за Ads Manager
 
-Източници: `marketing/meta-ads-campaign.md`, `marketing/12-product-shortlist.md`, `marketing/creative-briefs-bg.md`, `marketing/today-launch-plan.md`
+Източници: `marketing/meta-ads-campaign.md`, `marketing/12-product-shortlist.md`, `marketing/creative-briefs-bg.md`
+
+Формат на визиите: всички снимкови директиви са зададени за кадър 4:5, защото това е най-четимият и стабилен формат за Feed карусели в Meta.
 
 ---
 

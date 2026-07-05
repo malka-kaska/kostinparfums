@@ -96,6 +96,7 @@ class CheckoutRequest(BaseModel):
     shipping_method: Optional[str] = None
     discount_code: Optional[str] = None
     discount_amount: Optional[float] = 0
+    utm_params: Optional[dict] = None  # UTM attribution params
 
 
 class CheckoutResponse(BaseModel):
@@ -226,6 +227,7 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest):
             "shipping_method": checkout_data.shipping_method,
             "discount_code": checkout_data.discount_code,
             "discount_amount": checkout_data.discount_amount or 0,
+            "utm_params": checkout_data.utm_params or None,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
@@ -329,8 +331,8 @@ async def stripe_webhook(request: Request):
                         import secrets
                         verification_token = secrets.token_urlsafe(32)
                         
-                        # Create order with pending_verification status
-                        order_result = await db.orders.insert_one({
+                        # Build order document
+                        order_doc = {
                             "user_id": transaction.get("user_id", ""),
                             "user_email": transaction.get("user_email", ""),
                             "user_name": transaction.get("user_name", ""),
@@ -350,7 +352,15 @@ async def stripe_webhook(request: Request):
                             "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
                             "created_at": datetime.now(timezone.utc).isoformat(),
                             "updated_at": datetime.now(timezone.utc).isoformat(),
-                        })
+                        }
+
+                        # Preserve UTM attribution from checkout session
+                        utm_params = transaction.get("utm_params")
+                        if utm_params:
+                            order_doc["utm_params"] = utm_params
+
+                        # Create order with pending_verification status
+                        order_result = await db.orders.insert_one(order_doc)
                         
                         order_id = str(order_result.inserted_id)
                         logger.info(f"Order created (pending verification) for session {webhook_response.session_id}")

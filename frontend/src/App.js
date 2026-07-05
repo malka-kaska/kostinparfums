@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
+import { captureUtm } from "./utils/utmTracker";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
@@ -33,6 +34,10 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { Toaster } from "./components/ui/sonner";
 
 function App() {
+  useEffect(() => {
+    captureUtm();
+  }, []);
+
   return (
     <div className="App">
       <BrowserRouter>

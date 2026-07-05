@@ -185,6 +185,47 @@
   font-weight: 500;
 }
 
+/* Trust Badges */
+.trust-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+}
+
+.trust-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.trust-badge-icon {
+  color: var(--accent-gold, #c9a86c);
+  flex-shrink: 0;
+}
+
+/* Delivery Estimate */
+.delivery-estimate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.delivery-estimate-icon {
+  color: var(--accent-gold, #c9a86c);
+  flex-shrink: 0;
+}
+
 /* Free Return Info Box */
 .free-return-info {
   display: flex;

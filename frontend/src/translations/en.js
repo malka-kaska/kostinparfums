@@ -111,6 +111,12 @@ export const en = {
   skuLabel: "SKU:",
   productNotFound: "Product not found",
   quickAdd: "QUICK ADD",
+  // Trust badges on product page
+  trustBadgeAuthentic: "100% authentic perfumes",
+  trustBadgeDelivery: "Fast delivery to Bulgaria & EU",
+  trustBadgeFreeShipping: "Free shipping over 90 EUR",
+  // Delivery estimate
+  deliveryEstimate: "Estimated delivery: 1–2 business days to Bulgaria · 3–5 days to EU",
 
   // Cart
   shoppingCart: "Shopping Cart",

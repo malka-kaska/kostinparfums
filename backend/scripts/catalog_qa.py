@@ -20,6 +20,25 @@ except ImportError:  # pragma: no cover
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_REPORT_PATH = ROOT_DIR / "marketing" / "catalog-qa-report.md"
 SHORTLIST_PATH = ROOT_DIR / "marketing" / "12-product-shortlist.md"
+ISSUE_WEIGHT = 10
+SHORTLIST_BONUS = 100
+CRITICAL_ISSUE_WEIGHT = 5
+PRIORITY_CRITICAL_THRESHOLD = 120
+PRIORITY_HIGH_THRESHOLD = 40
+ISSUE_MISSING_BG = "Липсва българско описание."
+ISSUE_ENGLISH_ONLY = "Има само английско описание (по аналогия с преводния поток)."
+ISSUE_MISSING_BRAND = "Липсва марка (brand)."
+ISSUE_MISSING_GTIN_MPN = "Липсват идентификатори GTIN/MPN."
+ISSUE_MISSING_CATEGORY = "Липсва категория."
+ISSUE_MISSING_EUR_PRICE = "Липсва валидна EUR цена."
+ISSUE_MISSING_IMAGE = "Липсва снимка."
+ISSUE_BROKEN_IMAGE = "Счупена снимка (URL не се зарежда)."
+CRITICAL_ISSUES = {
+    ISSUE_MISSING_BG,
+    ISSUE_ENGLISH_ONLY,
+    ISSUE_BROKEN_IMAGE,
+    ISSUE_MISSING_EUR_PRICE,
+}
 
 
 @dataclass
@@ -188,21 +207,24 @@ def image_size_from_bytes(content: bytes) -> Optional[Tuple[int, int]]:
         return width, height
 
     if content.startswith(b"\xff\xd8"):
+        JPEG_MARKER_PREFIX = 0xFF
+        MARKER_LENGTH_SIZE = 2
         idx = 2
         data_len = len(content)
         while idx + 9 < data_len:
-            if content[idx] != 0xFF:
+            if content[idx] != JPEG_MARKER_PREFIX:
                 idx += 1
                 continue
             marker = content[idx + 1]
             idx += 2
             if marker in (0xD8, 0xD9):
                 continue
-            if idx + 2 > data_len:
+            if idx + MARKER_LENGTH_SIZE > data_len:
                 break
-            seg_len = struct.unpack(">H", content[idx:idx + 2])[0]
+            seg_len = struct.unpack(">H", content[idx:idx + MARKER_LENGTH_SIZE])[0]
             if seg_len < 2 or idx + seg_len > data_len:
                 break
+            # JPEG SOF markers containing width/height metadata.
             if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
                 if idx + 7 <= data_len:
                     height, width = struct.unpack(">HH", content[idx + 3:idx + 7])
@@ -243,14 +265,14 @@ def check_images(product: Dict[str, Any], min_size: int) -> Optional[str]:
         width = mock_check.get("width")
         height = mock_check.get("height")
         if status == "broken":
-            return "Счупена снимка (URL не се зарежда)."
+            return ISSUE_BROKEN_IMAGE
         if status == "too_small":
             return f"Снимката е твърде малка ({width}x{height}, минимум {min_size}x{min_size})."
         return None
 
     urls = collect_image_urls(product)
     if not urls:
-        return "Липсва снимка."
+        return ISSUE_MISSING_IMAGE
 
     found_too_small = False
     for url in urls:
@@ -269,7 +291,7 @@ def check_images(product: Dict[str, Any], min_size: int) -> Optional[str]:
 
     if found_too_small:
         return f"Снимката е твърде малка (под {min_size}x{min_size})."
-    return "Счупена снимка (URL не се зарежда)."
+    return ISSUE_BROKEN_IMAGE
 
 
 def product_id_to_str(product: Dict[str, Any]) -> str:
@@ -287,28 +309,28 @@ def find_issues_for_product(
     description_bg = normalize_text(product.get("description_bg"))
 
     if not description_bg:
-        issues.append("Липсва българско описание.")
+        issues.append(ISSUE_MISSING_BG)
     elif len(description_bg) < min_bg_length:
         issues.append(f"Българското описание е твърде кратко ({len(description_bg)} символа, минимум {min_bg_length}).")
 
     if has_only_english_description(product):
-        issues.append("Има само английско описание (по аналогия с преводния поток).")
+        issues.append(ISSUE_ENGLISH_ONLY)
 
     brand = normalize_text(product.get("brand"))
     if not brand:
-        issues.append("Липсва марка (brand).")
+        issues.append(ISSUE_MISSING_BRAND)
 
     gtin = normalize_text(product.get("gtin") or product.get("ean") or product.get("barcode"))
     mpn = normalize_text(product.get("mpn"))
     if not gtin and not mpn:
-        issues.append("Липсват идентификатори GTIN/MPN.")
+        issues.append(ISSUE_MISSING_GTIN_MPN)
 
     category = normalize_text(product.get("category"))
     if not category:
-        issues.append("Липсва категория.")
+        issues.append(ISSUE_MISSING_CATEGORY)
 
     if not has_valid_eur_price(product):
-        issues.append("Липсва валидна EUR цена.")
+        issues.append(ISSUE_MISSING_EUR_PRICE)
 
     image_issue = check_images(product, min_size=min_image_size)
     if image_issue:
@@ -318,9 +340,8 @@ def find_issues_for_product(
         return None
 
     shortlist_flag = is_shortlist_product(product, shortlist)
-    score = len(issues) * 10 + (100 if shortlist_flag else 0)
-    critical_markers = ("Липсва българско описание", "само английско", "Счупена снимка", "Липсва валидна EUR цена")
-    score += sum(5 for issue in issues if any(marker in issue for marker in critical_markers))
+    score = len(issues) * ISSUE_WEIGHT + (SHORTLIST_BONUS if shortlist_flag else 0)
+    score += sum(CRITICAL_ISSUE_WEIGHT for issue in issues if issue in CRITICAL_ISSUES)
 
     return IssueRow(
         product_id=product_id_to_str(product),
@@ -345,33 +366,34 @@ async def load_products_from_db(limit: int) -> List[Dict[str, Any]]:
         raise RuntimeError("Липсва motor. Инсталирайте зависимостите за backend.") from exc
 
     client = AsyncIOMotorClient(mongo_url)
-    db = client[db_name]
-    query = {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]}
-    projection = {
-        "_id": 1,
-        "name": 1,
-        "brand": 1,
-        "description": 1,
-        "description_bg": 1,
-        "category": 1,
-        "price": 1,
-        "price_eur": 1,
-        "currency": 1,
-        "gtin": 1,
-        "ean": 1,
-        "barcode": 1,
-        "mpn": 1,
-        "image": 1,
-        "images": 1,
-        "is_active": 1,
-    }
+    try:
+        db = client[db_name]
+        query = {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]}
+        projection = {
+            "_id": 1,
+            "name": 1,
+            "brand": 1,
+            "description": 1,
+            "description_bg": 1,
+            "category": 1,
+            "price": 1,
+            "price_eur": 1,
+            "currency": 1,
+            "gtin": 1,
+            "ean": 1,
+            "barcode": 1,
+            "mpn": 1,
+            "image": 1,
+            "images": 1,
+            "is_active": 1,
+        }
 
-    cursor = db.products.find(query, projection=projection)
-    if limit > 0:
-        cursor = cursor.limit(limit)
-    products = await cursor.to_list(length=max(limit, 1) if limit > 0 else None)
-    client.close()
-    return products
+        cursor = db.products.find(query, projection=projection)
+        if limit > 0:
+            cursor = cursor.limit(limit)
+        return await cursor.to_list(length=limit if limit > 0 else None)
+    finally:
+        client.close()
 
 
 def build_report(
@@ -401,8 +423,14 @@ def build_report(
     shortlist_products_in_catalog = []
     for brand, product_name in shortlist:
         matched = None
+        compact_brand = compact(brand)
+        compact_product_name = compact(product_name)
         for product in products:
-            if compact(brand) in compact(normalize_text(product.get("brand"))) and compact(product_name) in compact(normalize_text(product.get("name"))):
+            product_brand = compact(normalize_text(product.get("brand")))
+            product_name_compact = compact(normalize_text(product.get("name")))
+            brand_matches = compact_brand in product_brand or product_brand in compact_brand
+            product_matches = compact_product_name in product_name_compact or product_name_compact in compact_product_name
+            if brand_matches and product_matches:
                 matched = product
                 break
         shortlist_products_in_catalog.append((brand, product_name, matched))
@@ -427,7 +455,11 @@ def build_report(
         lines.append("| Нисък | Не | Няма проблемни продукти | — | — |")
     else:
         for row in issue_rows_sorted:
-            priority_label = "Критичен" if row.priority_score >= 120 else ("Висок" if row.priority_score >= 40 else "Среден")
+            priority_label = (
+                "Критичен"
+                if row.priority_score >= PRIORITY_CRITICAL_THRESHOLD
+                else ("Висок" if row.priority_score >= PRIORITY_HIGH_THRESHOLD else "Среден")
+            )
             shortlist_label = "Да" if row.is_shortlist else "Не"
             product_label = f"{row.brand} {row.name}".strip()
             issues_text = "; ".join(row.issues)

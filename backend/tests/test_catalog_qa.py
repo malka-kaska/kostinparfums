@@ -1,14 +1,16 @@
 from datetime import datetime, timezone
+import importlib.util
 from pathlib import Path
-import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "catalog_qa.py"
+SPEC = importlib.util.spec_from_file_location("catalog_qa", MODULE_PATH)
+assert SPEC and SPEC.loader
+catalog_qa = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(catalog_qa)
 
-from scripts.catalog_qa import (
-    build_report,
-    find_issues_for_product,
-    parse_shortlist,
-)
+build_report = catalog_qa.build_report
+find_issues_for_product = catalog_qa.find_issues_for_product
+parse_shortlist = catalog_qa.parse_shortlist
 
 
 def test_parse_shortlist_has_12_entries():

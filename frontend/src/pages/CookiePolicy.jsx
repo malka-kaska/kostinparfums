@@ -77,6 +77,7 @@ const CookiePolicy = () => {
       contactEmail: 'contact@kostinparfums.com',
       
       relatedLinks: 'Свързани документи',
+      tableHeaders: { name: 'Име', purpose: 'Цел', duration: 'Срок' },
     },
     en: {
       title: 'COOKIE POLICY',
@@ -147,6 +148,7 @@ const CookiePolicy = () => {
       contactEmail: 'contact@kostinparfums.com',
       
       relatedLinks: 'Related Documents',
+      tableHeaders: { name: 'Name', purpose: 'Purpose', duration: 'Duration' },
     }
   };
 
@@ -190,9 +192,9 @@ const CookiePolicy = () => {
               <table className="cookie-table">
                 <thead>
                   <tr>
-                    <th>{language === 'bg' ? 'Име' : 'Name'}</th>
-                    <th>{language === 'bg' ? 'Цел' : 'Purpose'}</th>
-                    <th>{language === 'bg' ? 'Срок' : 'Duration'}</th>
+                    <th>{t.tableHeaders.name}</th>
+                    <th>{t.tableHeaders.purpose}</th>
+                    <th>{t.tableHeaders.duration}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -229,9 +231,9 @@ const CookiePolicy = () => {
                 <table className="cookie-table">
                   <thead>
                     <tr>
-                      <th>{language === 'bg' ? 'Име' : 'Name'}</th>
-                      <th>{language === 'bg' ? 'Цел' : 'Purpose'}</th>
-                      <th>{language === 'bg' ? 'Срок' : 'Duration'}</th>
+                      <th>{t.tableHeaders.name}</th>
+                      <th>{t.tableHeaders.purpose}</th>
+                      <th>{t.tableHeaders.duration}</th>
                     </tr>
                   </thead>
                   <tbody>

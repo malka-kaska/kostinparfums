@@ -19,7 +19,12 @@
  *   trackMetaEvent('track', 'Purchase', { value: 49.90, currency: 'EUR' });
  */
 
-const PIXEL_ID = process.env.REACT_APP_META_PIXEL_ID || '2118783192346725';
+const PIXEL_ID = process.env.REACT_APP_META_PIXEL_ID;
+
+if (!PIXEL_ID && process.env.NODE_ENV !== 'test') {
+  // eslint-disable-next-line no-console
+  console.warn('[metaPixel] REACT_APP_META_PIXEL_ID is not set. Meta Pixel will not be initialized.');
+}
 
 let _initialized = false;
 
@@ -33,6 +38,11 @@ export const isMetaPixelInitialized = () => _initialized;
  */
 export const initializeMetaPixel = () => {
   if (_initialized || typeof window === 'undefined') return;
+  if (!PIXEL_ID) {
+    // eslint-disable-next-line no-console
+    console.warn('[metaPixel] Cannot initialize: REACT_APP_META_PIXEL_ID is not set.');
+    return;
+  }
 
   // Inject the Meta Pixel bootstrap snippet
   /* eslint-disable */

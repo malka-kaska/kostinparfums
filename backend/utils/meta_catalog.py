@@ -9,7 +9,7 @@ import hmac
 import hashlib
 import httpx
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,12 @@ BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
 
 # Frontend URL for product links
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://kostinparfums.com")
+PDP_BASE_URL = "https://kostinparfums.com"
+FREE_SHIPPING_THRESHOLD_EUR = 90.0
+
+MIN_IMAGE_SIZE_PX = 100
+RECOMMENDED_IMAGE_SIZE_PX = 500
+BACKGROUND_HINTS = ("white", "clean", "isolated", "transparent", "studio", "no-bg", "nobg")
 
 
 def get_appsecret_proof(token: str) -> str:
@@ -76,8 +82,8 @@ def transform_product_for_meta(product: dict) -> dict:
     stock = product.get("stock", 100)
     availability = "in stock" if (is_active and is_visible and stock > 0) else "out of stock"
     
-    # Build product URL
-    product_url = f"{FRONTEND_URL}/product/{product_id}"
+    # Build product URL (exact PDP domain for catalog feed)
+    product_url = f"{PDP_BASE_URL}/product/{product_id}"
     
     # Get gender - handle both list and string formats
     # Schema stores gender as list: ["women"], ["men"], ["unisex"] or []
@@ -96,7 +102,7 @@ def transform_product_for_meta(product: dict) -> dict:
     meta_product = {
         "retailer_id": product_id,
         "name": product.get("name", "")[:150],  # Max 150 chars for name
-        "description": product.get("description", product.get("name", ""))[:5000],  # Max 5000 chars
+        "description": product.get("description_bg", product.get("description", product.get("name", "")))[:5000],  # Max 5000 chars
         "availability": availability,
         "condition": "new",
         "price": price_cents,  # Price in cents (integer)
@@ -132,14 +138,20 @@ def transform_product_for_meta(product: dict) -> dict:
         meta_product["size"] = f"{volume}ml"
     
     # Custom labels for filtering in Ads Manager
-    meta_product["custom_label_0"] = product.get("brand", "")  # Brand
-    meta_product["custom_label_1"] = gender  # Gender (string, not list)
-    meta_product["custom_label_2"] = "perfume"  # Category
+    meta_product["custom_label_0"] = product.get("category", "")  # Category
+    meta_product["custom_label_1"] = str(product.get("bestseller_rank", "unranked"))  # Bestseller rank
+    meta_product["custom_label_2"] = "yes" if price_eur >= FREE_SHIPPING_THRESHOLD_EUR else "no"  # Eligible for free shipping
     
     # Scent profiles as custom label (NOTE: field is "scent_profiles" plural!)
     scent_profiles = product.get("scent_profiles", [])
     if scent_profiles and isinstance(scent_profiles, list):
         meta_product["custom_label_3"] = ",".join(scent_profiles[:3])  # Top 3 scents
+
+    # Optional product identifiers (when available)
+    if product.get("gtin"):
+        meta_product["gtin"] = str(product.get("gtin"))
+    if product.get("mpn"):
+        meta_product["mpn"] = str(product.get("mpn"))
     
     return meta_product
 
@@ -191,11 +203,118 @@ def to_batch_feed_item(meta_product: dict) -> dict:
     for key in (
         "google_product_category", "gender", "size",
         "custom_label_0", "custom_label_1", "custom_label_2", "custom_label_3",
+        "gtin", "mpn",
     ):
         if key in meta_product:
             feed_item[key] = meta_product[key]
 
     return feed_item
+
+
+def _parse_image_dimensions(image_bytes: bytes) -> Optional[Tuple[int, int]]:
+    """Parse common image headers and return (width, height)."""
+    if len(image_bytes) < 24:
+        return None
+
+    # PNG
+    if image_bytes.startswith(b"\x89PNG\r\n\x1a\n") and image_bytes[12:16] == b"IHDR":
+        width = int.from_bytes(image_bytes[16:20], "big")
+        height = int.from_bytes(image_bytes[20:24], "big")
+        return width, height
+
+    # GIF
+    if image_bytes[:6] in (b"GIF87a", b"GIF89a"):
+        width = int.from_bytes(image_bytes[6:8], "little")
+        height = int.from_bytes(image_bytes[8:10], "little")
+        return width, height
+
+    # JPEG
+    if image_bytes[:2] == b"\xff\xd8":
+        i = 2
+        length = len(image_bytes)
+        while i < length - 9:
+            if image_bytes[i] != 0xFF:
+                i += 1
+                continue
+            marker = image_bytes[i + 1]
+            if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                if i + 9 >= length:
+                    return None
+                height = int.from_bytes(image_bytes[i + 5:i + 7], "big")
+                width = int.from_bytes(image_bytes[i + 7:i + 9], "big")
+                return width, height
+            if i + 4 >= length:
+                return None
+            seg_len = int.from_bytes(image_bytes[i + 2:i + 4], "big")
+            if seg_len < 2:
+                return None
+            i += 2 + seg_len
+
+    return None
+
+
+def _has_clean_background_hint(image_url: str) -> bool:
+    """Lightweight heuristic: check filename/URL hints for clean background images."""
+    lowered = (image_url or "").lower()
+    return any(hint in lowered for hint in BACKGROUND_HINTS)
+
+
+async def validate_image_for_meta(image_url: str, timeout_seconds: float = 15.0) -> Dict[str, Any]:
+    """
+    Validate image requirements for Meta feed:
+    - hard minimum 100x100
+    - recommended minimum 500x500
+    - basic clean background heuristic
+    """
+    report = {
+        "image_url": image_url,
+        "is_valid": True,
+        "width": None,
+        "height": None,
+        "violations": [],
+        "warnings": [],
+    }
+
+    if not image_url:
+        report["is_valid"] = False
+        report["violations"].append("Липсва основна снимка.")
+        return report
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout_seconds, follow_redirects=True) as client:
+            response = await client.get(image_url)
+            if response.status_code != 200:
+                report["is_valid"] = False
+                report["violations"].append(f"Снимката не е достъпна (HTTP {response.status_code}).")
+                return report
+
+            dimensions = _parse_image_dimensions(response.content)
+            if not dimensions:
+                report["warnings"].append("Неуспешно автоматично разпознаване на размерите на снимката.")
+            else:
+                width, height = dimensions
+                report["width"] = width
+                report["height"] = height
+                if width < MIN_IMAGE_SIZE_PX or height < MIN_IMAGE_SIZE_PX:
+                    report["is_valid"] = False
+                    report["violations"].append(
+                        f"Снимката е под абсолютния минимум {MIN_IMAGE_SIZE_PX}x{MIN_IMAGE_SIZE_PX} px."
+                    )
+                elif width < RECOMMENDED_IMAGE_SIZE_PX or height < RECOMMENDED_IMAGE_SIZE_PX:
+                    report["warnings"].append(
+                        f"Препоръчителният минимум е {RECOMMENDED_IMAGE_SIZE_PX}x{RECOMMENDED_IMAGE_SIZE_PX} px."
+                    )
+
+            if not _has_clean_background_hint(image_url):
+                report["warnings"].append(
+                    "Липсва автоматичен индикатор за чист фон в URL; нужна е визуална проверка."
+                )
+
+            return report
+    except Exception as e:
+        report["is_valid"] = False
+        report["violations"].append(f"Грешка при проверка на снимка: {str(e)}")
+        return report
 
 
 class MetaCatalogClient:

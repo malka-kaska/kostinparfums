@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Cookie, Shield, Settings } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { initializeMetaPixel } from '../utils/metaPixel';
 import './CookieBanner.css';
 
 const CookieBanner = () => {
@@ -75,6 +76,10 @@ const CookieBanner = () => {
     setPreferences(prefs);
     setIsVisible(false);
     setShowDetails(false);
+    // Initialize Meta Pixel only when marketing cookies are accepted (GDPR)
+    if (prefs.marketing) {
+      initializeMetaPixel();
+    }
   };
 
   const handleAcceptAll = () => {

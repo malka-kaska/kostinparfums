@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
@@ -30,11 +30,19 @@ import DubaiPerfumes from "./pages/DubaiPerfumes";
 import GuestCancelOrder from "./pages/GuestCancelOrder";
 import CookieBanner from "./components/CookieBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
+import FacebookDomainVerificationMeta from "./components/FacebookDomainVerificationMeta";
 import { Toaster } from "./components/ui/sonner";
+import { initFromStoredConsent } from "./utils/metaPixel";
 
 function App() {
+  // On every page load, check if the user has already given marketing consent
+  // and initialize Meta Pixel only when they have (GDPR requirement).
+  useEffect(() => {
+    initFromStoredConsent();
+  }, []);
   return (
     <div className="App">
+      <FacebookDomainVerificationMeta />
       <BrowserRouter>
         <ThemeProvider>
         <LanguageProvider>

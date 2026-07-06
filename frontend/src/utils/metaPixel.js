@@ -1,35 +1,114 @@
 /**
- * Centralized Meta Pixel + Conversions API (CAPI) event layer.
+ * Meta Pixel + Conversions API (CAPI) — consent-gated event layer.
  *
- * The Pixel base code (fbq) is loaded in public/index.html using the
- * REACT_APP_META_PIXEL_ID environment variable.
+ * GDPR: the Meta Pixel (fbevents.js) is loaded and fbq() is called ONLY
+ * after the visitor grants explicit consent for marketing cookies.
+ * The same gate applies to server-side CAPI forwarding — without consent
+ * no tracking data leaves the browser at all.
  *
- * Each event fires:
- *  1. Browser-side fbq() call (Meta Pixel)
- *  2. Server-side CAPI request via the backend /api/meta-capi/* endpoint
+ * Initialization (single source of truth):
+ *   - App.js boot:        initFromStoredConsent()  — respects saved consent
+ *   - CookieBanner:       initializeMetaPixel()    — when marketing is accepted
  *
- * Both calls share the same event_id so Meta can deduplicate them
- * and avoid double-counting in Events Manager.
+ * Events: each helper fires
+ *   1. Browser-side fbq() call (Meta Pixel)
+ *   2. Server-side CAPI request via the backend /api/meta-capi/* endpoint
+ * Both share the same event_id so Meta deduplicates them in Events Manager.
  *
  * Design goals:
- *  - Never break UX: every call is wrapped and no-ops if fbq is unavailable.
- *  - Stateless: event_id is generated fresh per call using crypto.randomUUID().
+ *  - Never break UX: every call is wrapped and no-ops without consent/fbq.
+ *  - Stateless events: event_id is generated per call via crypto.randomUUID().
  *  - No secrets in the browser: the CAPI token lives only in the backend.
  */
 
+const PIXEL_ID = process.env.REACT_APP_META_PIXEL_ID;
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+if (!PIXEL_ID && process.env.NODE_ENV !== 'test') {
+  // eslint-disable-next-line no-console
+  console.warn('[metaPixel] REACT_APP_META_PIXEL_ID is not set. Meta Pixel will not be initialized.');
+}
 
-/** Crash-safe fbq wrapper — analytics must never throw into the React tree. */
-const fbq = (...args) => {
-  if (typeof window === 'undefined' || typeof window.fbq !== 'function') return;
+let _initialized = false;
+
+/** Returns true only after the Pixel script has been loaded and fbq('init') called. */
+export const isMetaPixelInitialized = () => _initialized;
+
+/**
+ * Load fbevents.js and call fbq('init', PIXEL_ID) + fbq('track', 'PageView').
+ * Safe to call multiple times — subsequent calls are no-ops.
+ * Must be called only when marketing cookie consent has been granted.
+ */
+export const initializeMetaPixel = () => {
+  if (_initialized || typeof window === 'undefined') return;
+  if (!PIXEL_ID) {
+    // eslint-disable-next-line no-console
+    console.warn('[metaPixel] Cannot initialize: REACT_APP_META_PIXEL_ID is not set.');
+    return;
+  }
+
+  // Inject the Meta Pixel bootstrap snippet
+  /* eslint-disable */
+  (function (f, b, e, v, n, t, s) {
+    if (f.fbq) return;
+    n = f.fbq = function () {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    if (!f._fbq) f._fbq = n;
+    n.push = n;
+    n.loaded = true;
+    n.version = '2.0';
+    n.queue = [];
+    t = b.createElement(e);
+    t.async = true;
+    t.src = v;
+    s = b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t, s);
+  })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+  /* eslint-enable */
+
+  window.fbq('init', PIXEL_ID);
+  window.fbq('track', 'PageView');
+  _initialized = true;
+};
+
+/**
+ * Safe wrapper around window.fbq().
+ * Silently does nothing if the Pixel has not been initialized (no consent yet).
+ * A failed analytics call must never propagate into the React component tree.
+ */
+export const trackMetaEvent = (...args) => {
+  if (!_initialized || typeof window === 'undefined' || typeof window.fbq !== 'function') return;
   try {
     window.fbq(...args);
   } catch {
-    /* swallow */
+    /* swallow — analytics must never break UX */
   }
 };
+
+/**
+ * Called once on app boot (e.g. inside App.js useEffect).
+ * Reads the persisted cookie_consent value from localStorage and initializes
+ * the Pixel only when the visitor has already given marketing consent.
+ */
+export const initFromStoredConsent = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem('cookie_consent');
+    if (!raw) return;
+    const prefs = JSON.parse(raw);
+    if (prefs && prefs.marketing === true) {
+      initializeMetaPixel();
+    }
+  } catch {
+    /* invalid localStorage value — do nothing */
+  }
+};
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+/** Consent-gated fbq wrapper used by all event helpers below. */
+const fbq = (...args) => trackMetaEvent(...args);
 
 /** Generate a unique event ID for Pixel ↔ CAPI deduplication. */
 const newEventId = () => {
@@ -42,10 +121,11 @@ const newEventId = () => {
 
 /**
  * Forward the event to the backend CAPI endpoint.
+ * GDPR: no-ops until marketing consent has been granted (_initialized).
  * Failures are silently swallowed so the UX is never affected.
  */
 const sendCapi = async (eventName, payload) => {
-  if (!API_URL) return;
+  if (!_initialized || !API_URL) return;
   try {
     await fetch(`${API_URL}/api/meta-capi/event`, {
       method: 'POST',
@@ -223,6 +303,10 @@ export const pixelDiscountApplied = ({ code, discountAmount, cartTotal }) => {
 };
 
 const metaPixel = {
+  isMetaPixelInitialized,
+  initializeMetaPixel,
+  trackMetaEvent,
+  initFromStoredConsent,
   pixelViewContent,
   pixelSearch,
   pixelAddToWishlist,

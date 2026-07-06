@@ -1,0 +1,348 @@
+{
+  "_readme": "KOSTIN Parfums — Meta Marketing API payload-и за трите основни аудитории. Заменете placeholder стойностите ({{...}}) с реалните си ID-та преди употреба. API версия: v21.0.",
+  "_usage": {
+    "targeting_search": "GET https://graph.facebook.com/v21.0/search?type=adinterest&q=<term>&locale=en_US&access_token=<TOKEN>",
+    "create_lookalike": "POST https://graph.facebook.com/v21.0/act_{{AD_ACCOUNT_ID}}/customaudiences",
+    "create_adset": "POST https://graph.facebook.com/v21.0/act_{{AD_ACCOUNT_ID}}/adsets",
+    "note_stack_rule": "Не смесвай стековете — всеки ad set съдържа само един от трите таргетинг обекта по-долу."
+  },
+
+  "shared": {
+    "geo_locations": {
+      "countries": ["BG", "RO", "GR", "CY", "HR", "RS"],
+      "_comment": "България, Румъния, Гърция, Кипър, Хърватия, Сърбия"
+    },
+    "attribution_spec": [
+      { "event_type": "CLICK_THROUGH", "window_days": 7 },
+      { "event_type": "VIEW_THROUGH",  "window_days": 1 }
+    ],
+    "publisher_platforms": ["facebook", "instagram", "audience_network", "messenger"],
+    "optimization_goal": "OFFSITE_CONVERSIONS",
+    "billing_event": "IMPRESSIONS",
+    "pixel_id": "{{META_PIXEL_ID}}",
+    "custom_event_type": "PURCHASE"
+  },
+
+  "custom_audiences": {
+    "_comment": "Тези аудитории трябва да са създадени предварително и техните ID-та да заменят placeholder-ите.",
+    "buyers_180d": {
+      "id": "{{BUYERS_180D_CA_ID}}",
+      "name": "Купувачи — последните 180 дни",
+      "description": "Потребители, задействали Purchase Pixel event в последните 180 дни",
+      "suggested_creation": {
+        "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/customaudiences",
+        "payload": {
+          "name": "Купувачи — последните 180 дни",
+          "subtype": "WEBSITE",
+          "retention_days": 180,
+          "rule": {
+            "_comment_retention": "retention_seconds = 15552000 = 180 дни × 24 ч × 3600 с",
+            "inclusions": {
+              "operator": "or",
+              "rules": [
+                {
+                  "event_sources": [{ "id": "{{META_PIXEL_ID}}", "type": "pixel" }],
+                  "retention_seconds": 15552000,
+                  "filter": {
+                    "operator": "and",
+                    "filters": [
+                      { "field": "event", "operator": "=", "value": "Purchase" }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "lookalike_audiences": {
+    "_comment": "Seed: Купувачи — последните 180 дни. Размер: 1%. Създай отделен LAL за всяка страна и един комбиниран EU.",
+    "lal_buyers_1pct_BG": {
+      "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/customaudiences",
+      "payload": {
+        "name": "LAL — Купувачи 180д — 1% BG",
+        "subtype": "LOOKALIKE",
+        "lookalike_spec": {
+          "ratio": 0.01,
+          "country": "BG",
+          "origin": [
+            { "id": "{{BUYERS_180D_CA_ID}}", "type": "CUSTOM_AUDIENCE" }
+          ]
+        }
+      }
+    },
+    "lal_buyers_1pct_RO": {
+      "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/customaudiences",
+      "payload": {
+        "name": "LAL — Купувачи 180д — 1% RO",
+        "subtype": "LOOKALIKE",
+        "lookalike_spec": {
+          "ratio": 0.01,
+          "country": "RO",
+          "origin": [
+            { "id": "{{BUYERS_180D_CA_ID}}", "type": "CUSTOM_AUDIENCE" }
+          ]
+        }
+      }
+    },
+    "lal_buyers_1pct_GR": {
+      "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/customaudiences",
+      "payload": {
+        "name": "LAL — Купувачи 180д — 1% GR",
+        "subtype": "LOOKALIKE",
+        "lookalike_spec": {
+          "ratio": 0.01,
+          "country": "GR",
+          "origin": [
+            { "id": "{{BUYERS_180D_CA_ID}}", "type": "CUSTOM_AUDIENCE" }
+          ]
+        }
+      }
+    },
+    "lal_buyers_1pct_EU_combined": {
+      "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/customaudiences",
+      "payload": {
+        "name": "LAL — Купувачи 180д — 1% EU (BG+RO+GR+CY+HR+RS)",
+        "subtype": "LOOKALIKE",
+        "lookalike_spec": {
+          "ratio": 0.01,
+          "target_countries": ["BG", "RO", "GR", "CY", "HR", "RS"],
+          "origin": [
+            { "id": "{{BUYERS_180D_CA_ID}}", "type": "CUSTOM_AUDIENCE" }
+          ]
+        }
+      }
+    }
+  },
+
+  "ad_sets": {
+    "_comment": "Три отделни ad set-а — по един за всяка аудитория. Всеки съдържа само своя стек.",
+
+    "audience_1_entry_luxury": {
+      "_name": "Entry Luxury — Cold Prospecting",
+      "_description": "Широко входно ниво: парфюми, одеколон, луксозни стоки, козметика. OR логика вътре в стека.",
+      "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/adsets",
+      "payload": {
+        "name": "KOSTIN | Entry Luxury | Cold | {{DATE}}",
+        "campaign_id": "{{CAMPAIGN_ID_COLD_PROSPECTING}}",
+        "status": "PAUSED",
+        "optimization_goal": "OFFSITE_CONVERSIONS",
+        "billing_event": "IMPRESSIONS",
+        "bid_strategy": "LOWEST_COST_WITH_BID_CAP",
+        "bid_amount": 3200,
+        "daily_budget": 4000,
+        "promoted_object": {
+          "pixel_id": "{{META_PIXEL_ID}}",
+          "custom_event_type": "PURCHASE"
+        },
+        "targeting": {
+          "geo_locations": {
+            "countries": ["BG", "RO", "GR", "CY", "HR", "RS"]
+          },
+          "age_min": 22,
+          "age_max": 55,
+          "genders": [1, 2],
+          "flexible_spec": [
+            {
+              "_logic": "OR — поне един от тези интереси трябва да съвпада",
+              "interests": [
+                { "id": "{{ID_PERFUME}}",        "name": "Perfume" },
+                { "id": "{{ID_COLOGNE}}",         "name": "Cologne" },
+                { "id": "{{ID_LUXURY_GOODS}}",    "name": "Luxury goods" },
+                { "id": "{{ID_COSMETICS}}",       "name": "Cosmetics" },
+                { "id": "{{ID_SKIN_CARE}}",       "name": "Skin care" },
+                { "id": "{{ID_BEAUTY}}",          "name": "Beauty (cosmetics)" },
+                { "id": "{{ID_FRAGRANCE}}",       "name": "Fragrance" },
+                { "id": "{{ID_ONLINE_SHOPPING}}", "name": "Online shopping" }
+              ]
+            }
+          ],
+          "exclusions": {
+            "_comment": "Изключване на съществуващи купувачи от студените сетове",
+            "custom_audiences": [
+              { "id": "{{BUYERS_180D_CA_ID}}" }
+            ]
+          },
+          "publisher_platforms": ["facebook", "instagram", "audience_network", "messenger"],
+          "attribution_spec": [
+            { "event_type": "CLICK_THROUGH", "window_days": 7 },
+            { "event_type": "VIEW_THROUGH",  "window_days": 1 }
+          ]
+        }
+      },
+      "lookalike_variant": {
+        "_description": "Вариант с Lookalike вместо interest стек — използва се паралелно в отделен ad set",
+        "targeting_override": {
+          "custom_audiences": [
+            { "id": "{{LAL_BUYERS_1PCT_BG_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_RO_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_GR_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_EU_ID}}" }
+          ],
+          "exclusions": {
+            "custom_audiences": [
+              { "id": "{{BUYERS_180D_CA_ID}}" }
+            ]
+          }
+        }
+      }
+    },
+
+    "audience_2_aspirational_men": {
+      "_name": "Aspirational Men — Cold Prospecting",
+      "_description": "Мъже с интерес към мъжка мода, дизайнерски марки, премиум аксесоари и грижа за мъжа. OR логика вътре в стека.",
+      "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/adsets",
+      "payload": {
+        "name": "KOSTIN | Aspirational Men | Cold | {{DATE}}",
+        "campaign_id": "{{CAMPAIGN_ID_COLD_PROSPECTING}}",
+        "status": "PAUSED",
+        "optimization_goal": "OFFSITE_CONVERSIONS",
+        "billing_event": "IMPRESSIONS",
+        "bid_strategy": "LOWEST_COST_WITH_BID_CAP",
+        "bid_amount": 2800,
+        "daily_budget": 3500,
+        "promoted_object": {
+          "pixel_id": "{{META_PIXEL_ID}}",
+          "custom_event_type": "PURCHASE"
+        },
+        "targeting": {
+          "geo_locations": {
+            "countries": ["BG", "RO", "GR", "CY", "HR", "RS"]
+          },
+          "age_min": 23,
+          "age_max": 45,
+          "genders": [1],
+          "flexible_spec": [
+            {
+              "_logic": "OR — поне един от тези интереси трябва да съвпада",
+              "interests": [
+                { "id": "{{ID_MENS_CLOTHING}}",   "name": "Men's clothing" },
+                { "id": "{{ID_MENS_FASHION}}",    "name": "Men's fashion" },
+                { "id": "{{ID_FASHION_ACC}}",     "name": "Fashion accessories" },
+                { "id": "{{ID_LUXURY_WATCHES}}",  "name": "Luxury watches" },
+                { "id": "{{ID_MENS_HEALTH}}",     "name": "Men's health" },
+                { "id": "{{ID_SHAVING}}",         "name": "Shaving" },
+                { "id": "{{ID_AFTERSHAVE}}",      "name": "Aftershave" },
+                { "id": "{{ID_HUGO_BOSS}}",       "name": "Hugo Boss" },
+                { "id": "{{ID_GIORGIO_ARMANI}}",  "name": "Giorgio Armani" },
+                { "id": "{{ID_DIESEL}}",          "name": "Diesel (brand)" },
+                { "id": "{{ID_TOM_FORD}}",        "name": "Tom Ford" },
+                { "id": "{{ID_CHRISTIAN_DIOR}}",  "name": "Christian Dior" }
+              ]
+            }
+          ],
+          "exclusions": {
+            "_comment": "Изключване на съществуващи купувачи от студените сетове",
+            "custom_audiences": [
+              { "id": "{{BUYERS_180D_CA_ID}}" }
+            ]
+          },
+          "publisher_platforms": ["facebook", "instagram", "audience_network", "messenger"],
+          "attribution_spec": [
+            { "event_type": "CLICK_THROUGH", "window_days": 7 },
+            { "event_type": "VIEW_THROUGH",  "window_days": 1 }
+          ]
+        }
+      },
+      "lookalike_variant": {
+        "_description": "Вариант с Lookalike — мъже купувачи 180 дни, 1% BG/EU",
+        "targeting_override": {
+          "genders": [1],
+          "age_min": 23,
+          "age_max": 45,
+          "custom_audiences": [
+            { "id": "{{LAL_BUYERS_1PCT_BG_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_RO_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_GR_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_EU_ID}}" }
+          ],
+          "exclusions": {
+            "custom_audiences": [
+              { "id": "{{BUYERS_180D_CA_ID}}" }
+            ]
+          }
+        }
+      }
+    },
+
+    "audience_3_dubai_niche_explorer": {
+      "_name": "Dubai / Niche Explorer — Cold Prospecting",
+      "_description": "Ценители на нишови парфюми, уд/арабски аромати и потребители с интерес към Дубай и пътуване до ОАЕ. OR логика вътре в стека.",
+      "endpoint": "POST /act_{{AD_ACCOUNT_ID}}/adsets",
+      "payload": {
+        "name": "KOSTIN | Dubai Niche | Cold | {{DATE}}",
+        "campaign_id": "{{CAMPAIGN_ID_COLD_PROSPECTING}}",
+        "status": "PAUSED",
+        "optimization_goal": "OFFSITE_CONVERSIONS",
+        "billing_event": "IMPRESSIONS",
+        "bid_strategy": "LOWEST_COST_WITH_BID_CAP",
+        "bid_amount": 3500,
+        "daily_budget": 3500,
+        "promoted_object": {
+          "pixel_id": "{{META_PIXEL_ID}}",
+          "custom_event_type": "PURCHASE"
+        },
+        "targeting": {
+          "geo_locations": {
+            "countries": ["BG", "RO", "GR", "CY", "HR", "RS"]
+          },
+          "age_min": 25,
+          "age_max": 55,
+          "genders": [1, 2],
+          "flexible_spec": [
+            {
+              "_logic": "OR — поне един от тези интереси трябва да съвпада",
+              "interests": [
+                { "id": "{{ID_NICHE_PERFUMERY}}",     "name": "Niche perfumery" },
+                { "id": "{{ID_OUD}}",                 "name": "Oud" },
+                { "id": "{{ID_ARABIAN_PERFUME}}",     "name": "Arabian perfume" },
+                { "id": "{{ID_ORIENTAL_PERFUME}}",    "name": "Oriental perfume" },
+                { "id": "{{ID_DUBAI}}",               "name": "Dubai" },
+                { "id": "{{ID_UAE}}",                 "name": "United Arab Emirates" },
+                { "id": "{{ID_TRAVEL_UAE}}",          "name": "Travel to United Arab Emirates" },
+                { "id": "{{ID_MIDDLE_EAST_CULTURE}}", "name": "Middle Eastern culture" },
+                { "id": "{{ID_AJMAL}}",               "name": "Ajmal (brand)" },
+                { "id": "{{ID_RASASI}}",              "name": "Rasasi (brand)" },
+                { "id": "{{ID_MFK}}",                 "name": "Maison Francis Kurkdjian" },
+                { "id": "{{ID_XERJOFF}}",             "name": "Xerjoff" }
+              ]
+            }
+          ],
+          "exclusions": {
+            "_comment": "Изключване на съществуващи купувачи от студените сетове",
+            "custom_audiences": [
+              { "id": "{{BUYERS_180D_CA_ID}}" }
+            ]
+          },
+          "publisher_platforms": ["facebook", "instagram", "audience_network", "messenger"],
+          "attribution_spec": [
+            { "event_type": "CLICK_THROUGH", "window_days": 7 },
+            { "event_type": "VIEW_THROUGH",  "window_days": 1 }
+          ]
+        }
+      },
+      "lookalike_variant": {
+        "_description": "Вариант с Lookalike — купувачи Dubai/Niche 180 дни, 1% BG/EU",
+        "targeting_override": {
+          "genders": [1, 2],
+          "age_min": 25,
+          "age_max": 55,
+          "custom_audiences": [
+            { "id": "{{LAL_BUYERS_1PCT_BG_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_RO_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_GR_ID}}" },
+            { "id": "{{LAL_BUYERS_1PCT_EU_ID}}" }
+          ],
+          "exclusions": {
+            "custom_audiences": [
+              { "id": "{{BUYERS_180D_CA_ID}}" }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

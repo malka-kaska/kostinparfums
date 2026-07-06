@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X, Grid2X2, LayoutList, ChevronDown, ChevronUp } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
+import { pixelSearch, pixelViewCategory } from '../utils/metaPixel';
 import './Products.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -199,6 +200,7 @@ const Products = () => {
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
+    pixelViewCategory(category);
     if (category !== 'all') {
       setSearchParams({ category });
     } else {

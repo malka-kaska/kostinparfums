@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader, Package } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { trackPurchase } from '../utils/analytics';
+import { pixelPurchase } from '../utils/metaPixel';
 import './CheckoutSuccess.css';
 
 // Cart is persisted under 'kostin_cart' (see AuthContext CART_STORAGE_KEY).
@@ -67,14 +68,8 @@ const CheckoutSuccess = () => {
             shippingCost = Number(pending.shipping_cost) || 0;
           } catch { /* ignore malformed pending data */ }
 
-          // Meta Pixel: Track Purchase event
-          if (typeof window !== 'undefined' && window.fbq && orderValue > 0) {
-            window.fbq('track', 'Purchase', {
-              value: orderValue,
-              currency: 'EUR',
-              content_type: 'product'
-            });
-          }
+          // Meta Pixel + CAPI: Track Purchase event with deduplication via event_id
+          pixelPurchase({ orderId: sessionId, value: orderValue, cartItems: [] });
 
           // GA4: Track purchase event for card (Stripe) payment.
           // transaction_id = Stripe session id guards against duplicate counting on reload.

@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { formatDualPrice } from '../utils/currency';
 import { trackBeginCheckout, trackPurchase } from '../utils/analytics';
 import { getStoredUtm } from '../utils/utmTracker';
+import { pixelInitiateCheckout, pixelDiscountApplied } from '../utils/metaPixel';
 import SpeedyShipping from '../components/SpeedyShipping';
 import '../components/SpeedyShipping.css';
 import './Checkout.css';
@@ -199,24 +200,13 @@ const Checkout = () => {
     loadCart();
   }, [loadCart]);
 
-  // Meta Pixel: Track InitiateCheckout when page loads with items
+  // Meta Pixel + CAPI: Track InitiateCheckout when page loads with items
   useEffect(() => {
-    if (cart.length > 0 && typeof window !== 'undefined' && window.fbq) {
-      const contentIds = cart.map(item => item.id);
-      const totalValue = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      window.fbq('track', 'InitiateCheckout', {
-        content_ids: contentIds,
-        content_type: 'product',
-        num_items: cart.length,
-        value: totalValue,
-        currency: 'EUR'
-      });
-    }
-    // GA4: Track begin_checkout when the checkout page loads with items
     if (cart.length > 0) {
+      pixelInitiateCheckout(cart);
       trackBeginCheckout(cart);
     }
-  }, [cart.length > 0]); // Only fire once when cart has items
+  }, [cart.length]); // Only fire once when cart has items
 
   useEffect(() => {
     // Pre-fill user data if logged in
@@ -300,6 +290,7 @@ const Checkout = () => {
           discount_amount: data.discount_amount,
           message: data.message,
         });
+        pixelDiscountApplied({ code: data.code, discountAmount: data.discount_amount, cartTotal: total });
         setDiscountCode('');
       } else {
         setDiscountError(data.detail || (language === 'bg' ? 'Невалиден код' : 'Invalid code'));

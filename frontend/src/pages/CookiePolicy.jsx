@@ -37,8 +37,12 @@ const CookiePolicy = () => {
       analyticsNote: 'В момента не използваме аналитични услуги на трети страни. Ако в бъдеще добавим такива, ще актуализираме тази политика.',
       
       marketing: 'Маркетингови бисквитки',
-      marketingDesc: 'Тези бисквитки се използват за показване на релевантни реклами и измерване на ефективността на рекламни кампании.',
-      marketingNote: 'В момента не използваме маркетингови бисквитки. Ако в бъдеще добавим такива, ще поискаме вашето изрично съгласие.',
+      marketingDesc: 'Тези бисквитки се използват за показване на персонализирани реклами и измерване на ефективността на рекламни кампании. Зареждат се само след изрично съгласие от ваша страна.',
+      marketingNote: 'Използваме Meta Pixel (Facebook/Instagram) и Meta Conversions API (CAPI) за проследяване на реализациите от реклами. Meta Pixel се инициализира единствено след като дадете съгласие за маркетингови бисквитки.',
+      marketingList: [
+        { name: '_fbp', purpose: 'Meta Pixel — идентификатор на браузъра за Attribution', duration: '90 дни' },
+        { name: '_fbc', purpose: 'Meta Pixel — параметър за кликване от реклама (fbclid)', duration: '90 дни' },
+      ],
       
       manageTitle: 'Как да управлявате бисквитките?',
       manageText: 'Можете да управлявате вашите предпочитания за бисквитки по следните начини:',
@@ -60,6 +64,7 @@ const CookiePolicy = () => {
       thirdParty: 'Бисквитки на трети страни',
       thirdPartyText: 'Нашият сайт използва услуги на трети страни, които могат да поставят свои бисквитки:',
       thirdPartyServices: [
+        { name: 'Meta (Facebook/Instagram)', purpose: 'Маркетинг и измерване на реализации (само след съгласие)', link: 'https://www.facebook.com/privacy/policy/' },
         { name: 'Stripe', purpose: 'Обработка на плащания', link: 'https://stripe.com/privacy' },
         { name: 'Cloudinary', purpose: 'Хостинг на изображения', link: 'https://cloudinary.com/privacy' },
       ],
@@ -72,6 +77,7 @@ const CookiePolicy = () => {
       contactEmail: 'contact@kostinparfums.com',
       
       relatedLinks: 'Свързани документи',
+      tableHeaders: { name: 'Име', purpose: 'Цел', duration: 'Срок' },
     },
     en: {
       title: 'COOKIE POLICY',
@@ -102,8 +108,12 @@ const CookiePolicy = () => {
       analyticsNote: 'We currently do not use third-party analytics services. If we add any in the future, we will update this policy.',
       
       marketing: 'Marketing Cookies',
-      marketingDesc: 'These cookies are used to display relevant ads and measure the effectiveness of advertising campaigns.',
-      marketingNote: 'We currently do not use marketing cookies. If we add any in the future, we will request your explicit consent.',
+      marketingDesc: 'These cookies are used to display personalized ads and measure the effectiveness of advertising campaigns. They are loaded only after your explicit consent.',
+      marketingNote: 'We use Meta Pixel (Facebook/Instagram) and Meta Conversions API (CAPI) to track ad conversions. Meta Pixel is initialized only after you have given consent for marketing cookies.',
+      marketingList: [
+        { name: '_fbp', purpose: 'Meta Pixel — browser identifier for attribution', duration: '90 days' },
+        { name: '_fbc', purpose: 'Meta Pixel — ad click parameter (fbclid)', duration: '90 days' },
+      ],
       
       manageTitle: 'How to manage cookies?',
       manageText: 'You can manage your cookie preferences in the following ways:',
@@ -125,6 +135,7 @@ const CookiePolicy = () => {
       thirdParty: 'Third-Party Cookies',
       thirdPartyText: 'Our site uses third-party services that may set their own cookies:',
       thirdPartyServices: [
+        { name: 'Meta (Facebook/Instagram)', purpose: 'Marketing and conversion measurement (only after consent)', link: 'https://www.facebook.com/privacy/policy/' },
         { name: 'Stripe', purpose: 'Payment processing', link: 'https://stripe.com/privacy' },
         { name: 'Cloudinary', purpose: 'Image hosting', link: 'https://cloudinary.com/privacy' },
       ],
@@ -137,6 +148,7 @@ const CookiePolicy = () => {
       contactEmail: 'contact@kostinparfums.com',
       
       relatedLinks: 'Related Documents',
+      tableHeaders: { name: 'Name', purpose: 'Purpose', duration: 'Duration' },
     }
   };
 
@@ -180,9 +192,9 @@ const CookiePolicy = () => {
               <table className="cookie-table">
                 <thead>
                   <tr>
-                    <th>{language === 'bg' ? 'Име' : 'Name'}</th>
-                    <th>{language === 'bg' ? 'Цел' : 'Purpose'}</th>
-                    <th>{language === 'bg' ? 'Срок' : 'Duration'}</th>
+                    <th>{t.tableHeaders.name}</th>
+                    <th>{t.tableHeaders.purpose}</th>
+                    <th>{t.tableHeaders.duration}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -215,6 +227,26 @@ const CookiePolicy = () => {
               </div>
               <p>{t.marketingDesc}</p>
               <p className="cookie-note">{t.marketingNote}</p>
+              {t.marketingList && (
+                <table className="cookie-table">
+                  <thead>
+                    <tr>
+                      <th>{t.tableHeaders.name}</th>
+                      <th>{t.tableHeaders.purpose}</th>
+                      <th>{t.tableHeaders.duration}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {t.marketingList.map((cookie, idx) => (
+                      <tr key={idx}>
+                        <td><code>{cookie.name}</code></td>
+                        <td>{cookie.purpose}</td>
+                        <td>{cookie.duration}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </section>
 

@@ -31,15 +31,24 @@ import DubaiPerfumes from "./pages/DubaiPerfumes";
 import GuestCancelOrder from "./pages/GuestCancelOrder";
 import CookieBanner from "./components/CookieBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
+import FacebookDomainVerificationMeta from "./components/FacebookDomainVerificationMeta";
 import { Toaster } from "./components/ui/sonner";
+import { initFromStoredConsent } from "./utils/metaPixel";
 
 function App() {
+  // Capture first-touch UTM parameters from the landing URL (attribution).
   useEffect(() => {
     captureUtm();
   }, []);
 
+  // On every page load, check if the user has already given marketing consent
+  // and initialize Meta Pixel only when they have (GDPR requirement).
+  useEffect(() => {
+    initFromStoredConsent();
+  }, []);
   return (
     <div className="App">
+      <FacebookDomainVerificationMeta />
       <BrowserRouter>
         <ThemeProvider>
         <LanguageProvider>

@@ -9,6 +9,7 @@ import { getProductImages, FALLBACK_IMAGE } from '../utils/imageUtils';
 import parseProductName from '../utils/parseProductName';
 import { addToRecentlyViewed } from '../utils/recentlyViewed';
 import { trackViewItem } from '../utils/analytics';
+import { pixelViewContent, pixelAddToWishlist, pixelAddToCart } from '../utils/metaPixel';
 import { toast } from '../components/ui/sonner';
 import './ProductDetail.css';
 
@@ -44,6 +45,7 @@ const ProductDetail = () => {
           if (viewedRef.current !== data.id) {
             viewedRef.current = data.id;
             trackViewItem(data);
+            pixelViewContent(data);
           }
           
           // Fetch variants (other sizes of same product)
@@ -77,6 +79,7 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     await addToCart(product, quantity);
+    pixelAddToCart(product, quantity);
     toast.success(t('addedToCart', { qty: quantity, name: product.name }));
   };
 
@@ -236,7 +239,7 @@ const ProductDetail = () => {
                 {t('addToCart')}
               </button>
 
-              <button className="wishlist-button" aria-label="Add to wishlist" data-testid="wishlist-button">
+              <button className="wishlist-button" aria-label="Add to wishlist" data-testid="wishlist-button" onClick={() => pixelAddToWishlist(product)}>
                 <Heart size={20} />
               </button>
             </div>

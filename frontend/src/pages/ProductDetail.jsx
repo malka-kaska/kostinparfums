@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, Heart, ArrowLeft, RotateCcw } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowLeft, RotateCcw, ShieldCheck, Truck, PackageCheck } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
@@ -82,6 +82,61 @@ const ProductDetail = () => {
     pixelAddToCart(product, quantity);
     toast.success(t('addedToCart', { qty: quantity, name: product.name }));
   };
+
+  // Inject / update Schema.org structured data for SEO rich results
+  useEffect(() => {
+    if (!product) return;
+
+    const availability = product.stock > 0
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/OutOfStock';
+
+    const schema = {
+      '@context': 'https://schema.org/',
+      '@type': 'Product',
+      name: product.name,
+      image: product.images && product.images.length > 0
+        ? product.images
+        : product.image
+          ? [product.image]
+          : [],
+      description: (lang === 'bg' && product.description_bg)
+        ? product.description_bg.replace(/<[^>]*>/g, '')
+        : (product.description || '').replace(/<[^>]*>/g, ''),
+      sku: product.sku || String(product.id),
+      brand: {
+        '@type': 'Brand',
+        name: product.brand,
+      },
+      offers: {
+        '@type': 'Offer',
+        url: `${window.location.origin}/product/${product.id}`,
+        priceCurrency: 'EUR',
+        price: product.price.toFixed(2),
+        availability,
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: {
+          '@type': 'Organization',
+          name: 'KOSTIN Parfums',
+        },
+      },
+    };
+
+    const scriptId = 'product-schema-ld-json';
+    let el = document.getElementById(scriptId);
+    if (!el) {
+      el = document.createElement('script');
+      el.id = scriptId;
+      el.type = 'application/ld+json';
+      document.head.appendChild(el);
+    }
+    el.textContent = JSON.stringify(schema);
+
+    return () => {
+      const existing = document.getElementById(scriptId);
+      if (existing) existing.remove();
+    };
+  }, [product, lang]);
 
   const getDescription = () => {
     if (!product) return '';
@@ -207,6 +262,22 @@ const ProductDetail = () => {
               <span>{t('freeReturnInfo') || '14 дни безплатно връщане'}</span>
             </div>
 
+            {/* Trust badges */}
+            <div className="trust-badges" data-testid="trust-badges">
+              <div className="trust-badge-item">
+                <ShieldCheck size={16} className="trust-badge-icon" />
+                <span>{t('trustBadgeAuthentic')}</span>
+              </div>
+              <div className="trust-badge-item">
+                <Truck size={16} className="trust-badge-icon" />
+                <span>{t('trustBadgeDelivery')}</span>
+              </div>
+              <div className="trust-badge-item">
+                <PackageCheck size={16} className="trust-badge-icon" />
+                <span>{t('trustBadgeFreeShipping')}</span>
+              </div>
+            </div>
+
             <div className="product-actions mt-4">
               <div className="quantity-selector" data-testid="quantity-selector">
                 <button 
@@ -243,6 +314,14 @@ const ProductDetail = () => {
                 <Heart size={20} />
               </button>
             </div>
+
+            {/* Delivery estimate */}
+            {product.stock > 0 && (
+              <div className="delivery-estimate" data-testid="delivery-estimate">
+                <Truck size={15} className="delivery-estimate-icon" />
+                <span>{t('deliveryEstimate')}</span>
+              </div>
+            )}
 
             {/* Product Variants (Different Sizes) */}
             {variants.length > 1 && (

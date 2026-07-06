@@ -136,6 +136,7 @@ class CODOrderRequest(BaseModel):
     speedy_data: Optional[SpeedyData] = None  # Speedy integration data
     discount_code: Optional[str] = None  # Discount code applied
     discount_amount: Optional[float] = 0.0  # Discount amount in EUR
+    utm_params: Optional[dict] = None  # UTM attribution params
 
 
 # Collection schemas

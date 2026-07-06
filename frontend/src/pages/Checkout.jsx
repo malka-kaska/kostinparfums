@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDualPrice } from '../utils/currency';
 import { trackBeginCheckout, trackPurchase } from '../utils/analytics';
+import { getStoredUtm } from '../utils/utmTracker';
 import { pixelInitiateCheckout, pixelDiscountApplied } from '../utils/metaPixel';
 import SpeedyShipping from '../components/SpeedyShipping';
 import '../components/SpeedyShipping.css';
@@ -351,6 +352,7 @@ const Checkout = () => {
       }
 
       // Save shipping info for after payment
+      const utmParams = getStoredUtm();
       sessionStorage.setItem('pending_shipping_address', JSON.stringify({
         ...shippingAddress,
         email: contactForm.email,
@@ -358,6 +360,7 @@ const Checkout = () => {
         shipping_cost: shippingPrice?.eur || 0,
         discount_code: appliedDiscount?.code || null,
         discount_amount: appliedDiscount?.discount_amount || 0,
+        ...(utmParams && { utm_params: utmParams }),
       }));
 
       const response = await fetch(`${API_URL}/api/payments/checkout`, {
@@ -373,6 +376,7 @@ const Checkout = () => {
           shipping_method: deliveryType === 'OFFICE' ? 'speedy_office' : 'address',
           discount_code: appliedDiscount?.code || null,
           discount_amount: appliedDiscount?.discount_amount || 0,
+          ...(utmParams && { utm_params: utmParams }),
         })
       });
 
@@ -425,6 +429,7 @@ const Checkout = () => {
         shippingAddress.address = deliveryAddress;
       }
 
+      const codUtmParams = getStoredUtm();
       const response = await fetch(`${API_URL}/api/orders/cod`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -443,7 +448,8 @@ const Checkout = () => {
             office_id: selectedOffice?.id,
             office_name: selectedOffice?.name,
             delivery_type: deliveryType,
-          }
+          },
+          ...(codUtmParams && { utm_params: codUtmParams }),
         })
       });
 

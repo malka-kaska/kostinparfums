@@ -44,6 +44,7 @@ function App() {
   // On every page load, check if the user has already given marketing consent
   // and initialize Meta Pixel only when they have (GDPR requirement).
   useEffect(() => {
+    console.log('[App][initFromStoredConsent] calling initFromStoredConsent');
     initFromStoredConsent();
   }, []);
   return (

@@ -76,9 +76,13 @@ const CookieBanner = () => {
     setPreferences(prefs);
     setIsVisible(false);
     setShowDetails(false);
+    console.log('[CookieBanner][saveConsent]', prefs);
     // Initialize Meta Pixel only when marketing cookies are accepted (GDPR)
     if (prefs.marketing) {
+      console.log('[CookieBanner][saveConsent] marketing=true, initializing Meta Pixel');
       initializeMetaPixel();
+    } else {
+      console.log('[CookieBanner][saveConsent] marketing=false, Pixel not initialized');
     }
   };
 

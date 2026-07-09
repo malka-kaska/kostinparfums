@@ -38,6 +38,7 @@ from routes.speedy import router as speedy_router
 from routes.discounts import router as discounts_router
 from routes.scent_migration import router as scent_migration_router
 from routes.meta_catalog import router as meta_catalog_router
+from routes.meta_ads import router as meta_ads_router
 from routes.huggingface import router as huggingface_router
 from routes.makeugc import router as makeugc_router
 from routes.content import router as content_router
@@ -582,6 +583,7 @@ app.include_router(speedy_router)
 app.include_router(discounts_router)
 app.include_router(scent_migration_router)
 app.include_router(meta_catalog_router)
+app.include_router(meta_ads_router)
 app.include_router(huggingface_router)
 app.include_router(makeugc_router)
 app.include_router(content_router)

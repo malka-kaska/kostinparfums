@@ -269,6 +269,10 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
             "delivery_type": order_data.speedy_data.delivery_type,
             "address": order_data.speedy_data.address,
         }
+
+    # Add UTM attribution params if provided
+    if order_data.utm_params:
+        order_doc["utm_params"] = order_data.utm_params
     
     result = await db.orders.insert_one(order_doc)
     order_doc["_id"] = result.inserted_id

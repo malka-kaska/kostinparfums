@@ -111,6 +111,12 @@ export const bg = {
   skuLabel: "SKU:",
   productNotFound: "\u041f\u0440\u043e\u0434\u0443\u043a\u0442\u044a\u0442 \u043d\u0435 \u0435 \u043d\u0430\u043c\u0435\u0440\u0435\u043d",
   quickAdd: "\u0411\u042a\u0420\u0417\u041e",
+  // Trust badges on product page
+  trustBadgeAuthentic: "100% автентични парфюми",
+  trustBadgeDelivery: "Бърза доставка за България и ЕС",
+  trustBadgeFreeShipping: "Безплатна доставка над 90 EUR",
+  // Delivery estimate
+  deliveryEstimate: "Очаквана доставка: 1–2 работни дни за България · 3–5 дни за ЕС",
 
   // Cart
   shoppingCart: "\u041a\u043e\u0448\u043d\u0438\u0446\u0430",

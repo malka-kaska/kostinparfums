@@ -77,8 +77,23 @@ const PrivacyPolicyEN = () => (
         <li><strong>Payment Processors:</strong> Stripe, for secure payment processing</li>
         <li><strong>Shipping Partners:</strong> To deliver your orders</li>
         <li><strong>Service Providers:</strong> Email services, analytics, hosting</li>
+        <li><strong>Meta Platforms (Facebook/Instagram):</strong> Conversion data sent via Meta Pixel and Conversions API — only after explicit marketing cookie consent</li>
       </ul>
       <p>We do not sell your personal data to third parties.</p>
+    </section>
+    <section className="legal-section">
+      <h2>6a. Meta Pixel and Conversions API (CAPI)</h2>
+      <p>We use <strong>Meta Pixel</strong> (Facebook/Instagram script) and <strong>Meta Conversions API (CAPI)</strong> to measure the performance of our advertising campaigns. These technologies are activated <strong>only after explicit consent</strong> for marketing cookies.</p>
+      <h3>What data is processed?</h3>
+      <ul>
+        <li><strong>Browser data (Meta Pixel):</strong> IP address, User-Agent, page URL, <code>_fbp</code> cookie, <code>fbclid</code> parameter</li>
+        <li><strong>Event data (CAPI):</strong> Hashed email address, hashed phone number, order value, order ID — on completed purchase</li>
+        <li>Data is hashed with SHA-256 before transmission and shared only with Meta Platforms Ireland Ltd.</li>
+      </ul>
+      <h3>Legal basis</h3>
+      <p>Processing of data for marketing purposes via Meta Pixel/CAPI is based on <strong>explicit consent</strong> (Art. 6(1)(a) GDPR). You can withdraw your consent at any time via our cookie banner or by contacting us at contact@kostinparfums.com.</p>
+      <h3>Limited Data Use</h3>
+      <p>When processing data of California or other US state residents under applicable law, we enable the <em>Limited Data Use</em> flag in Meta Conversions API, which restricts Meta's use of the data to delivering advertising services only.</p>
     </section>
     <section className="legal-section">
       <h2>7. Your Rights (GDPR)</h2>
@@ -96,7 +111,7 @@ const PrivacyPolicyEN = () => (
     </section>
     <section className="legal-section">
       <h2>8. Cookies</h2>
-      <p>We use cookies to improve your browsing experience and analyze site traffic. You can manage cookie preferences through your browser settings.</p>
+      <p>We use cookies to improve your browsing experience and analyze site traffic. <strong>Marketing cookies</strong> (including Meta Pixel) are activated only after your explicit consent. You can manage cookie preferences through our <a href="/cookies">cookie banner</a> or your browser settings.</p>
     </section>
     <section className="legal-section">
       <h2>9. Data Retention</h2>
@@ -189,8 +204,23 @@ const PrivacyPolicyBG = () => (
         <li><strong>Доставчици на платежни услуги:</strong> Stripe, за сигурна обработка на плащания</li>
         <li><strong>Куриерски партньори:</strong> За доставка на вашите поръчки</li>
         <li><strong>Доставчици на услуги:</strong> Имейл услуги, анализи, хостинг</li>
+        <li><strong>Meta Platforms (Facebook/Instagram):</strong> Данни за реализации от реклами, изпратени чрез Meta Pixel и Conversions API — само след изрично съгласие за маркетингови бисквитки</li>
       </ul>
       <p>Ние не продаваме вашите лични данни на трети страни.</p>
+    </section>
+    <section className="legal-section">
+      <h2>6а. Meta Pixel и Conversions API (CAPI)</h2>
+      <p>Използваме <strong>Meta Pixel</strong> (скрипт на Facebook/Instagram) и <strong>Meta Conversions API (CAPI)</strong> за измерване на ефективността на нашите рекламни кампании. Тези технологии се активират <strong>единствено след изрично съгласие</strong> за маркетингови бисквитки.</p>
+      <h3>Какви данни се обработват?</h3>
+      <ul>
+        <li><strong>Данни от браузъра (Meta Pixel):</strong> IP адрес, User-Agent, URL на страницата, бисквитка <code>_fbp</code>, параметър <code>fbclid</code></li>
+        <li><strong>Данни за събитие (CAPI):</strong> Хеширан имейл адрес, хеширан телефон, стойност на поръчката, идентификатор на поръчката — при завършена покупка</li>
+        <li>Данните се хешират с SHA-256 преди изпращане и се предоставят само на Meta Platforms Ireland Ltd.</li>
+      </ul>
+      <h3>Правно основание</h3>
+      <p>Обработката на данни за маркетингови цели чрез Meta Pixel/CAPI се извършва на основание <strong>изрично съгласие</strong> (чл. 6, ал. 1, буква „а" от GDPR). Можете да оттеглите съгласието си по всяко време чрез нашия банер за бисквитки или като се свържете с нас на contact@kostinparfums.com.</p>
+      <h3>Ограничено използване на данни (Limited Data Use)</h3>
+      <p>Когато обработваме данни на жители на Калифорния или други щати с приложимо законодателство, активираме флага <em>Limited Data Use</em> в Meta Conversions API, което ограничава използването на данните от Meta само до доставяне на рекламни услуги.</p>
     </section>
     <section className="legal-section">
       <h2>7. Вашите права (GDPR)</h2>
@@ -202,13 +232,13 @@ const PrivacyPolicyBG = () => (
         <li>Ограничаване на обработката на вашите данни</li>
         <li>Преносимост на данните</li>
         <li>Възражение срещу обработката</li>
-        <li>Оттегляне на съгласие по всяко време</li>
+        <li><strong>Оттегляне на съгласие по всяко време</strong> — включително съгласието за маркетингови бисквитки (Meta Pixel)</li>
       </ul>
-      <p>За да упражните тези права, свържете се с нас на privacy@kostin.com.</p>
+      <p>За да упражните тези права или да оттеглите съгласието си за маркетингово проследяване, свържете се с нас на <a href="mailto:contact@kostinparfums.com">contact@kostinparfums.com</a> или актуализирайте настройките си чрез <a href="/cookies">управлението на бисквитки</a>.</p>
     </section>
     <section className="legal-section">
       <h2>8. Бисквитки</h2>
-      <p>Използваме бисквитки за подобряване на вашето сърфиране и анализ на трафика на сайта. Можете да управлявате предпочитанията за бисквитки чрез настройките на вашия браузър.</p>
+      <p>Използваме бисквитки за подобряване на вашето сърфиране и анализ на трафика на сайта. <strong>Маркетингови бисквитки</strong> (включително Meta Pixel) се активират само след изрично съгласие от ваша страна. Можете да управлявате предпочитанията за бисквитки чрез нашия <a href="/cookies">банер за бисквитки</a> или настройките на вашия браузър.</p>
     </section>
     <section className="legal-section">
       <h2>9. Съхранение на данни</h2>

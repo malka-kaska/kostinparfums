@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDualPrice } from '../utils/currency';
 import { trackBeginCheckout, trackPurchase } from '../utils/analytics';
+import { getStoredUtm } from '../utils/utmTracker';
+import { pixelInitiateCheckout, pixelDiscountApplied } from '../utils/metaPixel';
 import SpeedyShipping from '../components/SpeedyShipping';
 import '../components/SpeedyShipping.css';
 import './Checkout.css';
@@ -198,24 +200,13 @@ const Checkout = () => {
     loadCart();
   }, [loadCart]);
 
-  // Meta Pixel: Track InitiateCheckout when page loads with items
+  // Meta Pixel + CAPI: Track InitiateCheckout when page loads with items
   useEffect(() => {
-    if (cart.length > 0 && typeof window !== 'undefined' && window.fbq) {
-      const contentIds = cart.map(item => item.id);
-      const totalValue = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      window.fbq('track', 'InitiateCheckout', {
-        content_ids: contentIds,
-        content_type: 'product',
-        num_items: cart.length,
-        value: totalValue,
-        currency: 'EUR'
-      });
-    }
-    // GA4: Track begin_checkout when the checkout page loads with items
     if (cart.length > 0) {
+      pixelInitiateCheckout(cart);
       trackBeginCheckout(cart);
     }
-  }, [cart.length > 0]); // Only fire once when cart has items
+  }, [cart.length]); // Only fire once when cart has items
 
   useEffect(() => {
     // Pre-fill user data if logged in
@@ -299,6 +290,7 @@ const Checkout = () => {
           discount_amount: data.discount_amount,
           message: data.message,
         });
+        pixelDiscountApplied({ code: data.code, discountAmount: data.discount_amount, cartTotal: total });
         setDiscountCode('');
       } else {
         setDiscountError(data.detail || (language === 'bg' ? 'Невалиден код' : 'Invalid code'));
@@ -360,6 +352,7 @@ const Checkout = () => {
       }
 
       // Save shipping info for after payment
+      const utmParams = getStoredUtm();
       sessionStorage.setItem('pending_shipping_address', JSON.stringify({
         ...shippingAddress,
         email: contactForm.email,
@@ -367,6 +360,7 @@ const Checkout = () => {
         shipping_cost: shippingPrice?.eur || 0,
         discount_code: appliedDiscount?.code || null,
         discount_amount: appliedDiscount?.discount_amount || 0,
+        ...(utmParams && { utm_params: utmParams }),
       }));
 
       const response = await fetch(`${API_URL}/api/payments/checkout`, {
@@ -382,6 +376,7 @@ const Checkout = () => {
           shipping_method: deliveryType === 'OFFICE' ? 'speedy_office' : 'address',
           discount_code: appliedDiscount?.code || null,
           discount_amount: appliedDiscount?.discount_amount || 0,
+          ...(utmParams && { utm_params: utmParams }),
         })
       });
 
@@ -434,6 +429,7 @@ const Checkout = () => {
         shippingAddress.address = deliveryAddress;
       }
 
+      const codUtmParams = getStoredUtm();
       const response = await fetch(`${API_URL}/api/orders/cod`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -452,7 +448,8 @@ const Checkout = () => {
             office_id: selectedOffice?.id,
             office_name: selectedOffice?.name,
             delivery_type: deliveryType,
-          }
+          },
+          ...(codUtmParams && { utm_params: codUtmParams }),
         })
       });
 

@@ -1,23 +1,37 @@
 # Deploy KOSTIN Parfums
 
-## Render
-1. New + -> Deploy from GitHub -> `malka-kaska/kostinparfums`
-2. Runtime: Docker
-3. Build command: leave default
-4. Start command: `uvicorn backend.server:app --host 0.0.0.0 --port $PORT`
-5. Add env vars from `.env.example`
-6. Deploy
+## Emergent / Production
+- Production preview: `https://kostin-cosmetics-1.preview.emergentagent.com`
+- Backend imports use `emergentintegrations` (Stripe, LLM, etc.)
+- `.emergent/emergent.yml` references the base image and job config
 
-## Docker/VPS
+### Typical deploy path
+1. Merge PRs into `main`
+2. Emergent preview build/deploy from GitHub
+3. Set required env vars in Emergent dashboard/secret store:
+   - `MONGO_URL`
+   - `STRIPE_API_KEY`
+   - `STRIPE_PUBLISHABLE_KEY`
+   - `FRONTEND_URL`
+   - `META_APP_ID=1359746189387697`
+   - `META_APP_SECRET`
+   - `META_PAGE_ID`
+   - `META_INSTAGRAM_BUSINESS_ACCOUNT_ID`
+   - `META_ACCESS_TOKEN`
+   - `EMAIL_FROM`
+   - `EMAIL_PASSWORD`
+   - `SMTP_HOST`
+   - `SMTP_PORT`
+   - `JWT_SECRET`
+   - `ADMIN_PASSWORD`
+4. Rebuild preview if needed from GitHub/repo settings
+
+## Docker/VPS fallback
 ```bash
 cp .env.example .env
 # fill real secrets
-docker compose up -d --build
+docker-compose up -d --build
 ```
-
-## Meta apps
-- `META_APP_ID`: `1359746189387697`
-- Also set `META_APP_SECRET`, `META_PAGE_ID`, `META_INSTAGRAM_BUSINESS_ACCOUNT_ID`, `META_ACCESS_TOKEN`
 
 ## Publish content
 ```bash

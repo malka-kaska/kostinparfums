@@ -38,6 +38,8 @@ from routes.speedy import router as speedy_router
 from routes.discounts import router as discounts_router
 from routes.scent_migration import router as scent_migration_router
 from routes.meta_catalog import router as meta_catalog_router
+from routes.huggingface import router as huggingface_router
+from routes.makeugc import router as makeugc_router
 from utils.auth import seed_admin
 from utils.email_service import send_order_confirmation_email, send_order_verification_email, send_invoice_email
 from utils.invbg_integration import create_official_invoice, get_invoice_pdf_bytes
@@ -579,6 +581,8 @@ app.include_router(speedy_router)
 app.include_router(discounts_router)
 app.include_router(scent_migration_router)
 app.include_router(meta_catalog_router)
+app.include_router(huggingface_router)
+app.include_router(makeugc_router)
 
 # CORS — must use explicit origin for credentials
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")

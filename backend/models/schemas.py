@@ -168,3 +168,68 @@ class CollectionResponse(BaseModel):
     is_active: bool = True
     product_count: Optional[int] = 0
     created_at: Optional[str] = None
+
+class CampaignAssetCreate(BaseModel):
+    product_id: Optional[str] = None
+    product_name: Optional[str] = None
+    brand: Optional[str] = None
+    campaign_type: str
+    aspect_ratio: str
+    prompt: str
+    metadata: Optional[Dict[str, str]] = None
+
+
+class CampaignAssetResponse(BaseModel):
+    id: str
+    product_id: Optional[str]
+    product_name: Optional[str]
+    brand: Optional[str]
+    campaign_type: str
+    aspect_ratio: str
+    prompt: str
+    provider: str
+    status: str
+    asset_url: Optional[str]
+    thumbnail_url: Optional[str]
+    meta_asset_id: Optional[str]
+    metadata: Optional[Dict[str, str]]
+    created_at: Optional[str]
+    updated_at: Optional[str]
+
+
+class HuggingFaceGenerateRequest(BaseModel):
+    prompt: str
+    negative_prompt: Optional[str] = None
+    aspect_ratio: str = '1:1'
+    model: Optional[str] = None
+    product_id: Optional[str] = None
+    brand: Optional[str] = None
+    campaign_type: str = 'static_ad'
+    save_to_cloudinary: bool = False
+    metadata: Optional[Dict[str, str]] = None
+
+
+class MakeUGCFlowRequest(BaseModel):
+    flow_id: Optional[str] = None
+    flow_preset: str = 'UGC or Unboxing'
+    product_id: Optional[str] = None
+    product_url: Optional[str] = None
+    brand: Optional[str] = None
+    hook: Optional[str] = None
+    setting: Optional[str] = None
+    cta: Optional[str] = None
+    language: str = 'bg'
+    save_script: bool = True
+
+
+class CampaignDeployRequest(BaseModel):
+    campaign_name: str
+    asset_ids: List[str]
+    ad_account_id: Optional[str] = None
+    catalog_id: Optional[str] = None
+    page_id: Optional[str] = None
+    ig_account_id: Optional[str] = None
+    budget: Optional[float] = None
+    targeting_countries: List[str] = ['BG']
+    objective: str = 'SALES'
+    status: str = 'PAUSED'

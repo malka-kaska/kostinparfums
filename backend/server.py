@@ -38,7 +38,11 @@ from routes.speedy import router as speedy_router
 from routes.discounts import router as discounts_router
 from routes.scent_migration import router as scent_migration_router
 from routes.meta_catalog import router as meta_catalog_router
+<<<<<<< HEAD
 from routes.meta_capi import router as meta_capi_router
+=======
+from routes.meta_ads import router as meta_ads_router
+>>>>>>> 9a75cf7 (feat(meta-ads): add campaign scaffolding, creative A/B, audience suggestions, and experiment helpers)
 from routes.huggingface import router as huggingface_router
 from routes.makeugc import router as makeugc_router
 from routes.content import router as content_router
@@ -593,7 +597,11 @@ app.include_router(speedy_router)
 app.include_router(discounts_router)
 app.include_router(scent_migration_router)
 app.include_router(meta_catalog_router)
+<<<<<<< HEAD
 app.include_router(meta_capi_router)
+=======
+app.include_router(meta_ads_router)
+>>>>>>> 9a75cf7 (feat(meta-ads): add campaign scaffolding, creative A/B, audience suggestions, and experiment helpers)
 app.include_router(huggingface_router)
 app.include_router(makeugc_router)
 app.include_router(content_router)

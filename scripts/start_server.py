@@ -41,7 +41,7 @@ def main():
             print(f"Health check skipped due to error: {exc}")
 
     uvicorn.run(
-        "server.server:app",
+        "backend.server:app",
         host=args.host,
         port=args.port,
         reload=args.reload,

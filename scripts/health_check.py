@@ -25,16 +25,25 @@ def check_backend(url: str, timeout: int = 5) -> dict:
         start = time.time()
         response = requests.get(f"{url}/health", timeout=timeout)
         elapsed = time.time() - start
-        result["ok"] = response.status_code == 200
         result["status_code"] = response.status_code
         result["latency_ms"] = int(elapsed * 1000)
-        if result["ok"]:
-            try:
-                result["body"] = response.json()
-            except Exception:
-                result["body"] = response.text[:200]
-        else:
+
+        if response.status_code != 200:
             result["error"] = response.text[:200]
+            return result
+
+        try:
+            body = response.json()
+        except Exception:
+            result["error"] = "Backend health endpoint returned non-JSON content"
+            return result
+
+        result["body"] = body
+        if body.get("status") != "healthy" or body.get("service") != "kostin-backend":
+            result["error"] = "Backend health payload is missing status=healthy or service=kostin-backend"
+            return result
+
+        result["ok"] = True
     except Exception as exc:
         result["error"] = str(exc)
     return result

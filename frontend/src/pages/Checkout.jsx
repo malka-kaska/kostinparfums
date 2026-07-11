@@ -206,7 +206,7 @@ const Checkout = () => {
       pixelInitiateCheckout(cart);
       trackBeginCheckout(cart);
     }
-  }, [cart.length]); // Only fire once when cart has items
+  }, [cart]); // Re-evaluate when checkout contents change
 
   useEffect(() => {
     // Pre-fill user data if logged in

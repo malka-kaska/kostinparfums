@@ -1,33 +1,28 @@
-# Meta Events Setup Action Plan
+# Meta Events Diagnostic Flow
+## Pixel status
+- Pixel ID: `2118783192346725`
+- Pixel helper: Active on kostinparfums.com
+- Issue: no events recorded, ViewContent missing in Events Manager
 
-## Observed state
-- Pixel ID: `2118783192346725` (active on kostinparfums.com)
-- Pixel helper shows: no events yet
-- Events Manager shows: ViewContent missing / Needs attention
-- Catalog count mismatch: backend DB has 7,347 visible products; official PDF should expose only ~134 visible products
+## Exact test flow
+1. Open `kostinparfums.com` in Safari with Meta Pixel Helper enabled.
+2. Accept cookie banner with marketing enabled (or ensure localStorage `cookie_consent = {"essential":true,"analytics":...,"marketing":true}`).
+3. Reload page and watch for:
+   - `fbq('init', '2118783192346725')`
+   - `fbq('track', 'PageView')`
+4. Navigate to any product page. Expected:
+   - `fbq('track', 'ViewContent', ...)` with `content_ids` and `value`
+5. Add to cart. Expected:
+   - `fbq('track', 'AddToCart', ...)`
+6. Checkout success. Expected:
+   - `fbq('track', 'Purchase', ...)`
 
-## Likely blockers
-1. cookie_consent gate in `frontend/src/utils/metaPixel.js` prevents Pixel init if marketing cookies are not accepted.
-2. `App.js` only calls `initFromStoredConsent()`; if consent was cleared, Pixel never loads and no ViewContent fires.
-3. Catalog sync flow may be syncing hidden or placeholder products because `products_backup.json` is not reconciled against official PDFs.
-4. Hardcoded popularity / search boosts in `backend/routes/products.py` can reference brands/products outside the official visible set.
+## If events still missing
+- Confirm `localStorage.getItem('cookie_consent')` is set and `prefs.marketing === true`
+- Confirm `localStorage.getItem('cookie_consent_date')` exists
+- Check Network tab for POST to `/api/meta-capi/event`
+- If backend returns 401/403, CAPI token/pixel ID env vars are missing
 
-## Fixes to apply
-### Frontend consent + Pixel init
-- Ensure `CookieBanner` and `App.js` initialize Pixel immediately when marketing consent is true.
-- Add guard logs for: `cookie_consent` value, `_initialized`, and `fbq('init')` call.
-
-### Catalog reconciliation
-- Run `backend/scripts/reconcile_catalog_visibility.py` against local Mongo to set `is_visible=false` for products not present in the official PDFs.
-- Re-run full catalog sync after reconciliation to send only ~134 valid items to Meta.
-
-### Meta Events Manager
-- In Safari, open Meta Events Manager for Pixel `2118783192346725`.
-- Set Test Events using browser Pixel Helper and verify `ViewContent`, `AddToCart`, `Purchase`.
-- If using Event Setup Tool, validate website interactions instead of manual URL testing.
-
-## Next steps
-1. Apply the code changes for consent/logging.
-2. Run reconciliation script against local DB.
-3. Trigger a fresh catalog sync from backend admin or script.
-4. Re-test with Meta Pixel Helper and Events Manager.
+## Next actions
+- Run catalog reconciliation script to reduce catalog from 7347 to ~134 PDF-visible products
+- Re-test events after catalog is clean

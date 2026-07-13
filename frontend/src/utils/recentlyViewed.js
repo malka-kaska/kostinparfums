@@ -70,8 +70,8 @@ export const addToRecentlyViewed = (product) => {
     }
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch {
-    // Silently fail - localStorage might be full or disabled
+  } catch (err) {
+    console.warn('Failed to save to localStorage:', err.message);
   }
 };
 
@@ -81,7 +81,7 @@ export const addToRecentlyViewed = (product) => {
 export const clearRecentlyViewed = () => {
   try {
     localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Silently fail
+  } catch (err) {
+    console.warn('Failed to clear localStorage:', err.message);
   }
 };

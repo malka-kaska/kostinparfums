@@ -306,12 +306,17 @@ class GuestRegisterRequest(PydanticBaseModel):
     password: str
     name: str
     order_id: OptionalType[str] = None
+    order_token: OptionalType[str] = None  # SEC-001 FIX: Require token for order ownership proof
 
 @router.post("/register-guest")
 async def register_guest(request: Request, data: GuestRegisterRequest):
     """
     Register a guest user after checkout.
-    Links the order to the new account.
+    Links the order to the new account only if:
+    1. The order's email matches the registration email, OR
+    2. A valid cancellation_token is provided as proof of ownership
+    
+    SEC-001 FIX: Prevents arbitrary order claiming (BOLA vulnerability)
     """
     db = request.app.state.db
     
@@ -342,28 +347,58 @@ async def register_guest(request: Request, data: GuestRegisterRequest):
     
     logger.info(f"Guest user registered: {data.email}")
     
-    # Link order to new user if order_id provided
+    # SEC-001 FIX: Link order only with verified ownership
     if data.order_id:
         try:
-            await db.orders.update_one(
-                {"_id": ObjectId(data.order_id)},
-                {
-                    "$set": {
-                        "user_id": user_id,
-                        "user_email": data.email.lower(),
-                        "user_name": data.name
-                    }
-                }
-            )
-            logger.info(f"Order {data.order_id} linked to new user {user_id}")
+            order = await db.orders.find_one({"_id": ObjectId(data.order_id)})
+            
+            if order:
+                # Check ownership: email must match OR valid token provided
+                order_email = order.get("user_email", "").lower()
+                order_token = order.get("cancellation_token", "")
+                user_email_lower = data.email.lower()
+                
+                can_link = False
+                
+                # Method 1: Email matches
+                if order_email == user_email_lower:
+                    can_link = True
+                    logger.info(f"Order {data.order_id} linked via email match")
+                
+                # Method 2: Valid token provided
+                elif data.order_token and order_token and data.order_token == order_token:
+                    can_link = True
+                    logger.info(f"Order {data.order_id} linked via token verification")
+                
+                if can_link:
+                    await db.orders.update_one(
+                        {"_id": ObjectId(data.order_id)},
+                        {
+                            "$set": {
+                                "user_id": user_id,
+                                "user_email": user_email_lower,
+                                "user_name": data.name
+                            }
+                        }
+                    )
+                    logger.info(f"Order {data.order_id} successfully linked to user {user_id}")
+                else:
+                    # SEC-001: Do NOT link order - ownership not verified
+                    logger.warning(f"Order {data.order_id} NOT linked - ownership verification failed for email {data.email}")
+            else:
+                logger.warning(f"Order {data.order_id} not found")
+                
         except Exception as e:
-            logger.error(f"Failed to link order to user: {e}")
+            logger.error(f"Failed to process order linking: {e}")
     
-    # Also link any other orders with this email
-    await db.orders.update_many(
-        {"user_email": data.email.lower(), "user_id": None},
+    # Link other orders with matching email (this is safe - email-based ownership)
+    linked_result = await db.orders.update_many(
+        {"user_email": data.email.lower(), "user_id": {"$in": [None, ""]}},
         {"$set": {"user_id": user_id, "user_name": data.name}}
     )
+    
+    if linked_result.modified_count > 0:
+        logger.info(f"Linked {linked_result.modified_count} additional orders by email match")
     
     return {
         "success": True,

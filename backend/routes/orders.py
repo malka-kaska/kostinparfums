@@ -228,6 +228,20 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
     # Generate cancellation token for guest orders
     cancellation_token = secrets.token_urlsafe(32)
     
+    # Check customer risk via nekorekten.com (for COD orders)
+    customer_risk_check = None
+    try:
+        from utils.nekorekten import check_customer
+        customer_risk_check = await check_customer(
+            phone=order_data.shipping_address.phone,
+            email=user_email or order_data.email,
+            name=user_name
+        )
+        if customer_risk_check.get("is_risky"):
+            logger.warning(f"RISKY CUSTOMER detected for order {order_number}: {customer_risk_check.get('reports_count')} reports found")
+    except Exception as e:
+        logger.error(f"Error checking customer risk: {e}")
+    
     # Create order document
     order_doc = {
         "order_number": order_number,
@@ -259,6 +273,14 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     
+    # Add customer risk check result (from nekorekten.com)
+    if customer_risk_check:
+        order_doc["customer_risk_check"] = {
+            "is_risky": customer_risk_check.get("is_risky", False),
+            "reports_count": customer_risk_check.get("reports_count", 0),
+            "checked_at": datetime.now(timezone.utc).isoformat()
+        }
+    
     # Add Speedy data if provided
     if order_data.speedy_data:
         order_doc["speedy_data"] = {
@@ -269,10 +291,6 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
             "delivery_type": order_data.speedy_data.delivery_type,
             "address": order_data.speedy_data.address,
         }
-
-    # Add UTM attribution params if provided
-    if order_data.utm_params:
-        order_doc["utm_params"] = order_data.utm_params
     
     result = await db.orders.insert_one(order_doc)
     order_doc["_id"] = result.inserted_id
@@ -399,7 +417,9 @@ async def create_cod_order(request: Request, order_data: CODOrderRequest):
             shipping_address=order_doc["shipping_address"],
             tracking_number=tracking_number,
             discount_code=discount_code,
-            discount_amount=discount_amount
+            discount_amount=discount_amount,
+            is_risky_customer=customer_risk_check.get("is_risky", False) if customer_risk_check else False,
+            risk_reports_count=customer_risk_check.get("reports_count", 0) if customer_risk_check else 0
         )
     except Exception as e:
         logger.error(f"Failed to send admin new order notification: {e}")

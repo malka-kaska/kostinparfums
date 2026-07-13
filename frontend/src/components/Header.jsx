@@ -4,7 +4,9 @@ import { Search, ShoppingCart, User, Menu, X, Globe, Sun, Moon } from 'lucide-re
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { useBrandBackground } from '../context/BrandBackgroundContext';
 import SmartSearch from './SmartSearch';
+import DynamicHeaderBackground from './DynamicHeaderBackground';
 import './Header.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -18,6 +20,10 @@ const Header = () => {
   const { user, logout, getCartCount } = useAuth();
   const { lang, t, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { hasActiveBackground, getTextColor } = useBrandBackground();
+  
+  const hasBrandBg = hasActiveBackground();
+  const textColor = getTextColor();
 
   useEffect(() => {
     const updateCount = () => setCartCount(getCartCount());
@@ -88,7 +94,11 @@ const Header = () => {
       </div>
       
       {/* Main Header */}
-      <header className="header" data-testid="main-header">
+      <header 
+        className={`header ${hasBrandBg ? 'has-brand-bg' : ''} ${hasBrandBg && textColor ? `text-${textColor}` : ''}`} 
+        data-testid="main-header"
+      >
+        {hasBrandBg && <DynamicHeaderBackground />}
         <div className="container">
           {/* Icons Row */}
           <div className="header-icons-row">
@@ -160,8 +170,8 @@ const Header = () => {
           </div>
 
           {/* Logo - Centered Above Navigation */}
-          <Link to="/" className="logo-text-link" data-testid="logo-link">
-            <h1 className="logo-text">KOSTIN</h1>
+          <Link to="/" className="logo-text-link" data-testid="logo-link" aria-label="KOSTIN - Homepage">
+            <span className="logo-text">KOSTIN</span>
             <p className="logo-tagline">{t('curatedBeautyEssentials')}</p>
           </Link>
 
@@ -187,9 +197,6 @@ const Header = () => {
                 {lang === 'bg' && col.name_bg ? col.name_bg : col.name}
               </Link>
             ))}
-            <Link to="/summer" className="nav-link nav-link-summer" onClick={() => setMobileMenuOpen(false)}>
-              ☀️ {lang === 'bg' ? 'Летен Scent Hub' : 'Summer Scent Hub'}
-            </Link>
           </nav>
           
           {/* Smart Search Bar */}

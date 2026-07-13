@@ -411,9 +411,16 @@ async def _create_shipment_internal(shipment_data: CreateShipmentRequest) -> dic
             logger.info(f"Adding {len(fiscal_items)} fiscal receipt items for касов бон (COD: {cod_amount}, fiscal_total: {fiscal_total}, match: {fiscal_mismatch <= 0.01})")
             
             # COD goes in service.additionalServices
+            # Also add OBPD (Open Before Payment Delivery) - allows customer to inspect package before paying
             shipment_payload["service"]["additionalServices"] = {
-                "cod": cod_service
+                "cod": cod_service,
+                "obpd": {
+                    "option": "OPEN",  # OPEN = преглед only, TEST = тест и преглед
+                    "returnShipmentServiceId": SERVICE_TO_OFFICE,  # Return service if customer refuses
+                    "returnShipmentPayer": "SENDER"  # KOSTIN pays for return if refused
+                }
             }
+            logger.info("Added OBPD (Open Before Payment) - customer can inspect before paying")
             
             # Also set declaredValueAmount for insurance purposes
             shipment_payload["payment"]["declaredValueAmount"] = shipment_data.cod_amount
@@ -741,6 +748,166 @@ async def create_shipment_for_order_id(request: Request, order_id: str):
         raise
     except Exception as e:
         logger.error(f"Error creating shipment for order {order_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/preview-shipment/{order_id}")
+async def preview_shipment(order_id: str, request: Request):
+    """
+    Preview shipment details before creating the actual waybill.
+    Uses the calculate endpoint to show estimated price, pickup/delivery dates.
+    Does NOT create the actual shipment.
+    """
+    from motor.motor_asyncio import AsyncIOMotorClient
+    from bson import ObjectId
+    import os
+    
+    MONGO_URL = os.environ.get("MONGO_URL")
+    DB_NAME = os.environ.get("DB_NAME", "kostin_cosmetics")
+    
+    client = AsyncIOMotorClient(MONGO_URL)
+    database = client[DB_NAME]
+    
+    # Verify admin access
+    await verify_admin_speedy(request, database)
+    
+    # Get order
+    order = await database.orders.find_one({"_id": ObjectId(order_id)})
+    if not order:
+        raise HTTPException(status_code=404, detail="Поръчката не е намерена")
+    
+    speedy_data = order.get("speedy_data", {})
+    shipping_address = order.get("shipping_address", {})
+    
+    if not speedy_data or not speedy_data.get("city_id"):
+        raise HTTPException(status_code=400, detail="Поръчката няма данни за Speedy доставка")
+    
+    # Check if already has tracking
+    if order.get("tracking_number"):
+        raise HTTPException(status_code=400, detail=f"Поръчката вече има товарителница: {order.get('tracking_number')}")
+    
+    try:
+        # Build preview data
+        delivery_type = speedy_data.get("delivery_type", "OFFICE")
+        city_id = speedy_data.get("city_id")
+        office_id = speedy_data.get("office_id")
+        
+        # Validate office ID if needed
+        if delivery_type == "OFFICE" and office_id:
+            validated_office_id = await validate_and_fix_office_id(
+                city_id=city_id,
+                office_id=office_id,
+                office_name=speedy_data.get("office_name", "")
+            )
+            if validated_office_id:
+                office_id = validated_office_id
+        
+        # Calculate shipping price
+        subtotal = float(order.get("subtotal", 0))
+        discount_amount = float(order.get("discount_amount") or 0)
+        cod_amount = subtotal - discount_amount if order.get("payment_method") == "cod" else 0
+        
+        # Build recipient
+        recipient = {"privatePerson": True}
+        if delivery_type == "OFFICE" and office_id:
+            recipient["siteId"] = city_id
+            recipient["pickupOfficeId"] = office_id
+        else:
+            recipient["addressLocation"] = {
+                "siteId": city_id,
+                "addressNote": speedy_data.get("address") or shipping_address.get("address", "")
+            }
+        
+        # Build service config
+        service_config = {
+            "serviceIds": [SERVICE_TO_OFFICE if delivery_type == "OFFICE" else SERVICE_TO_ADDRESS],
+            "autoAdjustPickupDate": True
+        }
+        
+        if order.get("payment_method") == "cod" and cod_amount > 0:
+            service_config["additionalServices"] = {
+                "cod": {
+                    "amount": cod_amount,
+                    "processingType": "CASH"
+                }
+            }
+        
+        # Determine shipping payer
+        order_total = float(order.get("total", 0))
+        shipping_payer = "SENDER" if order_total >= FREE_SHIPPING_THRESHOLD else "RECIPIENT"
+        
+        # Call calculate endpoint
+        calc_payload = {
+            "sender": {
+                "clientId": SPEEDY_CLIENT_ID,
+                "phone1": {"number": SPEEDY_SENDER_PHONE}
+            },
+            "recipient": recipient,
+            "service": service_config,
+            "content": {
+                "parcelsCount": 1,
+                "totalWeight": 0.5,
+                "contents": "Парфюми",
+                "package": "BOX"
+            },
+            "payment": {
+                "courierServicePayer": shipping_payer
+            }
+        }
+        
+        calc_data = await speedy_request("calculate", calc_payload)
+        calculations = calc_data.get("calculations", [])
+        
+        if not calculations:
+            raise HTTPException(status_code=500, detail="Не може да се изчисли цена за доставка")
+        
+        calc = calculations[0]
+        price = calc.get("price", {})
+        
+        # Build preview response
+        items_summary = []
+        for item in order.get("items", []):
+            items_summary.append({
+                "name": f"{item.get('brand', '')} {item.get('name', '')}",
+                "quantity": item.get("quantity", 1),
+                "price": item.get("price", 0)
+            })
+        
+        return {
+            "success": True,
+            "preview": True,
+            "order_number": order.get("order_number"),
+            "recipient": {
+                "name": shipping_address.get("full_name", ""),
+                "phone": shipping_address.get("phone", ""),
+                "email": order.get("user_email", ""),
+                "city": speedy_data.get("city_name", ""),
+                "office": speedy_data.get("office_name") if delivery_type == "OFFICE" else None,
+                "address": speedy_data.get("address") if delivery_type == "ADDRESS" else None,
+                "delivery_type": "До офис" if delivery_type == "OFFICE" else "До адрес"
+            },
+            "shipment": {
+                "cod_amount": cod_amount if order.get("payment_method") == "cod" else None,
+                "shipping_price": price.get("total"),
+                "shipping_currency": price.get("currency", "EUR"),
+                "shipping_payer": "KOSTIN (безплатна доставка)" if shipping_payer == "SENDER" else "Клиент",
+                "pickup_date": calc.get("pickupDate"),
+                "delivery_deadline": calc.get("deliveryDeadline")
+            },
+            "items": items_summary,
+            "totals": {
+                "subtotal": subtotal,
+                "discount": discount_amount,
+                "shipping": float(order.get("shipping_cost", 0)),
+                "total": order_total
+            },
+            "message": "Това е ПРЕГЛЕД. Товарителницата НЕ е създадена."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error previewing shipment for order {order_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

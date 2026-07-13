@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request, Query
 from typing import Optional
 import logging
+import re  # SEC-002 FIX: Import re for escaping user input
 
 logger = logging.getLogger(__name__)
 
@@ -253,24 +254,30 @@ async def search_products(
     
     # Brand filter
     if brand:
-        mongo_query["brand"] = {"$regex": f"^{brand}$", "$options": "i"}
+        # SEC-002 FIX: Escape regex special characters
+        safe_brand = re.escape(brand)
+        mongo_query["brand"] = {"$regex": f"^{safe_brand}$", "$options": "i"}
     
     # Text search
     if query_lower:
         # Check for brand alias in query
         alias_brand = resolve_brand_alias(query_lower)
         
+        # SEC-002 FIX: Escape regex special characters
+        safe_query = re.escape(query_lower)
+        
         if alias_brand and not brand:
             # Query is a brand alias, search for that brand
-            mongo_query["brand"] = {"$regex": alias_brand, "$options": "i"}
+            safe_alias = re.escape(alias_brand)
+            mongo_query["brand"] = {"$regex": safe_alias, "$options": "i"}
         else:
             # Regular search in name
             mongo_query["$or"] = [
-                {"name": {"$regex": query_lower, "$options": "i"}},
+                {"name": {"$regex": safe_query, "$options": "i"}},
             ]
             # If no brand filter, also search in brand
             if not brand:
-                mongo_query["$or"].append({"brand": {"$regex": query_lower, "$options": "i"}})
+                mongo_query["$or"].append({"brand": {"$regex": safe_query, "$options": "i"}})
     
     # Fetch products
     cursor = db.products.find(mongo_query).limit(50)  # Get more for sorting

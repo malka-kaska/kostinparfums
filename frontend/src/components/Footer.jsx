@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, MapPin } from 'lucide-react';
+import { Mail, MapPin, Instagram, Facebook } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import './Footer.css';
@@ -73,6 +73,26 @@ const Footer = () => {
                 <MapPin size={14} />
                 <span>гр. Плевен</span>
               </div>
+            </div>
+            <div className="footer-social">
+              <a 
+                href="https://www.instagram.com/kostin.parfums/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="social-link"
+                aria-label="Instagram"
+              >
+                <Instagram size={20} />
+              </a>
+              <a 
+                href="https://www.facebook.com/profile.php?id=61591235952620" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="social-link"
+                aria-label="Facebook"
+              >
+                <Facebook size={20} />
+              </a>
             </div>
           </div>
           

@@ -3,12 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useLanguage } from '../context/LanguageContext';
+import { useBrandBackground } from '../context/BrandBackgroundContext';
 import './Products.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const DubaiPerfumes = () => {
   const { t } = useLanguage();
+  const { setSelectedBrands: setHeaderBrands } = useBrandBackground();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,19 @@ const DubaiPerfumes = () => {
   const selectedScentProfilesParam = searchParams.get('scent_profiles') || '';
   const selectedScentProfiles = selectedScentProfilesParam ? selectedScentProfilesParam.split(',').filter(Boolean) : [];
   const sortBy = searchParams.get('sort') || 'popular';
+
+  // Update header background when brands change
+  useEffect(() => {
+    // Only update if the brands array actually changed (compare by content)
+    const brandsString = selectedBrands.join(',');
+    setHeaderBrands(selectedBrands);
+    
+    // Cleanup - reset on unmount
+    return () => {
+      setHeaderBrands([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBrandsParam]); // Use the string param, not the array
 
   useEffect(() => {
     const fetchProducts = async () => {

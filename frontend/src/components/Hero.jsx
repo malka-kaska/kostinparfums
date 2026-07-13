@@ -9,20 +9,15 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const DEFAULT_SLIDES = [
   {
     image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=1920&q=80',
-    alt: 'Luxury Perfume Collection'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=1920&q=80',
-    alt: 'Bleu de Chanel'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1920&q=80',
-    alt: 'Exclusive Perfumes'
+    alt: 'Luxury Perfume Collection',
+    show_button: true,
+    button_text: null,
+    button_link: '/products'
   }
 ];
 
 const Hero = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [heroSlides, setHeroSlides] = useState(DEFAULT_SLIDES);
 
@@ -52,13 +47,24 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, [heroSlides.length]);
 
+  // Get current slide's button settings
+  const currentSlideData = heroSlides[currentSlide] || {};
+  const showButton = currentSlideData.show_button !== false;
+  const buttonText = (lang === 'bg'
+    ? currentSlideData.button_text
+    : (currentSlideData.button_text_en || currentSlideData.button_text)) || t('heroButton');
+  const buttonLink = currentSlideData.button_link || '/products';
+
+  // Check if button link is external
+  const isExternal = buttonLink.startsWith('http');
+
   return (
     <section className="hero" data-testid="hero-section">
       {/* Slides */}
       <div className="hero-slides">
         {heroSlides.map((slide, index) => (
           <div
-            key={index}
+            key={slide.image || `slide-${index}`}
             className={`hero-slide ${index === currentSlide ? 'active' : ''}`}
             style={{ backgroundImage: `url(${slide.image})` }}
             aria-hidden={index !== currentSlide}
@@ -72,18 +78,26 @@ const Hero = () => {
           <div className="hero-content">
             <h1 className="hero-title" data-testid="hero-title">{t('heroTitle')}</h1>
             <p className="hero-subtitle">{t('heroSubtitle')}</p>
-            <Link to="/products" className="hero-button" data-testid="hero-button">
-              {t('heroButton')}
-            </Link>
+            {showButton && (
+              isExternal ? (
+                <a href={buttonLink} className="hero-button" data-testid="hero-button" target="_blank" rel="noopener noreferrer">
+                  {buttonText}
+                </a>
+              ) : (
+                <Link to={buttonLink} className="hero-button" data-testid="hero-button">
+                  {buttonText}
+                </Link>
+              )
+            )}
           </div>
         </div>
       </div>
 
       {/* Slide indicators */}
       <div className="hero-indicators">
-        {heroSlides.map((_, index) => (
+        {heroSlides.map((slide, index) => (
           <button
-            key={index}
+            key={slide.image || `indicator-${index}`}
             className={`hero-indicator ${index === currentSlide ? 'active' : ''}`}
             onClick={() => setCurrentSlide(index)}
             aria-label={`Go to slide ${index + 1}`}

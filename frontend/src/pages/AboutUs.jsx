@@ -25,10 +25,56 @@ const SafeText = ({ text }) => {
 };
 
 const AboutUs = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+
+  // Inject SEO meta + Organization JSON-LD
+  const setMeta = (attr, value, content) => {
+    if (typeof document === 'undefined') return;
+    let el = document.querySelector(`meta[${attr}="${value}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute(attr, value);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  };
+  if (typeof document !== 'undefined') {
+    document.title = (lang === 'bg'
+      ? 'За KOSTIN | Автентични луксозни парфюми — доставка в България'
+      : 'About KOSTIN | Authentic luxury perfumes — delivery in Bulgaria');
+    setMeta('name', 'description', lang === 'bg'
+      ? 'KOSTIN — премиум онлайн магазин за 100% автентични луксозни парфюми от Chanel, Dior, YSL, Tom Ford и още. Директни партньорства, батч проверка, доставка чрез Speedy.'
+      : 'KOSTIN — premium online store for 100% authentic luxury perfumes from Chanel, Dior, YSL, Tom Ford and more. Direct partnerships, batch verification, delivery via Speedy.');
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', 'https://kostinparfums.com/about');
+  }
+
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "KOSTIN",
+    "url": "https://kostinparfums.com",
+    "logo": "https://kostinparfums.com/logo.png",
+    "description": "Luxury perfume boutique offering authentic designer fragrances with delivery across Bulgaria via Speedy.",
+    "email": "contact@kostin.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "бул. Чаталджа №4, вх. А, ет. 4, ап. 10",
+      "addressLocality": "Плевен",
+      "postalCode": "5800",
+      "addressCountry": "BG"
+    },
+    "founder": { "@type": "Person", "name": "Konstantin Kirchev" }
+  };
 
   return (
     <div className="about-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       <section className="about-hero">
         <div className="container">
           <h1 className="about-title">{t('aboutTitle')}</h1>
@@ -89,6 +135,38 @@ const AboutUs = () => {
             <p className="section-text"><SafeText text={t('aboutPhilosophy1')} /></p>
             <p className="section-text">{t('aboutPhilosophy2')}</p>
           </div>
+        </section>
+
+        {/* Extended SEO content sections */}
+        <section className="about-section">
+          <h2 className="section-heading">{t('aboutStoryTitle')}</h2>
+          <p className="section-text">{t('aboutStoryText1')}</p>
+          <p className="section-text">{t('aboutStoryText2')}</p>
+          <p className="section-text">{t('aboutStoryText3')}</p>
+        </section>
+
+        <section className="about-section">
+          <h2 className="section-heading">{t('aboutAuthTitle')}</h2>
+          <p className="section-text">{t('aboutAuthText1')}</p>
+          <p className="section-text">{t('aboutAuthText2')}</p>
+          <p className="section-text">{t('aboutAuthText3')}</p>
+          <p className="section-text">{t('aboutAuthText4')}</p>
+        </section>
+
+        <section className="about-section">
+          <h2 className="section-heading">{t('aboutDeliveryTitle')}</h2>
+          <p className="section-text">{t('aboutDeliveryText1')}</p>
+          <p className="section-text">{t('aboutDeliveryText2')}</p>
+          <p className="section-text">{t('aboutDeliveryText3')}</p>
+          <p className="section-text">{t('aboutDeliveryText4')}</p>
+        </section>
+
+        <section className="about-section">
+          <h2 className="section-heading">{t('aboutGuideTitle')}</h2>
+          <p className="section-text">{t('aboutGuideText1')}</p>
+          <p className="section-text">{t('aboutGuideText2')}</p>
+          <p className="section-text">{t('aboutGuideText3')}</p>
+          <p className="section-text">{t('aboutGuideText4')}</p>
         </section>
 
         <section className="about-mission">

@@ -37,13 +37,11 @@ from routes.collections import router as collections_router
 from routes.speedy import router as speedy_router
 from routes.discounts import router as discounts_router
 from routes.scent_migration import router as scent_migration_router
+from routes.seo import router as seo_router
+from routes.ai_descriptions import router as ai_descriptions_router
 from routes.meta_catalog import router as meta_catalog_router
-from routes.meta_capi import router as meta_capi_router
-from routes.meta_ads import router as meta_ads_router
-from routes.meta_pixel import router as meta_pixel_router
-from routes.huggingface import router as huggingface_router
-from routes.makeugc import router as makeugc_router
-from routes.content import router as content_router
+from routes.nekorekten import router as nekorekten_router
+from routes.brand_backgrounds import router as brand_backgrounds_router
 from utils.auth import seed_admin
 from utils.email_service import send_order_confirmation_email, send_order_verification_email, send_invoice_email
 from utils.invbg_integration import create_official_invoice, get_invoice_pdf_bytes
@@ -75,10 +73,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Basic health check
+# Basic health check - IMPORTANT: Must be at root level for K8s probes
 @app.get("/health")
 async def health_check():
     """Health check endpoint for Kubernetes liveness/readiness probes"""
+    return {"status": "healthy", "service": "kostin-backend"}
+
+
+@app.get("/api/health")
+async def api_health_check():
+    """API-prefixed health check endpoint"""
     return {"status": "healthy", "service": "kostin-backend"}
 
 
@@ -102,7 +106,6 @@ class CheckoutRequest(BaseModel):
     shipping_method: Optional[str] = None
     discount_code: Optional[str] = None
     discount_amount: Optional[float] = 0
-    utm_params: Optional[dict] = None  # UTM attribution params
 
 
 class CheckoutResponse(BaseModel):
@@ -233,7 +236,6 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest):
             "shipping_method": checkout_data.shipping_method,
             "discount_code": checkout_data.discount_code,
             "discount_amount": checkout_data.discount_amount or 0,
-            "utm_params": checkout_data.utm_params or None,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
@@ -337,8 +339,8 @@ async def stripe_webhook(request: Request):
                         import secrets
                         verification_token = secrets.token_urlsafe(32)
                         
-                        # Build order document
-                        order_doc = {
+                        # Create order with pending_verification status
+                        order_result = await db.orders.insert_one({
                             "user_id": transaction.get("user_id", ""),
                             "user_email": transaction.get("user_email", ""),
                             "user_name": transaction.get("user_name", ""),
@@ -358,15 +360,7 @@ async def stripe_webhook(request: Request):
                             "verification_expires": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
                             "created_at": datetime.now(timezone.utc).isoformat(),
                             "updated_at": datetime.now(timezone.utc).isoformat(),
-                        }
-
-                        # Preserve UTM attribution from checkout session
-                        utm_params = transaction.get("utm_params")
-                        if utm_params:
-                            order_doc["utm_params"] = utm_params
-
-                        # Create order with pending_verification status
-                        order_result = await db.orders.insert_one(order_doc)
+                        })
                         
                         order_id = str(order_result.inserted_id)
                         logger.info(f"Order created (pending verification) for session {webhook_response.session_id}")
@@ -594,13 +588,11 @@ app.include_router(collections_router)
 app.include_router(speedy_router)
 app.include_router(discounts_router)
 app.include_router(scent_migration_router)
+app.include_router(seo_router)
+app.include_router(ai_descriptions_router)
 app.include_router(meta_catalog_router)
-app.include_router(meta_capi_router)
-app.include_router(meta_ads_router)
-app.include_router(meta_pixel_router)
-app.include_router(huggingface_router)
-app.include_router(makeugc_router)
-app.include_router(content_router)
+app.include_router(nekorekten_router)
+app.include_router(brand_backgrounds_router)
 
 # CORS — must use explicit origin for credentials
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
@@ -616,17 +608,45 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    # Run database migrations first
-    await run_migrations(db)
-    logger.info("Migrations check complete")
+    """Combined startup event - handles all initialization"""
+    import asyncio
     
-    # Seed admin user
-    await seed_admin(db)
-    logger.info("Admin user seeded successfully")
+    try:
+        # Run database migrations with timeout protection
+        try:
+            await asyncio.wait_for(run_migrations(db), timeout=45.0)
+            logger.info("Migrations check complete")
+        except asyncio.TimeoutError:
+            logger.warning("Migrations timed out - app will continue")
+        except Exception as e:
+            logger.error(f"Migration error (non-blocking): {e}")
+        
+        # Seed admin user with timeout
+        try:
+            await asyncio.wait_for(seed_admin(db), timeout=10.0)
+            logger.info("Admin user seeded successfully")
+        except asyncio.TimeoutError:
+            logger.warning("Admin seed timed out")
+        except Exception as e:
+            logger.error(f"Admin seed error: {e}")
+        
+        # Seed navigation collections with timeout
+        try:
+            await asyncio.wait_for(seed_nav_collections(db), timeout=5.0)
+            logger.info("Navigation collections seeded")
+        except asyncio.TimeoutError:
+            logger.warning("Nav collections seed timed out")
+        except Exception as e:
+            logger.error(f"Nav seed error: {e}")
+        
+        # Start background tasks (non-blocking)
+        asyncio.create_task(auto_sync_speedy_statuses())
+        logger.info("Started Speedy status auto-sync background task (every 10 minutes)")
+        
+    except Exception as e:
+        logger.error(f"Startup error (app will continue): {e}")
     
-    # Seed navigation collections (Dubai Fragrances)
-    await seed_nav_collections(db)
-    logger.info("Navigation collections seeded")
+    logger.info("Application startup complete")
 
 
 async def seed_nav_collections(database):
@@ -706,10 +726,3 @@ async def auto_sync_speedy_statuses():
         except Exception as e:
             logger.error(f"Error in auto-sync task: {e}")
             await asyncio.sleep(60)  # Wait a minute before retrying on error
-
-
-@app.on_event("startup")
-async def start_background_tasks():
-    """Start background tasks on application startup"""
-    asyncio.create_task(auto_sync_speedy_statuses())
-    logger.info("Started Speedy status auto-sync background task (every 10 minutes)")

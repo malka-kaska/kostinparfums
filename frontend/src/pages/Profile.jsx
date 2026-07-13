@@ -91,7 +91,7 @@ const Profile = () => {
           setOrders(data.orders);
         }
       } catch (err) {
-        // Silently handle order fetch errors
+        console.warn('Failed to fetch orders:', err.message);
       }
     };
     if (user) fetchOrders();

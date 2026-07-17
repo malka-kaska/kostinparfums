@@ -53,7 +53,9 @@ const OrderSuccess = () => {
       localStorage.removeItem('kostin_cart');
       localStorage.removeItem('cart');
       window.dispatchEvent(new Event('cartUpdated'));
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn('Failed to clear cart:', err.message);
+    }
   }, [orderNumber]);
 
   return (

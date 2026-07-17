@@ -1,0 +1,68 @@
+[
+  {
+    "file": "ig_stories/day1_erba_pura_teaser.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Submitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_generations as a follow-up poll. In text-only clients, use job_status with sync:true to poll for comple"
+  },
+  {
+    "file": "ig_stories/day1_erba_pura_reveal.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Submitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_generations as a follow-up poll. In text-only clients, use job_status with sync:true to poll for comple"
+  },
+  {
+    "file": "ig_stories/day3_quiz.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Submitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_generations as a follow-up poll. In text-only clients, use job_status with sync:true to poll for comple"
+  },
+  {
+    "file": "meta_briefs/tofu_top_luxury.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Note: adjustments applied — aspect_ratio: \"1.91:1\" → \"16:9\" (closest match by log-ratio distance).\\n\\nSubmitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_g"
+  },
+  {
+    "file": "meta_briefs/mofu_everyday.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Error starting generation: Something went wrong. Please try again.\\nRequest ID: ff380178-df13-47bd-b3c8-b765a2fbcc94'}], 'structuredContent': {'error': 'Something went wrong. Please try again.', 'requ"
+  },
+  {
+    "file": "meta_briefs/bofu_cart.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Note: adjustments applied — aspect_ratio: \"1.91:1\" → \"16:9\" (closest match by log-ratio distance).\\n\\nSubmitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_g"
+  },
+  {
+    "file": "meta_briefs/auth_authentic.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Submitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_generations as a follow-up poll. In text-only clients, use job_status with sync:true to poll for comple"
+  },
+  {
+    "file": "meta_briefs/price_gift.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Submitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_generations as a follow-up poll. In text-only clients, use job_status with sync:true to poll for comple"
+  },
+  {
+    "file": "fb_ads/launch_brand_1200.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Submitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_generations as a follow-up poll. In text-only clients, use job_status with sync:true to poll for comple"
+  },
+  {
+    "file": "fb_ads/spotlight_1200x1500.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Submitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_generations as a follow-up poll. In text-only clients, use job_status with sync:true to poll for comple"
+  },
+  {
+    "file": "fb_ads/cart_reminder_1200x628.png",
+    "status": "submitted",
+    "url": null,
+    "raw": "{'result': {'content': [{'type': 'text', 'text': 'Note: adjustments applied — aspect_ratio: \"1.91:1\" → \"16:9\" (closest match by log-ratio distance).\\n\\nSubmitted 1 job. If a widget is visible, it polls automatically — do not call job_status or show_g"
+  }
+]

@@ -95,13 +95,15 @@ export const initFromStoredConsent = () => {
   if (typeof window === 'undefined') return;
   try {
     const raw = localStorage.getItem('cookie_consent');
+    console.log('[metaPixel][initFromStoredConsent] raw=', raw);
     if (!raw) return;
     const prefs = JSON.parse(raw);
+    console.log('[metaPixel][initFromStoredConsent] parsed=', prefs, 'marketing=', !!prefs.marketing);
     if (prefs && prefs.marketing === true) {
       initializeMetaPixel();
     }
-  } catch {
-    /* invalid localStorage value — do nothing */
+  } catch (err) {
+    console.log('[metaPixel][initFromStoredConsent] invalid localStorage', err);
   }
 };
 

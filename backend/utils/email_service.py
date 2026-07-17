@@ -1129,7 +1129,9 @@ async def send_admin_new_order_notification(
     shipping_address: dict,
     tracking_number: str = None,
     discount_code: str = None,
-    discount_amount: float = 0
+    discount_amount: float = 0,
+    is_risky_customer: bool = False,
+    risk_reports_count: int = 0
 ):
     """Send email to admin when a new order is placed"""
     
@@ -1190,6 +1192,19 @@ async def send_admin_new_order_notification(
                     <span>-€{discount_amount:.2f}</span>
                 </div>"""
     
+    # Risk warning HTML
+    risk_warning_html = ""
+    if is_risky_customer:
+        risk_warning_html = f"""
+            <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
+                <h3 style="margin: 0 0 10px 0; color: #dc2626;">⚠️ ВНИМАНИЕ: Рисков клиент!</h3>
+                <p style="margin: 0; color: #991b1b;">
+                    Този клиент има <strong>{risk_reports_count} сигнал(а)</strong> в НЕкоректен.КОМ<br>
+                    <a href="https://nekorekten.com/bg/check?phone={customer_phone.replace('+', '')}" target="_blank" style="color: #dc2626;">Виж детайли →</a>
+                </p>
+            </div>
+            """
+    
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -1212,6 +1227,8 @@ async def send_admin_new_order_notification(
                     {f'<span style="display: inline-block; background: #22c55e; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; margin-left: 8px;">🏷️ Код: {discount_code}</span>' if discount_code else ''}
                 </p>
             </div>
+            
+            {risk_warning_html}
             
             <!-- Customer Info -->
             <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">

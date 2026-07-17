@@ -7,52 +7,13 @@ from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from typing import Optional
 from bson import ObjectId
 import logging
-from datetime import datetime, timezone
-import asyncio
-import httpx
 
 from utils.auth import get_current_user
-from utils.meta_catalog import (
-    meta_catalog,
-    transform_product_for_meta,
-    to_batch_feed_item,
-    validate_image_for_meta,
-)
+from utils.meta_catalog import meta_catalog, transform_product_for_meta, to_batch_feed_item
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/meta-catalog", tags=["meta-catalog"])
-
-ORDER_STATUSES_FOR_BESTSELLER = ["completed", "shipped", "delivered", "paid", "pending"]
-MAX_PRODUCTS_FOR_RANKING = 10000
-
-
-async def _build_bestseller_rank_map(db) -> dict:
-    """Build product_id -> bestseller rank map from orders."""
-    pipeline = [
-        {"$match": {"status": {"$in": ORDER_STATUSES_FOR_BESTSELLER}}},
-        {"$unwind": "$items"},
-        {"$group": {"_id": "$items.product_id", "total_sold": {"$sum": "$items.quantity"}}},
-        {"$sort": {"total_sold": -1}},
-    ]
-    try:
-        sales_data = await db.orders.aggregate(pipeline).to_list(MAX_PRODUCTS_FOR_RANKING)
-    except Exception:
-        return {}
-    return {str(item["_id"]): idx + 1 for idx, item in enumerate(sales_data)}
-
-
-def _required_feed_fields() -> tuple:
-    return ("id", "title", "description", "availability", "condition", "price", "link", "image_link", "brand")
-
-
-def _check_required_fields(feed_item: dict) -> list:
-    missing = []
-    for field_name in _required_feed_fields():
-        value = feed_item.get(field_name)
-        if value is None or value == "":
-            missing.append(field_name)
-    return missing
 
 
 @router.get("/test")
@@ -172,92 +133,6 @@ async def sync_all_products(request: Request, background_tasks: BackgroundTasks)
         "total_products": count,
         "status": "processing"
     }
-
-
-@router.get("/feed")
-async def generate_meta_feed(request: Request, validate_images: bool = False):
-    """
-    Generate full Meta product feed in EUR for all active and visible products.
-    Includes required fields and custom labels.
-    """
-    db = request.app.state.db
-    user = await get_current_user(request, db)
-
-    if user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    cursor = db.products.find({"is_visible": True, "is_active": True})
-    products = []
-    async for p in cursor:
-        p["_id"] = str(p["_id"])
-        products.append(p)
-
-    rank_map = await _build_bestseller_rank_map(db)
-    feed_items = []
-    violations = []
-    image_checks = []
-
-    for product in products:
-        product["bestseller_rank"] = rank_map.get(product.get("_id"), "unranked")
-        meta_product = transform_product_for_meta(product)
-        feed_item = to_batch_feed_item(meta_product)
-        feed_items.append(feed_item)
-
-        missing = _check_required_fields(feed_item)
-        if missing:
-            violations.append({
-                "product_id": feed_item.get("id"),
-                "type": "missing_required_fields",
-                "missing_fields": missing,
-            })
-
-        if validate_images:
-            image_checks.append((feed_item.get("id"), feed_item.get("image_link", "")))
-
-    if validate_images and image_checks:
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as shared_client:
-            image_reports = await asyncio.gather(
-                *(validate_image_for_meta(image_url, client=shared_client) for _, image_url in image_checks),
-                return_exceptions=True,
-            )
-        for (product_id, image_url), image_report in zip(image_checks, image_reports):
-            if isinstance(image_report, Exception):
-                violations.append({
-                    "product_id": product_id,
-                    "type": "image_validation",
-                    "report": {
-                        "image_url": image_url,
-                        "is_valid": False,
-                        "violations": [f"Грешка при проверка на снимка: {str(image_report)}"],
-                        "warnings": [],
-                    },
-                })
-                continue
-            if image_report.get("violations") or image_report.get("warnings"):
-                violations.append({
-                    "product_id": product_id,
-                    "type": "image_validation",
-                    "report": image_report,
-                })
-
-    return {
-        "success": True,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "currency": "EUR",
-        "total_products": len(feed_items),
-        "feed": feed_items,
-        "validation_report": {
-            "has_violations": len(violations) > 0,
-            "violations_count": len(violations),
-            "violations": violations,
-        },
-    }
-
-
-@router.get("/feed/validation-report")
-async def get_meta_feed_validation_report(request: Request):
-    """Run full feed validation report with image checks."""
-    return await generate_meta_feed(request, validate_images=True)
 
 
 @router.post("/sync/batch")

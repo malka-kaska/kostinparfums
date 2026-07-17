@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  This is a static fallback sitemap.
+  The FULL, dynamic sitemap (including all products) is served from
+  /api/sitemap.xml and referenced in robots.txt.
+-->
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://kostinparfums.com/api/sitemap.xml</loc>
+  </sitemap>
+</sitemapindex>

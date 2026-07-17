@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, Heart, ArrowLeft, RotateCcw, ShieldCheck, Truck, PackageCheck } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowLeft, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,6 @@ import { getProductImages, FALLBACK_IMAGE } from '../utils/imageUtils';
 import parseProductName from '../utils/parseProductName';
 import { addToRecentlyViewed } from '../utils/recentlyViewed';
 import { trackViewItem } from '../utils/analytics';
-import { pixelViewContent, pixelAddToWishlist, pixelAddToCart } from '../utils/metaPixel';
 import { toast } from '../components/ui/sonner';
 import './ProductDetail.css';
 
@@ -45,7 +44,6 @@ const ProductDetail = () => {
           if (viewedRef.current !== data.id) {
             viewedRef.current = data.id;
             trackViewItem(data);
-            pixelViewContent(data);
           }
           
           // Fetch variants (other sizes of same product)
@@ -55,8 +53,8 @@ const ProductDetail = () => {
             setVariants(varData.variants || []);
           }
           
-          // Fetch related products by scent profile
-          const relRes = await fetch(`${API_URL}/api/products/${id}/related?limit=5`);
+          // Fetch related products (admin picks + FBT + brand + category)
+          const relRes = await fetch(`${API_URL}/api/products/${id}/related?limit=6`);
           if (relRes.ok) {
             const relData = await relRes.json();
             setRelatedProducts(relData.products || []);
@@ -79,64 +77,8 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     await addToCart(product, quantity);
-    pixelAddToCart(product, quantity);
     toast.success(t('addedToCart', { qty: quantity, name: product.name }));
   };
-
-  // Inject / update Schema.org structured data for SEO rich results
-  useEffect(() => {
-    if (!product) return;
-
-    const availability = product.stock > 0
-      ? 'https://schema.org/InStock'
-      : 'https://schema.org/OutOfStock';
-
-    const schema = {
-      '@context': 'https://schema.org/',
-      '@type': 'Product',
-      name: product.name,
-      image: product.images && product.images.length > 0
-        ? product.images
-        : product.image
-          ? [product.image]
-          : [],
-      description: (lang === 'bg' && product.description_bg)
-        ? product.description_bg.replace(/<[^>]*>/g, '')
-        : (product.description || '').replace(/<[^>]*>/g, ''),
-      sku: product.sku || String(product.id),
-      brand: {
-        '@type': 'Brand',
-        name: product.brand,
-      },
-      offers: {
-        '@type': 'Offer',
-        url: `${window.location.origin}/product/${product.id}`,
-        priceCurrency: 'EUR',
-        price: product.price.toFixed(2),
-        availability,
-        itemCondition: 'https://schema.org/NewCondition',
-        seller: {
-          '@type': 'Organization',
-          name: 'KOSTIN Parfums',
-        },
-      },
-    };
-
-    const scriptId = 'product-schema-ld-json';
-    let el = document.getElementById(scriptId);
-    if (!el) {
-      el = document.createElement('script');
-      el.id = scriptId;
-      el.type = 'application/ld+json';
-      document.head.appendChild(el);
-    }
-    el.textContent = JSON.stringify(schema);
-
-    return () => {
-      const existing = document.getElementById(scriptId);
-      if (existing) existing.remove();
-    };
-  }, [product, lang]);
 
   const getDescription = () => {
     if (!product) return '';
@@ -173,8 +115,68 @@ const ProductDetail = () => {
     : getProductImages(product.image);
   const currentImage = imageError[selectedImageIndex] ? FALLBACK_IMAGE : productImages[selectedImageIndex];
 
+  // SEO: schema.org Product structured data (JSON-LD) for search engines
+  const productDescription = (lang === 'bg' && product.description_bg)
+    ? product.description_bg.replace(/<[^>]*>/g, '').slice(0, 500)
+    : (product.description || '').replace(/<[^>]*>/g, '').slice(0, 500);
+  const canonicalUrl = `https://kostinparfums.com/product/${product.id}`;
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "brand": { "@type": "Brand", "name": product.brand },
+    "description": productDescription || `${product.brand} ${product.name} - authentic luxury fragrance available at KOSTIN.`,
+    "image": productImages.length > 0 ? productImages : undefined,
+    "sku": product.sku || product.id,
+    "url": canonicalUrl,
+    "offers": {
+      "@type": "Offer",
+      "url": canonicalUrl,
+      "priceCurrency": "EUR",
+      "price": product.price,
+      "availability": product.stock > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": { "@type": "Organization", "name": "KOSTIN" }
+    }
+  };
+
+  // Inject/update meta tags & structured data for SEO
+  const setMeta = (attr, value, content) => {
+    if (typeof document === 'undefined') return;
+    let el = document.querySelector(`meta[${attr}="${value}"]`);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute(attr, value);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  };
+  if (typeof document !== 'undefined') {
+    // Title
+    document.title = `${product.brand} ${product.name} | KOSTIN`;
+    // Description
+    setMeta('name', 'description', productDescription || `${product.brand} ${product.name} — authentic luxury fragrance at KOSTIN. Fast shipping across Bulgaria.`);
+    // Canonical link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', canonicalUrl);
+    // Open Graph
+    setMeta('property', 'og:title', `${product.brand} ${product.name} | KOSTIN`);
+    setMeta('property', 'og:description', productDescription || `${product.brand} ${product.name} — luxury fragrance at KOSTIN.`);
+    setMeta('property', 'og:url', canonicalUrl);
+    setMeta('property', 'og:type', 'product');
+    if (productImages[0]) setMeta('property', 'og:image', productImages[0]);
+  }
+
   return (
     <div className="product-detail-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="container section-padding-small">
         <button className="back-button" onClick={() => navigate(-1)} data-testid="back-button">
           <ArrowLeft size={20} />
@@ -262,22 +264,6 @@ const ProductDetail = () => {
               <span>{t('freeReturnInfo') || '14 дни безплатно връщане'}</span>
             </div>
 
-            {/* Trust badges */}
-            <div className="trust-badges" data-testid="trust-badges">
-              <div className="trust-badge-item">
-                <ShieldCheck size={16} className="trust-badge-icon" />
-                <span>{t('trustBadgeAuthentic')}</span>
-              </div>
-              <div className="trust-badge-item">
-                <Truck size={16} className="trust-badge-icon" />
-                <span>{t('trustBadgeDelivery')}</span>
-              </div>
-              <div className="trust-badge-item">
-                <PackageCheck size={16} className="trust-badge-icon" />
-                <span>{t('trustBadgeFreeShipping')}</span>
-              </div>
-            </div>
-
             <div className="product-actions mt-4">
               <div className="quantity-selector" data-testid="quantity-selector">
                 <button 
@@ -310,18 +296,10 @@ const ProductDetail = () => {
                 {t('addToCart')}
               </button>
 
-              <button className="wishlist-button" aria-label="Add to wishlist" data-testid="wishlist-button" onClick={() => pixelAddToWishlist(product)}>
+              <button className="wishlist-button" aria-label="Add to wishlist" data-testid="wishlist-button">
                 <Heart size={20} />
               </button>
             </div>
-
-            {/* Delivery estimate */}
-            {product.stock > 0 && (
-              <div className="delivery-estimate" data-testid="delivery-estimate">
-                <Truck size={15} className="delivery-estimate-icon" />
-                <span>{t('deliveryEstimate')}</span>
-              </div>
-            )}
 
             {/* Product Variants (Different Sizes) */}
             {variants.length > 1 && (

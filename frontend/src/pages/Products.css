@@ -442,3 +442,55 @@
     flex: 1;
   }
 }
+/* Collection Banner */
+.collection-banner {
+  position: relative;
+  margin: 32px 0 40px;
+  min-height: 280px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+}
+
+.collection-banner-overlay {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+}
+
+.collection-banner-overlay h1 {
+  color: #fff;
+  margin: 0;
+}
+
+.collection-banner-desc {
+  color: rgba(255, 255, 255, 0.92);
+  margin-top: 12px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.collection-banner-count {
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .collection-banner {
+    min-height: 200px;
+    margin: 20px 0 28px;
+  }
+  .collection-banner-overlay {
+    padding: 24px 20px;
+  }
+}

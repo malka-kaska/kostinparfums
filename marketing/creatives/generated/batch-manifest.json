@@ -1,0 +1,42 @@
+{
+  "campaign": "KOSTIN_MakeUGC_July2026",
+  "status": "pending_generation",
+  "total_days": 30,
+  "batches": [
+    {
+      "id": "batch-01-07",
+      "days": [1, 2, 3, 4, 5, 6, 7],
+      "output_dir": "marketing/creatives/generated/day-01-07",
+      "status": "pending",
+      "notes": "Static stills and Reels prompts for Days 1-7"
+    },
+    {
+      "id": "batch-08-14",
+      "days": [8, 9, 10, 11, 12, 13, 14],
+      "output_dir": "marketing/creatives/generated/day-08-14",
+      "status": "pending",
+      "notes": "TikTok video, carousel, and product candids"
+    },
+    {
+      "id": "batch-15-21",
+      "days": [15, 16, 17, 18, 19, 20, 21],
+      "output_dir": "marketing/creatives/generated/day-15-21",
+      "status": "pending",
+      "notes": "UGC recap, niche/oud treatments, space for brand assets"
+    },
+    {
+      "id": "batch-22-30",
+      "days": [22, 23, 24, 25, 26, 27, 28, 29, 30],
+      "output_dir": "marketing/creatives/generated/day-22-30",
+      "status": "pending",
+      "notes": "Closing month recap and final waves for Meta upload"
+    }
+  ],
+  "required_env": [
+    "MAKEUGC_API_KEY",
+    "META_ACCESS_TOKEN",
+    "META_AD_ACCOUNT_ID",
+    "META_PAGE_ID",
+    "META_INSTAGRAM_BUSINESS_ACCOUNT_ID"
+  ]
+}

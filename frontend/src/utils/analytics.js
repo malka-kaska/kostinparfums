@@ -22,8 +22,8 @@ const send = (...args) => {
   if (!isReady()) return;
   try {
     window.gtag(...args);
-  } catch {
-    /* swallow: a failed analytics call must never affect the user */
+  } catch (err) {
+    console.warn('Analytics error (non-blocking):', err.message);
   }
 };
 

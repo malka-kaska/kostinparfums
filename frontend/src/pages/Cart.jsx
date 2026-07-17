@@ -4,6 +4,7 @@ import { Trash2, Plus, Minus, ShoppingBag, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { trackRemoveFromCart } from '../utils/analytics';
+import YouMayAlsoLike from '../components/YouMayAlsoLike';
 import './Cart.css';
 
 const Cart = () => {
@@ -186,6 +187,14 @@ const Cart = () => {
             </Link>
           </div>
         </div>
+
+        <YouMayAlsoLike
+          mode="cart"
+          productIds={cart.map((item) => item.id)}
+          limit={6}
+          minToShow={3}
+          testId="cart-you-may-also-like"
+        />
       </div>
     </div>
   );

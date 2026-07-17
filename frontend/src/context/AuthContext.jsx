@@ -34,7 +34,9 @@ export const AuthProvider = ({ children }) => {
         setUser(data);
         return data;
       }
-    } catch { /* silent fail - user remains null */ }
+    } catch (err) {
+      console.warn('Auth check failed:', err.message);
+    }
     setUser(null);
     return null;
   }, []);

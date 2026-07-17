@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Package, Filter, Home, Percent, Sparkles, Cloud, Rocket } from 'lucide-react';
+import { ShoppingBag, Package, Filter, Home, Percent, Sparkles, Cloud, Image, Link2, Wand2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import ProductsManager from './components/ProductsManager';
@@ -10,7 +10,9 @@ import HomepageManager from './components/HomepageManager';
 import DiscountCodesManager from './components/DiscountCodesManager';
 import ScentMigrationManager from './components/ScentMigrationManager';
 import MetaCatalogManager from './components/MetaCatalogManager';
-import { CampaignsManager } from './components/CampaignsManager';
+import BrandBackgroundsManager from './components/BrandBackgroundsManager';
+import VariantsManager from './components/VariantsManager';
+import AiDescriptionsManager from './components/AiDescriptionsManager';
 import '../Admin.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -164,12 +166,28 @@ const Admin = () => {
             <span>Meta Catalog</span>
           </button>
           <button
-            className={`admin-tab ${activeTab === 'campaigns' ? 'active' : ''}`}
-            onClick={() => setActiveTab('campaigns')}
-            data-testid="admin-tab-campaigns"
+            className={`admin-tab ${activeTab === 'backgrounds' ? 'active' : ''}`}
+            onClick={() => setActiveTab('backgrounds')}
+            data-testid="admin-tab-backgrounds"
           >
-            <Rocket size={18} />
-            <span>Campaigns</span>
+            <Image size={18} />
+            <span>{t('brandBackgrounds') || 'Фонове'}</span>
+          </button>
+          <button
+            className={`admin-tab ${activeTab === 'variants' ? 'active' : ''}`}
+            onClick={() => setActiveTab('variants')}
+            data-testid="admin-tab-variants"
+          >
+            <Link2 size={18} />
+            <span>{t('variantsTab') || 'Варианти'}</span>
+          </button>
+          <button
+            className={`admin-tab ${activeTab === 'ai-descriptions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('ai-descriptions')}
+            data-testid="admin-tab-ai-descriptions"
+          >
+            <Wand2 size={18} />
+            <span>{t('aiDescriptions') || 'AI Описания'}</span>
           </button>
         </div>
 
@@ -205,12 +223,16 @@ const Admin = () => {
           <MetaCatalogManager />
         )}
 
-        {activeTab === 'campaigns' && (
-          <CampaignsManager products={products} />
+        {activeTab === 'backgrounds' && (
+          <BrandBackgroundsManager />
         )}
 
-        {activeTab === 'meta' && (
-          <MetaCatalogManager />
+        {activeTab === 'variants' && (
+          <VariantsManager />
+        )}
+
+        {activeTab === 'ai-descriptions' && (
+          <AiDescriptionsManager />
         )}
       </div>
     </div>

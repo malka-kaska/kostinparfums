@@ -1,25 +1,17 @@
-# Deploy KOSTIN Parfums
+# KOSTIN Parfums — Deploy Guide
 
-## Render
-1. New + -> Deploy from GitHub -> `malka-kaska/kostinparfums`
-2. Runtime: Docker
-3. Build command: leave default
-4. Start command: `uvicorn backend.server:app --host 0.0.0.0 --port $PORT`
-5. Add env vars from `.env.example`
-6. Deploy
+## Backend deploy
+1. Set required env vars from `.env.example` on your host/provider.
+2. Install deps: `pip install -r backend/requirements.txt`
+3. Validate env: `python scripts/setup_env.py`
+4. Start backend: `python scripts/start_server.py --host 0.0.0.0 --port 8000`
 
-## Docker/VPS
-```bash
-cp .env.example .env
-# fill real secrets
-docker compose up -d --build
-```
+## Frontend deploy
+- Build frontend: `cd frontend && npm run build`
+- Serve `frontend/build` with the backend or a static host pointing to `FRONTEND_URL`
 
-## Meta apps
-- `META_APP_ID`: `1359746189387697`
-- Also set `META_APP_SECRET`, `META_PAGE_ID`, `META_INSTAGRAM_BUSINESS_ACCOUNT_ID`, `META_ACCESS_TOKEN`
-
-## Publish content
-```bash
-python scripts/publish_content.py
-```
+## Meta events checklist
+- Pixel ID: `2118783192346725`
+- Enable events in Meta Events Manager: `ViewContent`, `AddToCart`, `Purchase`
+- Verify cookie consent allows marketing=true on `kostinparfums.com`
+- Use `marketing/meta-events-debug-checklist.md` for console validation

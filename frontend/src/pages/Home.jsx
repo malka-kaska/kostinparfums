@@ -8,8 +8,8 @@ import './Home.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Category images for Men and Women fragrances
-const GENDER_IMAGES = {
+// Fallback category images if admin hasn't uploaded custom ones
+const DEFAULT_GENDER_IMAGES = {
   men: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&q=80',
   women: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80',
 };
@@ -17,7 +17,9 @@ const GENDER_IMAGES = {
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
-  const { t } = useLanguage();
+  const [campaignBanner, setCampaignBanner] = useState(null);
+  const [genderImages, setGenderImages] = useState(DEFAULT_GENDER_IMAGES);
+  const { t, lang } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +36,19 @@ const Home = () => {
         if (bestSellersRes.ok) {
           const bestSellersData = await bestSellersRes.json();
           setBestSellers(bestSellersData);
+        }
+
+        // Fetch homepage settings (campaign banner + gender images)
+        const settingsRes = await fetch(`${API_URL}/api/homepage/settings`);
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setCampaignBanner(settingsData.campaign_banner || null);
+          if (settingsData.gender_images) {
+            setGenderImages({
+              men: settingsData.gender_images.men || DEFAULT_GENDER_IMAGES.men,
+              women: settingsData.gender_images.women || DEFAULT_GENDER_IMAGES.women,
+            });
+          }
         }
       } catch {
         setFeaturedProducts([]);
@@ -59,7 +74,7 @@ const Home = () => {
               to="/products?gender=men"
               className="gender-card"
               style={{
-                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${GENDER_IMAGES.men})`,
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${genderImages.men})`,
               }}
             >
               <div className="gender-content">
@@ -71,7 +86,7 @@ const Home = () => {
               to="/products?gender=women"
               className="gender-card"
               style={{
-                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${GENDER_IMAGES.women})`,
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${genderImages.women})`,
               }}
             >
               <div className="gender-content">
@@ -82,6 +97,36 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Campaign Banner Section (admin controlled) - directly under Shop by Category */}
+      {campaignBanner && campaignBanner.enabled && campaignBanner.image && (
+        <section className="campaign-banner-section" data-testid="campaign-banner-section">
+          <Link
+            to={campaignBanner.button_link || '#'}
+            className="campaign-banner"
+            style={{ backgroundImage: `url(${campaignBanner.image})` }}
+          >
+            <div className="campaign-banner-overlay" />
+            <div className="campaign-banner-content">
+              {(lang === 'en' ? campaignBanner.title_en : campaignBanner.title) && (
+                <h2 className="campaign-banner-title" data-testid="campaign-banner-title">
+                  {lang === 'en' ? (campaignBanner.title_en || campaignBanner.title) : (campaignBanner.title || campaignBanner.title_en)}
+                </h2>
+              )}
+              {(lang === 'en' ? campaignBanner.description_en : campaignBanner.description) && (
+                <p className="campaign-banner-description" data-testid="campaign-banner-description">
+                  {lang === 'en' ? (campaignBanner.description_en || campaignBanner.description) : (campaignBanner.description || campaignBanner.description_en)}
+                </p>
+              )}
+              {(lang === 'en' ? campaignBanner.button_text_en : campaignBanner.button_text) && (
+                <span className="campaign-banner-cta" data-testid="campaign-banner-cta">
+                  {lang === 'en' ? (campaignBanner.button_text_en || campaignBanner.button_text) : (campaignBanner.button_text || campaignBanner.button_text_en)}
+                </span>
+              )}
+            </div>
+          </Link>
+        </section>
+      )}
 
       {/* Recently Viewed Section - above Best Sellers */}
       <RecentlyViewed />

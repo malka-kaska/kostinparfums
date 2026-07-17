@@ -19,6 +19,7 @@ const DiscountCodesManager = ({ products, collections }) => {
     discount_value: '',
     applies_to: 'all',
     target_id: '',
+    exclude_sale_items: false,
     usage_type: 'multi_use',
     usage_limit: '',
     per_user_limit: 1,
@@ -78,6 +79,8 @@ const DiscountCodesManager = ({ products, collections }) => {
       copyCode: 'Копирай код',
       copied: 'Копиран!',
       confirmDelete: 'Сигурни ли сте, че искате да изтриете този код?',
+      excludeSaleItems: 'Изключи продукти с намаление',
+      excludeSaleItemsHint: 'Кодът няма да важи за продукти, които вече са на промоция',
       categories: {
         perfumes: 'Парфюми',
         makeup: 'Грим',
@@ -134,6 +137,8 @@ const DiscountCodesManager = ({ products, collections }) => {
       copyCode: 'Copy code',
       copied: 'Copied!',
       confirmDelete: 'Are you sure you want to delete this code?',
+      excludeSaleItems: 'Exclude sale items',
+      excludeSaleItemsHint: 'Code will not apply to products already on sale',
       categories: {
         perfumes: 'Perfumes',
         makeup: 'Makeup',
@@ -176,7 +181,7 @@ const DiscountCodesManager = ({ products, collections }) => {
   const resetForm = () => {
     setFormData({
       code: '', discount_type: 'percentage', discount_value: '', applies_to: 'all',
-      target_id: '', usage_type: 'multi_use', usage_limit: '', per_user_limit: 1,
+      target_id: '', exclude_sale_items: false, usage_type: 'multi_use', usage_limit: '', per_user_limit: 1,
       min_order_amount: '', max_discount_amount: '', valid_from: '', valid_until: '',
       description: '', is_active: true,
     });
@@ -196,6 +201,7 @@ const DiscountCodesManager = ({ products, collections }) => {
       discount_value: code.discount_value.toString(),
       applies_to: code.applies_to,
       target_id: code.target_id || '',
+      exclude_sale_items: code.exclude_sale_items || false,
       usage_type: code.usage_type,
       usage_limit: code.usage_limit?.toString() || '',
       per_user_limit: code.per_user_limit || 1,
@@ -230,6 +236,7 @@ const DiscountCodesManager = ({ products, collections }) => {
         discount_value: parseFloat(formData.discount_value),
         applies_to: formData.applies_to,
         target_id: formData.applies_to !== 'all' ? formData.target_id : null,
+        exclude_sale_items: formData.exclude_sale_items,
         usage_type: formData.usage_type,
         usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
         per_user_limit: parseInt(formData.per_user_limit) || 1,
@@ -437,6 +444,22 @@ const DiscountCodesManager = ({ products, collections }) => {
                       className="form-input" placeholder="Dior, Chanel..." data-testid="target-brand-input" />
                   </div>
                 )}
+
+                {/* Exclude Sale Items */}
+                <div className="form-group full-width">
+                  <label className="toggle-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={formData.exclude_sale_items}
+                      onChange={(e) => setFormData({ ...formData, exclude_sale_items: e.target.checked })}
+                      data-testid="exclude-sale-items-checkbox"
+                    />
+                    <div>
+                      <span style={{ fontWeight: 500 }}>{txt.excludeSaleItems}</span>
+                      <span className="form-hint" style={{ display: 'block', marginTop: '2px' }}>{txt.excludeSaleItemsHint}</span>
+                    </div>
+                  </label>
+                </div>
 
                 {/* Usage Type */}
                 <div className="form-row">

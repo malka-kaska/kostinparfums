@@ -1,0 +1,166 @@
+/* Dynamic Header Background Styles */
+
+.dynamic-header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dynamic-header-bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: clip-path 0.5s ease-out, opacity 0.5s ease-out;
+  will-change: clip-path;
+}
+
+.dynamic-header-bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+/* Fade in animation for brand background */
+.dynamic-header-bg-layer {
+  animation: fadeInBg 0.4s ease-out forwards;
+}
+
+@keyframes fadeInBg {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Stagger animation for multiple layers */
+.dynamic-header-bg-layer:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.dynamic-header-bg-layer:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.dynamic-header-bg-layer:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.dynamic-header-bg-layer:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+/* Dynamic header styles when background is active */
+.header.has-brand-bg {
+  position: relative;
+  background: transparent !important;
+  border-bottom: none;
+}
+
+.header.has-brand-bg .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Text color transitions */
+.header.has-brand-bg.text-white .icon-button,
+.header.has-brand-bg.text-white .logo-text,
+.header.has-brand-bg.text-white .logo-tagline,
+.header.has-brand-bg.text-white .nav-link,
+.header.has-brand-bg.text-white .lang-toggle,
+.header.has-brand-bg.text-white .theme-toggle,
+.header.has-brand-bg.text-white .mobile-menu-toggle {
+  color: #ffffff !important;
+  transition: color 0.3s ease;
+}
+
+.header.has-brand-bg.text-white .lang-toggle,
+.header.has-brand-bg.text-white .theme-toggle {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.header.has-brand-bg.text-white .lang-toggle:hover,
+.header.has-brand-bg.text-white .theme-toggle:hover,
+.header.has-brand-bg.text-white .icon-button:hover,
+.header.has-brand-bg.text-white .nav-link:hover {
+  color: var(--accent-gold) !important;
+}
+
+.header.has-brand-bg.text-black .icon-button,
+.header.has-brand-bg.text-black .logo-text,
+.header.has-brand-bg.text-black .logo-tagline,
+.header.has-brand-bg.text-black .nav-link,
+.header.has-brand-bg.text-black .lang-toggle,
+.header.has-brand-bg.text-black .theme-toggle,
+.header.has-brand-bg.text-black .mobile-menu-toggle {
+  color: #000000 !important;
+  transition: color 0.3s ease;
+}
+
+.header.has-brand-bg.text-black .lang-toggle,
+.header.has-brand-bg.text-black .theme-toggle {
+  border-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+.header.has-brand-bg.text-black .lang-toggle:hover,
+.header.has-brand-bg.text-black .theme-toggle:hover,
+.header.has-brand-bg.text-black .icon-button:hover,
+.header.has-brand-bg.text-black .nav-link:hover {
+  color: var(--accent-gold) !important;
+}
+
+/* Nav link underline adjustment */
+.header.has-brand-bg.text-white .nav-link:after {
+  background: #ffffff;
+}
+
+.header.has-brand-bg.text-white .nav-link:hover:after {
+  background: var(--accent-gold);
+}
+
+.header.has-brand-bg.text-black .nav-link:after {
+  background: #000000;
+}
+
+.header.has-brand-bg.text-black .nav-link:hover:after {
+  background: var(--accent-gold);
+}
+
+/* Cart badge visibility */
+.header.has-brand-bg .cart-badge {
+  background: var(--accent-gold);
+  color: #ffffff;
+}
+
+/* Mobile nav menu overlay styling */
+@media (max-width: 1024px) {
+  .header.has-brand-bg .nav-menu.open {
+    background: rgba(0, 0, 0, 0.95);
+  }
+  
+  .header.has-brand-bg .nav-menu.open .nav-link {
+    color: #ffffff !important;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Announcement bar stays unchanged */
+.announcement-bar {
+  position: relative;
+  z-index: 101;
+}

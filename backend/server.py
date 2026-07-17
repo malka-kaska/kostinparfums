@@ -40,6 +40,12 @@ from routes.scent_migration import router as scent_migration_router
 from routes.seo import router as seo_router
 from routes.ai_descriptions import router as ai_descriptions_router
 from routes.meta_catalog import router as meta_catalog_router
+from routes.meta_capi import router as meta_capi_router
+from routes.meta_ads import router as meta_ads_router
+from routes.meta_pixel import router as meta_pixel_router
+from routes.huggingface import router as huggingface_router
+from routes.makeugc import router as makeugc_router
+from routes.content import router as content_router
 from routes.nekorekten import router as nekorekten_router
 from routes.brand_backgrounds import router as brand_backgrounds_router
 from utils.auth import seed_admin
@@ -591,6 +597,12 @@ app.include_router(scent_migration_router)
 app.include_router(seo_router)
 app.include_router(ai_descriptions_router)
 app.include_router(meta_catalog_router)
+app.include_router(meta_capi_router)
+app.include_router(meta_ads_router)
+app.include_router(meta_pixel_router)
+app.include_router(huggingface_router)
+app.include_router(makeugc_router)
+app.include_router(content_router)
 app.include_router(nekorekten_router)
 app.include_router(brand_backgrounds_router)
 

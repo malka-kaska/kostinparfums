@@ -1,0 +1,80 @@
+name: Fetch N8N Workflows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    environment: emergent
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch Workflows
+        env:
+          N8N_TOKEN: ${{ secrets.N8N_MCP_ACCESS_TOKEN }}
+        run: |
+          cat << 'EOF' > fetch_workflows.py
+          import requests, json, os
+          url = "https://api.n8n-mcp.com/mcp"
+          headers = {
+              "Authorization": f"Bearer {os.environ['N8N_TOKEN']}",
+              "Content-Type": "application/json"
+          }
+          workflows = []
+          cursor = None
+          for i in range(20):
+              payload = {
+                  "jsonrpc": "2.0",
+                  "method": "tools/call",
+                  "params": {
+                      "name": "n8n_list_workflows",
+                      "arguments": {"limit": 100}
+                  },
+                  "id": 1
+              }
+              if cursor: payload["params"]["arguments"]["cursor"] = cursor
+              try:
+                  res = requests.post(url, headers=headers, json=payload).json()
+                  if "result" not in res:
+                      print("Error:", res)
+                      break
+                  content = json.loads(res["result"]["content"][0]["text"])
+                  for wf in content["data"]["workflows"]:
+                      payload_get = {
+                          "jsonrpc": "2.0",
+                          "method": "tools/call",
+                          "params": {
+                              "name": "n8n_get_workflow",
+                              "arguments": {"workflowId": wf["id"]}
+                          },
+                          "id": 2
+                      }
+                      wf_res = requests.post(url, headers=headers, json=payload_get).json()
+                      wf_content = json.loads(wf_res["result"]["content"][0]["text"])
+                      workflows.append(wf_content)
+                  cursor = content.get("data", {}).get("nextCursor")
+                  if not cursor: break
+              except Exception as e:
+                  print("Exception:", e)
+                  break
+          with open("n8n_workflows.json", "w") as f:
+              json.dump(workflows, f, indent=2)
+          print("Fetched workflows.")
+          EOF
+          python fetch_workflows.py
+
+      - name: Upload Workflows Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: n8n-workflows
+          path: n8n_workflows.json

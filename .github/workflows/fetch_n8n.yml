@@ -9,7 +9,7 @@ jobs:
     environment: emergent
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -74,7 +74,7 @@ jobs:
           python fetch_workflows.py
 
       - name: Upload Workflows Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: n8n-workflows
           path: n8n_workflows.json

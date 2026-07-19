@@ -8,16 +8,45 @@ router = APIRouter(prefix="/api/homepage", tags=["homepage"])
 class HeroSlide(BaseModel):
     image: str
     alt: str = ""
+    show_button: bool = True
+    button_text: Optional[str] = None
+    button_text_en: Optional[str] = None
+    button_link_type: Optional[str] = None
+    button_link: Optional[str] = None
+    button_product_id: Optional[str] = None
+    button_collection_slug: Optional[str] = None
+
+class GenderImages(BaseModel):
+    men: Optional[str] = None
+    women: Optional[str] = None
+
+class CampaignBanner(BaseModel):
+    enabled: bool = False
+    image: Optional[str] = None
+    title: Optional[str] = None
+    title_en: Optional[str] = None
+    description: Optional[str] = None
+    description_en: Optional[str] = None
+    button_text: Optional[str] = None
+    button_text_en: Optional[str] = None
+    button_link: Optional[str] = None
 
 class HomepageSettings(BaseModel):
     hero_slides: List[HeroSlide] = []
     featured_product_ids: List[str] = []
+    campaign_banner: Optional[CampaignBanner] = None
 
 class UpdateHeroSlidesRequest(BaseModel):
     slides: List[HeroSlide]
 
 class UpdateFeaturedProductsRequest(BaseModel):
     product_ids: List[str]
+
+class UpdateCampaignBannerRequest(BaseModel):
+    banner: CampaignBanner
+
+class UpdateGenderImagesRequest(BaseModel):
+    images: GenderImages
 
 
 @router.get("/settings")
@@ -35,13 +64,118 @@ async def get_homepage_settings(request: Request):
                 {"image": "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=1920&q=80", "alt": "Bleu de Chanel"},
                 {"image": "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1920&q=80", "alt": "Exclusive Perfumes"}
             ],
-            "featured_product_ids": []
+            "featured_product_ids": [],
+            "gender_images": {
+                "men": "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&q=80",
+                "women": "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80"
+            },
+            "campaign_banner": {
+                "enabled": False,
+                "image": None,
+                "title": None,
+                "title_en": None,
+                "description": None,
+                "description_en": None,
+                "button_text": None,
+                "button_text_en": None,
+                "button_link": None,
+            }
         }
     
+    gender_images = settings.get("gender_images") or {}
     return {
         "hero_slides": settings.get("hero_slides", []),
-        "featured_product_ids": settings.get("featured_product_ids", [])
+        "featured_product_ids": settings.get("featured_product_ids", []),
+        "gender_images": {
+            "men": gender_images.get("men") or "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&q=80",
+            "women": gender_images.get("women") or "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80"
+        },
+        "campaign_banner": settings.get("campaign_banner") or {
+            "enabled": False,
+            "image": None,
+            "title": None,
+            "title_en": None,
+            "description": None,
+            "description_en": None,
+            "button_text": None,
+            "button_text_en": None,
+            "button_link": None,
+        }
     }
+
+
+@router.put("/campaign-banner")
+async def update_campaign_banner(request: Request, data: UpdateCampaignBannerRequest):
+    """Update homepage campaign banner (admin only)"""
+    try:
+        db = request.app.state.db
+
+        from utils.auth import get_current_user
+        try:
+            user = await get_current_user(request, db)
+        except Exception:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        if not user or user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+
+        banner = data.banner
+        if hasattr(banner, 'model_dump'):
+            banner_data = banner.model_dump()
+        elif hasattr(banner, 'dict'):
+            banner_data = banner.dict()
+        else:
+            banner_data = dict(banner)
+
+        await db.settings.update_one(
+            {"type": "homepage"},
+            {"$set": {"campaign_banner": banner_data}},
+            upsert=True
+        )
+
+        return {"message": "Campaign banner updated", "campaign_banner": banner_data}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating campaign banner: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/gender-images")
+async def update_gender_images(request: Request, data: UpdateGenderImagesRequest):
+    """Update the Men/Women category images shown on homepage (admin only)"""
+    try:
+        db = request.app.state.db
+
+        from utils.auth import get_current_user
+        try:
+            user = await get_current_user(request, db)
+        except Exception:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        if not user or user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+
+        images = data.images
+        if hasattr(images, 'model_dump'):
+            images_data = images.model_dump()
+        elif hasattr(images, 'dict'):
+            images_data = images.dict()
+        else:
+            images_data = dict(images)
+
+        await db.settings.update_one(
+            {"type": "homepage"},
+            {"$set": {"gender_images": images_data}},
+            upsert=True
+        )
+
+        return {"message": "Gender images updated", "gender_images": images_data}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating gender images: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/hero-slides")

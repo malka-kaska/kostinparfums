@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X, Grid2X2, LayoutList, ChevronDown, ChevronUp } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import YouMayAlsoLike from '../components/YouMayAlsoLike';
 import { useLanguage } from '../context/LanguageContext';
-import { pixelSearch, pixelViewCategory } from '../utils/metaPixel';
+import { useBrandBackground } from '../context/BrandBackgroundContext';
 import './Products.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -118,7 +119,15 @@ const Products = () => {
     // (URL brands are handled in the other useEffect)
   }, [selectedGender]);
 
+  // Read initial values from URL - runs only once on mount or when URL changes externally (back button)
+  const urlSyncRef = React.useRef(false);
   useEffect(() => {
+    // Skip if we just updated the URL ourselves
+    if (urlSyncRef.current) {
+      urlSyncRef.current = false;
+      return;
+    }
+    
     const categoryFromUrl = searchParams.get('category') || 'all';
     const searchFromUrl = searchParams.get('search') || '';
     const genderFromUrl = searchParams.get('gender') || 'all';
@@ -129,15 +138,11 @@ const Products = () => {
     setSearchQuery(searchFromUrl);
     setSelectedGender(genderFromUrl);
     
-    // Set brands from URL if present
-    if (brandsFromUrl) {
-      setSelectedBrands(brandsFromUrl.split(',').filter(Boolean));
-    }
+    // Set brands from URL if present, otherwise clear
+    setSelectedBrands(brandsFromUrl ? brandsFromUrl.split(',').filter(Boolean) : []);
     
-    // Set scent profiles from URL if present
-    if (profilesFromUrl) {
-      setSelectedScentProfiles(profilesFromUrl.split(',').filter(Boolean));
-    }
+    // Set scent profiles from URL if present, otherwise clear
+    setSelectedScentProfiles(profilesFromUrl ? profilesFromUrl.split(',').filter(Boolean) : []);
   }, [searchParams]);
 
   useEffect(() => {
@@ -165,8 +170,9 @@ const Products = () => {
         if (searchQuery) params.set('search', searchQuery);
         if (sortBy) params.set('sort', sortBy);
         
-        // Filter by "all_products" collection (excludes Dubai products by default)
-        params.set('collection', 'all_products');
+        // Use collection from URL if specified, otherwise default to "all_products"
+        const collectionFromUrl = searchParams.get('collection');
+        params.set('collection', collectionFromUrl || 'all_products');
         params.set('limit', '200');
 
         const res = await fetch(`${API_URL}/api/products?${params.toString()}`);
@@ -190,7 +196,6 @@ const Products = () => {
     };
 
     fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, selectedBrands, selectedGender, selectedScentProfiles, sortBy, searchQuery, searchParams]);
 
   // Infinite Scroll Observer Setup
@@ -222,20 +227,12 @@ const Products = () => {
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
-    pixelViewCategory(category);
-    if (category !== 'all') {
-      setSearchParams({ category });
-    } else {
-      setSearchParams({});
-    }
+    // URL params are synced via useEffect
   };
 
   const handleGenderChange = (gender) => {
     setSelectedGender(gender);
-    const newParams = {};
-    if (gender !== 'all') newParams.gender = gender;
-    if (selectedCategory !== 'all') newParams.category = selectedCategory;
-    setSearchParams(newParams);
+    // URL params are synced via useEffect
   };
 
   const handleBrandToggle = (brand) => {
@@ -258,26 +255,79 @@ const Products = () => {
     });
   };
 
+  // Sync all filters to URL params (for browser back button support)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    // Preserve collection param from current URL
+    const currentCollection = new URLSearchParams(window.location.search).get('collection');
+    if (currentCollection) params.set('collection', currentCollection);
+    
+    if (selectedCategory !== 'all') params.set('category', selectedCategory);
+    if (selectedGender !== 'all') params.set('gender', selectedGender);
+    if (selectedBrands.length > 0) params.set('brands', selectedBrands.join(','));
+    if (selectedScentProfiles.length > 0) params.set('scent_profiles', selectedScentProfiles.join(','));
+    if (searchQuery) params.set('search', searchQuery);
+    
+    const newParamsString = params.toString();
+    const currentParamsString = window.location.search.slice(1); // Remove leading '?'
+    
+    // Only update if params actually changed
+    if (currentParamsString !== newParamsString) {
+      urlSyncRef.current = true; // Mark that we're updating URL
+      setSearchParams(params, { replace: true });
+    }
+  }, [selectedCategory, selectedGender, selectedBrands, selectedScentProfiles, searchQuery, setSearchParams]);
+
   const clearFilters = () => {
     setSelectedCategory('all');
     setSelectedBrands([]);
     setSelectedGender('all');
     setSelectedScentProfiles([]);
     setSearchQuery('');
-    setSearchParams({});
+    // Preserve collection parameter when clearing filters
+    const collectionParam = searchParams.get('collection');
+    if (collectionParam) {
+      setSearchParams({ collection: collectionParam });
+    } else {
+      setSearchParams({});
+    }
   };
 
   return (
     <div className="products-page">
       <div className="container">
-        <div className="page-header section-padding-small">
-          <h1 className="hero-medium" data-testid="products-heading">{t('allProducts')}</h1>
-          <p className="body-large mt-3" style={{ color: 'var(--text-secondary)' }}>
-            {totalProducts === 1 
-              ? t('discoverCollectionSingular', { count: totalProducts })
-              : t('discoverCollection', { count: totalProducts })}
-          </p>
-        </div>
+        {collectionInfo?.banner_image ? (
+          <div className="collection-banner" data-testid="collection-banner" style={{ backgroundImage: `url(${collectionInfo.banner_image})` }}>
+            <div className="collection-banner-overlay">
+              <h1 className="hero-medium" data-testid="products-heading">{collectionName}</h1>
+              {collectionInfo.description && (
+                <p className="body-large collection-banner-desc" data-testid="collection-description">{collectionInfo.description}</p>
+              )}
+              <p className="body-regular collection-banner-count">
+                {totalProducts === 1 
+                  ? t('discoverCollectionSingular', { count: totalProducts })
+                  : t('discoverCollection', { count: totalProducts })}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="page-header section-padding-small">
+            <h1 className="hero-medium" data-testid="products-heading">
+              {collectionName || t('allProducts')}
+            </h1>
+            {collectionInfo?.description && (
+              <p className="body-large mt-3" data-testid="collection-description" style={{ color: 'var(--text-secondary)' }}>
+                {collectionInfo.description}
+              </p>
+            )}
+            <p className="body-large mt-3" style={{ color: 'var(--text-secondary)' }}>
+              {totalProducts === 1 
+                ? t('discoverCollectionSingular', { count: totalProducts })
+                : t('discoverCollection', { count: totalProducts })}
+            </p>
+          </div>
+        )}
 
         <div className="products-layout">
           <aside className={`filters-sidebar ${filtersOpen ? 'open' : ''}`} data-testid="filters-sidebar">
@@ -471,6 +521,16 @@ const Products = () => {
             )}
           </div>
         </div>
+
+        {products.length > 0 && (
+          <YouMayAlsoLike
+            mode="cart"
+            productIds={products.slice(0, 5).map((p) => p.id)}
+            limit={6}
+            minToShow={3}
+            testId="products-you-may-also-like"
+          />
+        )}
       </div>
     </div>
   );

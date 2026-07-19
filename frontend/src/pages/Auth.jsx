@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { pixelCompleteRegistration, pixelLead } from '../utils/metaPixel';
 import './Auth.css';
 
 const Auth = () => {
@@ -54,11 +53,6 @@ const Auth = () => {
         }
         // Show verification message - user must verify email before logging in
         if (result && (result.pendingVerification || result.email_verified === false)) {
-          // Meta Pixel: CompleteRegistration + Lead (if newsletter opted in)
-          pixelCompleteRegistration();
-          if (subscribeNewsletter) {
-            pixelLead();
-          }
           setSuccessMessage(t('checkEmailToVerify') || 'Проверете имейла си за да потвърдите акаунта.');
           setEmail('');
           setPassword('');

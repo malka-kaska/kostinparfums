@@ -47,6 +47,7 @@ class ProductCreate(BaseModel):
     gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
     collections: Optional[List[str]] = None  # Collection slugs: ["all_products", "dubai", "campaign_xyz"]
     scent_profiles: Optional[List[str]] = None  # Scent profile tags: ["sweet", "woody", "oriental", etc.]
+    related_product_ids: Optional[List[str]] = None  # Manual "You may also like" picks
 
 
 class ProductUpdate(BaseModel):
@@ -65,6 +66,7 @@ class ProductUpdate(BaseModel):
     gender: Optional[List[str]] = None  # ["men"], ["women"], or ["men", "women"] for both
     collections: Optional[List[str]] = None  # Collection slugs
     scent_profiles: Optional[List[str]] = None  # Scent profile tags
+    related_product_ids: Optional[List[str]] = None  # Manual "You may also like" picks
 
 
 class ProductVisibilityUpdate(BaseModel):
@@ -136,26 +138,31 @@ class CODOrderRequest(BaseModel):
     speedy_data: Optional[SpeedyData] = None  # Speedy integration data
     discount_code: Optional[str] = None  # Discount code applied
     discount_amount: Optional[float] = 0.0  # Discount amount in EUR
-    utm_params: Optional[dict] = None  # UTM attribution params
 
 
 # Collection schemas
 class CollectionCreate(BaseModel):
     name: str  # Display name: "Дубайски аромати"
     name_en: Optional[str] = None  # English name: "Dubai Fragrances"
+    name_bg: Optional[str] = None  # Bulgarian name
     slug: str  # URL-friendly identifier: "dubai"
     description: Optional[str] = None
     description_en: Optional[str] = None
+    banner_image: Optional[str] = None
     is_system: bool = False  # System collections can't be deleted (all_products, dubai)
     is_active: bool = True
+    show_in_nav: bool = False  # Show in header/footer navigation
 
 
 class CollectionUpdate(BaseModel):
     name: Optional[str] = None
     name_en: Optional[str] = None
+    name_bg: Optional[str] = None
     description: Optional[str] = None
     description_en: Optional[str] = None
+    banner_image: Optional[str] = None
     is_active: Optional[bool] = None
+    show_in_nav: Optional[bool] = None
 
 
 class CollectionResponse(BaseModel):
@@ -169,68 +176,3 @@ class CollectionResponse(BaseModel):
     is_active: bool = True
     product_count: Optional[int] = 0
     created_at: Optional[str] = None
-
-class CampaignAssetCreate(BaseModel):
-    product_id: Optional[str] = None
-    product_name: Optional[str] = None
-    brand: Optional[str] = None
-    campaign_type: str
-    aspect_ratio: str
-    prompt: str
-    metadata: Optional[Dict[str, str]] = None
-
-
-class CampaignAssetResponse(BaseModel):
-    id: str
-    product_id: Optional[str]
-    product_name: Optional[str]
-    brand: Optional[str]
-    campaign_type: str
-    aspect_ratio: str
-    prompt: str
-    provider: str
-    status: str
-    asset_url: Optional[str]
-    thumbnail_url: Optional[str]
-    meta_asset_id: Optional[str]
-    metadata: Optional[Dict[str, str]]
-    created_at: Optional[str]
-    updated_at: Optional[str]
-
-
-class HuggingFaceGenerateRequest(BaseModel):
-    prompt: str
-    negative_prompt: Optional[str] = None
-    aspect_ratio: str = '1:1'
-    model: Optional[str] = None
-    product_id: Optional[str] = None
-    brand: Optional[str] = None
-    campaign_type: str = 'static_ad'
-    save_to_cloudinary: bool = False
-    metadata: Optional[Dict[str, str]] = None
-
-
-class MakeUGCFlowRequest(BaseModel):
-    flow_id: Optional[str] = None
-    flow_preset: str = 'UGC or Unboxing'
-    product_id: Optional[str] = None
-    product_url: Optional[str] = None
-    brand: Optional[str] = None
-    hook: Optional[str] = None
-    setting: Optional[str] = None
-    cta: Optional[str] = None
-    language: str = 'bg'
-    save_script: bool = True
-
-
-class CampaignDeployRequest(BaseModel):
-    campaign_name: str
-    asset_ids: List[str]
-    ad_account_id: Optional[str] = None
-    catalog_id: Optional[str] = None
-    page_id: Optional[str] = None
-    ig_account_id: Optional[str] = None
-    budget: Optional[float] = None
-    targeting_countries: List[str] = ['BG']
-    objective: str = 'SALES'
-    status: str = 'PAUSED'

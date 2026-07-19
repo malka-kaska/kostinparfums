@@ -5,6 +5,17 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 
 **Region**: Bulgaria only (shipping within Bulgaria via Speedy courier)
 
+
+## Recent Changes (Feb 2026)
+- **Content pages expanded for SEO** (Feb 2026): 
+  - `AboutUs`: added 4 new sections (908 words total, 7 H2 headings): "The Story of KOSTIN", "The Journey of Every Perfume" (verification process), "Delivery Across Bulgaria" (Speedy), "How to Choose the Right Fragrance" (educational). Full BG + EN translations. Injects Organization JSON-LD, dynamic title, meta description, canonical.
+  - `FAQ`: expanded from 10 to **25 questions/answers** covering EDT vs EDP, longevity, storage, layering, seasonal picks, COD, invoicing, batch code verification, promo codes, delivery address changes, 14-day voucher, gift orders, Dubai vs designer, GDPR. Full BG + EN. Injects **FAQPage JSON-LD** — enables Google Rich Snippets in search results.
+- **SEO Overhaul** (Feb 2026): Dynamic `/api/sitemap.xml` (7359 URLs), `/api/robots.txt`, ProductDetail schema.org Product JSON-LD + dynamic meta tags, fixed Multiple H1 (Header logo → span).
+- **AI Product Descriptions** (Feb 2026): Admin tab powered by Emergent LLM (GPT-4o-mini), bulk + per-product generation, BG + EN.
+- **Custom Gender Section Images** (Feb 2026): Admin upload for Men/Women homepage cards.
+- **Related Products / "You may also like"** (Feb 2026): ProductDetail, Products, Cart. Combined algorithm.
+- **Homepage Campaign Banner** (Feb 2026): New full-width admin-managed campaign section on homepage, positioned directly below "Shop by Category" (Men/Women). Bilingual fields (title/description/button BG+EN), background image upload, button link, and enable/disable toggle. Backend: `PUT /api/homepage/campaign-banner`. Frontend: `Home.jsx` + `HomepageManager.jsx`. Data stored in `settings` doc under `campaign_banner`.
+
 ## Core Features (Completed)
 
 ### Authentication & Email System
@@ -143,6 +154,40 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
   - Cookie Policy page (/cookies) with detailed cookie information
   - Data Export functionality (GET /api/auth/export-data) - downloads JSON with all user data
 
+## Recently Added (July 2026 - Latest)
+
+### Variants Manager - Auto-Groups Display (July 9, 2026)
+- [x] **New backend endpoint**: `GET /api/products/variants/all-groups` returns both manual and auto-detected variant groups
+- [x] **Auto-detection logic**: Products grouped by base name using `extract_base_name()` function (removes size patterns like "50ml", "100 M", etc.)
+- [x] **Admin UI tabs**: VariantsManager now shows two tabs - "Manual Groups" and "Auto-linked" 
+- [x] **Auto-groups display**: Shows base name, brand tag, product list with thumbnails and prices
+- [x] **Convert to manual**: Button to convert auto-group to manual group (assigns `variant_group_id`)
+- [x] **Statistics**: Shows count of manual (0) and auto (910) groups
+
+### Collection Page URL Fix (July 9, 2026)
+- [x] **Bug fixed**: `/products` page now reads `?collection=` URL parameter correctly
+- [x] **Dynamic title**: Page title shows collection name (e.g., "Лятна колекция" / "Summer Collection") instead of generic "All Products"
+- [x] **Clear filters**: Preserves collection parameter when clearing other filters
+- [x] **Localization**: Collection name displayed in user's selected language (BG/EN)
+
+### Collection Filter + Hero Button Persistence Fixes (July 11, 2026)
+- [x] **Bug fixed**: URL sync effect in `Products.jsx` was dropping the `?collection=` param on mount, causing collection pages to show ALL products. Now preserves the collection param.
+- [x] **Bug fixed**: Backend `HeroSlide` model (`routes/homepage.py`) only accepted `image`/`alt`, stripping hero button settings (`show_button`, `button_text`, `button_link_type`, `button_link`, `button_product_id`, `button_collection_slug`) on save. Model extended - button settings now persist and render on homepage.
+- [x] Verified in preview: Summer Collection page shows only marked products; hero button "Към Лятна колекция" renders with correct link.
+- [ ] USER ACTION: Redeploy to production + re-save hero slide button settings in Admin (old saves had button fields stripped).
+
+### Collection Banner + Description (July 11, 2026)
+- [x] **New field `banner_image`** on collections (schemas.py, collections.py CRUD + response)
+- [x] **Admin editor**: CollectionsManager pencil button per row → edit panel (description BG/EN, banner upload via /api/upload/image, remove banner, save via PUT /api/collections/{id})
+- [x] **Public collection page**: banner block with dark gradient overlay, collection name, localized description, product count. Falls back to plain header (+description) without banner.
+- [x] **i18n fix**: Added ~26 missing translation keys (bg.js/en.js) that leaked as raw keys in Admin (manageCollections, collectionsTab labels, brandBackgrounds, variantsTab, etc.)
+- [x] Tested: iteration_19.json — backend 100%, frontend 100%
+
+### Hero Button EN Text (July 11, 2026)
+- [x] **New field `button_text_en`** on hero slides (backend HeroSlide model + Admin HomepageManager input "Текст на бутона (EN)")
+- [x] **Hero.jsx**: shows button_text (BG) or button_text_en based on selected language (fallback to BG text)
+- [x] Tested: BG → "КЪМ ЛЯТНА КОЛЕКЦИЯ", EN → "TO SUMMER COLLECTION"
+
 ## Backlog
 - [ ] Dropshipping API integration (awaiting supplier API details)
 - [x] ~~Refactor Admin.jsx into smaller components~~ (DONE - June 2026)
@@ -152,8 +197,27 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] ~~Guest Cancel Order Page~~ (DONE - July 2026)
 - [ ] НЕкоректен БГ API integration (BLOCKED - awaiting IP whitelist confirmation)
 - [x] ~~Meta Catalog Integration~~ (DONE - July 2026)
+- [x] ~~Dynamic Brand Backgrounds~~ (DONE - July 2026)
 
 ## Recently Added (June-July 2026)
+
+### Dynamic Brand Header Backgrounds (July 2026)
+- [x] **Backend CRUD API**: `/api/brand-backgrounds` routes for managing brand backgrounds
+- [x] **Admin Panel**: New "Фонове" (Backgrounds) tab with brand selector, image upload, positioning controls
+- [x] **Frontend Context**: `BrandBackgroundContext.jsx` - tracks selected brands and provides background data
+- [x] **Dynamic Header Component**: `DynamicHeaderBackground.jsx` - renders background images with CSS clip-path
+- [x] **Diagonal Splits**: When 2+ brands selected, backgrounds split diagonally (CSS clip-path polygons)
+- [x] **Text Color Adaptation**: Logo/navigation colors automatically switch (white/black) based on brand config
+- [x] **Product Page Integration**: Brand filters on `/products` and `/dubai-perfumes` update header background
+- [x] **Image Positioning**: Admin can set X/Y position percentages for background placement
+- [x] **Overlay Control**: Adjustable darkness overlay (0-70%)
+
+### Discount Codes - Exclude Sale Items (July 2026)
+- [x] **New field `exclude_sale_items`**: Added to discount code schema
+- [x] **Validation logic**: When enabled, discount code only applies to products without `original_price` (non-sale items)
+- [x] **Admin UI**: Checkbox "Изключи продукти с намаление" / "Exclude sale items" in discount code form
+- [x] **User-friendly errors**: Shows "Този код не важи за продукти с намаление" if all cart items are on sale
+- [x] **Partial application**: Applies discount only to eligible items, shows warning about excluded sale items
 
 ### Order Cancellation System (July 2026)
 - [x] **User Cancel Order (Profile)**: Textarea за описание на причината при отказ
@@ -227,6 +291,15 @@ KOSTIN is a luxury perfumes e-commerce platform focused exclusively on high-end 
 - [x] **SEC-003 (HIGH)**: Speedy shipment endpoints require admin authentication  
 - [x] **SEC-004 (MEDIUM)**: Password reset sends email instead of logging token
 - [x] **Cookie Security**: Uses secure=True in production environment
+
+## Security Audit (July 2026)
+### Fixed Vulnerabilities:
+- [x] **SEC-001 (HIGH)**: Guest registration BOLA vulnerability - order ownership now verified via email match or cancellation token before linking (`routes/auth.py:register_guest`)
+- [x] **SEC-002 (MEDIUM)**: ReDoS prevention - all user search inputs now escaped with `re.escape()` before MongoDB regex queries (`routes/products.py`, `routes/search.py`)
+- [x] **P3 Hardening**: 
+  - Auth cookies now use `secure=True` when `ENVIRONMENT=production`
+  - Nekorekten `/report` endpoint now uses JWT auth (consistent with app)
+  - Nekorekten `/check` endpoint now has rate limiting (10 req/min per IP)
 
 ## Test Credentials
 - Admin: konstantin.kirchev.bs@gmail.com / aS1zX2QwE34xK9

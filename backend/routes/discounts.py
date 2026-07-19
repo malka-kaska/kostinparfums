@@ -33,6 +33,9 @@ class DiscountCodeCreate(BaseModel):
     applies_to: str = "all"  # "all", "product", "category", "collection", "brand"
     target_id: Optional[str] = None  # product_id, category name, collection slug, or brand name
     
+    # Sale items exclusion
+    exclude_sale_items: bool = False  # If True, code won't apply to products with original_price (already on sale)
+    
     # Usage rules
     usage_type: str = "multi_use"  # "single_use" or "multi_use"
     usage_limit: Optional[int] = None  # Max uses for multi_use codes
@@ -56,6 +59,7 @@ class DiscountCodeUpdate(BaseModel):
     discount_value: Optional[float] = None
     applies_to: Optional[str] = None
     target_id: Optional[str] = None
+    exclude_sale_items: Optional[bool] = None  # New field
     usage_type: Optional[str] = None
     usage_limit: Optional[int] = None
     per_user_limit: Optional[int] = None
@@ -70,7 +74,7 @@ class DiscountCodeUpdate(BaseModel):
 class ApplyDiscountRequest(BaseModel):
     code: str
     cart_total: float
-    items: List[dict]  # [{product_id, category, brand, collections, price, quantity}]
+    items: List[dict]  # [{product_id, category, brand, collections, price, quantity, original_price (optional)}]
     user_id: Optional[str] = None
 
 
@@ -92,6 +96,7 @@ def serialize_discount(doc: dict) -> dict:
         "applies_to": doc["applies_to"],
         "target_id": doc.get("target_id"),
         "target_name": doc.get("target_name"),
+        "exclude_sale_items": doc.get("exclude_sale_items", False),
         "usage_type": doc["usage_type"],
         "usage_limit": doc.get("usage_limit"),
         "per_user_limit": doc.get("per_user_limit", 1),
@@ -186,6 +191,7 @@ async def create_discount_code(request: Request, data: DiscountCodeCreate):
         "applies_to": data.applies_to,
         "target_id": data.target_id,
         "target_name": target_name,
+        "exclude_sale_items": data.exclude_sale_items,  # New field
         "usage_type": data.usage_type,
         "usage_limit": data.usage_limit,
         "per_user_limit": data.per_user_limit,
@@ -237,6 +243,8 @@ async def update_discount_code(request: Request, code_id: str, data: DiscountCod
         update_data["applies_to"] = data.applies_to
     if data.target_id is not None:
         update_data["target_id"] = data.target_id
+    if data.exclude_sale_items is not None:
+        update_data["exclude_sale_items"] = data.exclude_sale_items
     if data.usage_type is not None:
         update_data["usage_type"] = data.usage_type
     if data.usage_limit is not None:
@@ -368,35 +376,60 @@ async def validate_discount_code(request: Request, data: ApplyDiscountRequest):
             detail=f"Минималната сума за поръчка е €{discount['min_order_amount']:.2f}"
         )
     
+    # Check if discount excludes sale items
+    exclude_sale = discount.get("exclude_sale_items", False)
+    
     # Calculate discount based on applies_to
     applicable_amount = 0
     applicable_items = []
+    excluded_sale_items_count = 0
+    
+    def is_item_applicable(item):
+        """Check if item matches the discount criteria"""
+        nonlocal excluded_sale_items_count
+        
+        # First check if this is a sale item (has original_price > price)
+        if exclude_sale:
+            original_price = item.get("original_price")
+            current_price = item.get("price", 0)
+            if original_price and original_price > current_price:
+                excluded_sale_items_count += 1
+                return False
+        
+        return True
     
     if discount["applies_to"] == "all":
-        applicable_amount = data.cart_total
-        applicable_items = data.items
+        for item in data.items:
+            if is_item_applicable(item):
+                applicable_amount += item["price"] * item["quantity"]
+                applicable_items.append(item)
     elif discount["applies_to"] == "product":
         for item in data.items:
-            if item.get("product_id") == discount["target_id"]:
+            if item.get("product_id") == discount["target_id"] and is_item_applicable(item):
                 applicable_amount += item["price"] * item["quantity"]
                 applicable_items.append(item)
     elif discount["applies_to"] == "category":
         for item in data.items:
-            if item.get("category") == discount["target_id"]:
+            if item.get("category") == discount["target_id"] and is_item_applicable(item):
                 applicable_amount += item["price"] * item["quantity"]
                 applicable_items.append(item)
     elif discount["applies_to"] == "collection":
         for item in data.items:
-            if discount["target_id"] in (item.get("collections") or []):
+            if discount["target_id"] in (item.get("collections") or []) and is_item_applicable(item):
                 applicable_amount += item["price"] * item["quantity"]
                 applicable_items.append(item)
     elif discount["applies_to"] == "brand":
         for item in data.items:
-            if item.get("brand") == discount["target_id"]:
+            if item.get("brand") == discount["target_id"] and is_item_applicable(item):
                 applicable_amount += item["price"] * item["quantity"]
                 applicable_items.append(item)
     
     if applicable_amount == 0:
+        if excluded_sale_items_count > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="Този код не важи за продукти с намаление. Добавете продукт на редовна цена."
+            )
         raise HTTPException(status_code=400, detail="Кодът не се прилага за нито един продукт в кошницата")
     
     # Calculate discount amount
@@ -410,7 +443,7 @@ async def validate_discount_code(request: Request, data: ApplyDiscountRequest):
     
     discount_amount = round(discount_amount, 2)
     
-    return {
+    response = {
         "valid": True,
         "code": code,
         "discount_type": discount["discount_type"],
@@ -418,8 +451,15 @@ async def validate_discount_code(request: Request, data: ApplyDiscountRequest):
         "discount_amount": discount_amount,
         "applicable_items_count": len(applicable_items),
         "description": discount.get("description"),
-        "message": f"Отстъпка от €{discount_amount:.2f} е приложена успешно!"
+        "message": f"Отстъпка от €{discount_amount:.2f} е приложена успешно!",
+        "exclude_sale_items": exclude_sale,
     }
+    
+    # Add warning if some items were excluded
+    if excluded_sale_items_count > 0:
+        response["warning"] = f"Кодът не важи за {excluded_sale_items_count} продукт(а) с намаление."
+    
+    return response
 
 
 @router.post("/apply")

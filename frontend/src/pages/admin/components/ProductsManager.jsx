@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Eye, EyeOff, Upload, Loader, GripVertical, Search, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Eye, EyeOff, Upload, Loader, GripVertical, Search, Filter, Wand2 } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
 import { formatDualPrice } from '../../../utils/currency';
 
@@ -10,16 +10,17 @@ const CATEGORY_OPTIONS_BASE = [
 ];
 
 const ProductsManager = ({ collections }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', brand: '', category: '', price: '', original_price: '', description: '', description_bg: '', images: [], stock: '', gender: [], collections: ['all_products'], scent_profiles: []
+    name: '', brand: '', category: '', price: '', original_price: '', description: '', description_bg: '', images: [], stock: '', gender: [], collections: ['all_products'], scent_profiles: [], related_product_ids: []
   });
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [relatedSearch, setRelatedSearch] = useState('');
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -85,6 +86,25 @@ const ProductsManager = ({ collections }) => {
 
   useEffect(() => { setPage(1); }, [filterVisibility, filterSort, filterSearch, filterCategory, filterScentProfile]);
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  // Load all products (lightweight) once for the related-products picker
+  const [allProducts, setAllProducts] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    const loadAll = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/products/admin/all?limit=10000`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setAllProducts(data.products || []);
+        }
+      } catch (err) {
+        console.error('Failed to load all products for related picker:', err);
+      }
+    };
+    loadAll();
+    return () => { cancelled = true; };
+  }, []);
 
   // Image upload handlers
   const handleImageUpload = async (e) => {
@@ -159,8 +179,10 @@ const ProductsManager = ({ collections }) => {
       description: product.description || '',
       description_bg: product.description_bg || '', images, stock: product.stock.toString(),
       gender: product.gender || [], collections: product.collections || ['all_products'],
-      scent_profiles: product.scent_profiles || []
+      scent_profiles: product.scent_profiles || [],
+      related_product_ids: product.related_product_ids || []
     });
+    setRelatedSearch('');
   };
 
   const handleCreate = () => {
@@ -168,8 +190,9 @@ const ProductsManager = ({ collections }) => {
     setEditingProduct(null);
     setFormData({
       name: '', brand: '', category: 'perfumes', price: '', original_price: '', description: '', description_bg: '',
-      images: [], stock: '', gender: [], collections: ['all_products'], scent_profiles: []
+      images: [], stock: '', gender: [], collections: ['all_products'], scent_profiles: [], related_product_ids: []
     });
+    setRelatedSearch('');
   };
 
   const handleSave = async () => {
@@ -183,6 +206,7 @@ const ProductsManager = ({ collections }) => {
         stock: parseInt(formData.stock) || 0, gender: formData.gender || [],
         collections: formData.collections || ['all_products'],
         scent_profiles: formData.scent_profiles || [],
+        related_product_ids: formData.related_product_ids || [],
       };
       
       // Handle original_price for discounts
@@ -212,6 +236,44 @@ const ProductsManager = ({ collections }) => {
   };
 
   const handleCancel = () => { setEditingProduct(null); setIsCreating(false); };
+
+  const [aiGenerating, setAiGenerating] = useState({ bg: false, en: false });
+
+  const handleAiGenerate = async (language) => {
+    if (!editingProduct) {
+      alert(lang === 'bg' ? 'Първо запази продукта' : 'Save the product first');
+      return;
+    }
+    setAiGenerating(prev => ({ ...prev, [language]: true }));
+    try {
+      const res = await fetch(`${API_URL}/api/ai-descriptions/product/${editingProduct}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ languages: [language], force: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const result = data?.results?.[language];
+        if (result?.text) {
+          if (language === 'bg') {
+            setFormData(prev => ({ ...prev, description_bg: result.text }));
+          } else {
+            setFormData(prev => ({ ...prev, description: result.text }));
+          }
+        } else if (result?.error) {
+          alert('AI error: ' + result.error);
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || 'AI generation failed');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    } finally {
+      setAiGenerating(prev => ({ ...prev, [language]: false }));
+    }
+  };
 
   const handleDelete = async (productId) => {
     if (!window.confirm(t('confirmDelete'))) return;
@@ -429,14 +491,162 @@ const ProductsManager = ({ collections }) => {
                 <p className="form-hint">{t('scentProfilesHint') || 'Избери до 4 ароматни профила за този продукт'}</p>
               </div>
 
+              {/* Related Products (You may also like) */}
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="form-label">
+                  {t('relatedProductsLabel') || 'Свързани продукти („Може да ви хареса също")'}
+                </label>
+                <p className="form-hint">
+                  {t('relatedProductsHint') || 'Избери до 6 продукта, които да се показват в секцията „Може да ви хареса също". Ако не избереш нищо, системата автоматично препоръчва подобни продукти.'}
+                </p>
+
+                {/* Selected list */}
+                {formData.related_product_ids && formData.related_product_ids.length > 0 && (
+                  <div className="related-selected-list" data-testid="related-selected-list">
+                    {formData.related_product_ids.map((rid, idx) => {
+                      const p = allProducts.find((x) => x.id === rid) || products.find((x) => x.id === rid);
+                      const label = p ? `${p.brand} — ${p.name}` : `#${rid}`;
+                      return (
+                        <div key={rid} className="related-selected-item">
+                          <span className="related-order">{idx + 1}</span>
+                          {p && p.image && (
+                            <img
+                              src={p.image}
+                              alt={p.name}
+                              className="related-thumb"
+                            />
+                          )}
+                          <span className="related-name">{label}</span>
+                          <div className="related-actions">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (idx === 0) return;
+                                const arr = [...formData.related_product_ids];
+                                [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                                setFormData({ ...formData, related_product_ids: arr });
+                              }}
+                              disabled={idx === 0}
+                              data-testid={`related-move-up-${idx}`}
+                            >↑</button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (idx === formData.related_product_ids.length - 1) return;
+                                const arr = [...formData.related_product_ids];
+                                [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
+                                setFormData({ ...formData, related_product_ids: arr });
+                              }}
+                              disabled={idx === formData.related_product_ids.length - 1}
+                              data-testid={`related-move-down-${idx}`}
+                            >↓</button>
+                            <button
+                              type="button"
+                              className="btn-remove"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  related_product_ids: formData.related_product_ids.filter((x) => x !== rid),
+                                });
+                              }}
+                              data-testid={`related-remove-${idx}`}
+                            >✕</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Search + add */}
+                {(formData.related_product_ids?.length || 0) < 6 && (
+                  <>
+                    <div className="related-search-box">
+                      <Search size={14} />
+                      <input
+                        type="text"
+                        placeholder={t('searchProducts') || 'Търси продукти...'}
+                        value={relatedSearch}
+                        onChange={(e) => setRelatedSearch(e.target.value)}
+                        data-testid="related-search-input"
+                      />
+                    </div>
+                    <div className="related-suggestions">
+                      {allProducts
+                        .filter((p) => {
+                          if (p.id === editingProduct) return false;
+                          if ((formData.related_product_ids || []).includes(p.id)) return false;
+                          if (!relatedSearch) return false;
+                          const q = relatedSearch.toLowerCase();
+                          return (
+                            (p.name || '').toLowerCase().includes(q) ||
+                            (p.brand || '').toLowerCase().includes(q)
+                          );
+                        })
+                        .slice(0, 12)
+                        .map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            className="related-suggestion"
+                            onClick={() => {
+                              const current = formData.related_product_ids || [];
+                              if (current.length >= 6) return;
+                              setFormData({
+                                ...formData,
+                                related_product_ids: [...current, p.id],
+                              });
+                              setRelatedSearch('');
+                            }}
+                            data-testid={`related-add-${p.id}`}
+                          >
+                            {p.image && <img src={p.image} alt={p.name} />}
+                            <span>{p.brand} — {p.name}</span>
+                          </button>
+                        ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* Descriptions */}
               <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="form-label">{t('description')} (EN)</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="form-input" rows="3" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="form-label">{t('description')} (EN)</label>
+                  {editingProduct && (
+                    <button
+                      type="button"
+                      className="btn-ai-generate"
+                      onClick={() => handleAiGenerate('en')}
+                      disabled={aiGenerating.en}
+                      data-testid="ai-generate-en-btn"
+                      title={lang === 'bg' ? 'Генерирай с AI' : 'Generate with AI'}
+                    >
+                      {aiGenerating.en ? <Loader size={14} className="spinning" /> : <Wand2 size={14} />}
+                      <span>{aiGenerating.en ? '...' : (lang === 'bg' ? 'AI генерирай' : 'AI Generate')}</span>
+                    </button>
+                  )}
+                </div>
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="form-input" rows="4" />
               </div>
               <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="form-label">{t('description')} (BG)</label>
-                <textarea value={formData.description_bg} onChange={(e) => setFormData({ ...formData, description_bg: e.target.value })} className="form-input" rows="3" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="form-label">{t('description')} (BG)</label>
+                  {editingProduct && (
+                    <button
+                      type="button"
+                      className="btn-ai-generate"
+                      onClick={() => handleAiGenerate('bg')}
+                      disabled={aiGenerating.bg}
+                      data-testid="ai-generate-bg-btn"
+                      title={lang === 'bg' ? 'Генерирай с AI' : 'Generate with AI'}
+                    >
+                      {aiGenerating.bg ? <Loader size={14} className="spinning" /> : <Wand2 size={14} />}
+                      <span>{aiGenerating.bg ? '...' : (lang === 'bg' ? 'AI генерирай' : 'AI Generate')}</span>
+                    </button>
+                  )}
+                </div>
+                <textarea value={formData.description_bg} onChange={(e) => setFormData({ ...formData, description_bg: e.target.value })} className="form-input" rows="4" />
               </div>
             </div>
             <div className="form-actions">

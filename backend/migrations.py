@@ -102,19 +102,30 @@ async def migrate_products_from_backup(db):
 
 
 async def run_migrations(db):
-    """Run all pending migrations"""
+    """Run all pending migrations with timeout protection"""
     logger.info("=" * 50)
     logger.info("Starting database migrations...")
     logger.info(f"DATA_DIR: {DATA_DIR}")
     logger.info(f"DATA_DIR exists: {DATA_DIR.exists()}")
     
     try:
-        await migrate_products_from_backup(db)
-        await migrate_collections(db)
+        # Set a reasonable timeout for migrations (30 seconds)
+        import asyncio
+        try:
+            await asyncio.wait_for(migrate_products_from_backup(db), timeout=30.0)
+        except asyncio.TimeoutError:
+            logger.warning("Product migration timed out - will continue without blocking startup")
+        
+        try:
+            await asyncio.wait_for(migrate_collections(db), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning("Collections migration timed out - will continue without blocking startup")
+            
     except Exception as e:
         logger.error(f"Migration failed: {e}")
         import traceback
         logger.error(traceback.format_exc())
+        # Don't raise - allow app to start even if migrations fail
     
     logger.info("Migration check complete")
     logger.info("=" * 50)
@@ -143,7 +154,7 @@ async def migrate_collections(db):
     # Check if migration already done
     existing = await db[MIGRATIONS_COLLECTION].find_one({"name": migration_name})
     if existing:
-        logger.info(f"Collections migration already applied")
+        logger.info("Collections migration already applied")
         return
     
     logger.info("Starting collections migration...")

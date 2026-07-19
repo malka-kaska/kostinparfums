@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, Query, BackgroundTasks
 from bson import ObjectId
-from typing import Optional
+from typing import Optional, List
+from pydantic import BaseModel
 from models.schemas import ProductCreate, ProductUpdate, ProductResponse, ProductVisibilityUpdate
 from utils.auth import get_current_user, get_current_user_optional
 import logging
 import uuid
+import re  # SEC-002 FIX: Import re for escaping user input
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +208,9 @@ def product_doc_to_response(doc: dict, include_visibility: bool = False) -> dict
         "gender": doc.get("gender", []),  # New field - ["men"], ["women"], or both
         "collections": doc.get("collections", ["all_products"]),  # Collection slugs
         "scent_profiles": doc.get("scent_profiles", []),  # Scent profile tags
+        "variant_group_id": doc.get("variant_group_id"),  # Manual variant linking
+        "variant_order": doc.get("variant_order", 0),  # Order within variant group
+        "related_product_ids": doc.get("related_product_ids", []),  # Manual admin-picked related products
         "created_at": doc.get("created_at"),
     }
     if doc.get("description_bg"):
@@ -259,10 +264,12 @@ async def get_products(
             query["scent_profiles"] = {"$in": profile_list}
     
     if search:
+        # SEC-002 FIX: Escape regex special characters to prevent ReDoS attacks
+        safe_search = re.escape(search)
         query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
-            {"brand": {"$regex": search, "$options": "i"}},
-            {"description": {"$regex": search, "$options": "i"}},
+            {"name": {"$regex": safe_search, "$options": "i"}},
+            {"brand": {"$regex": safe_search, "$options": "i"}},
+            {"description": {"$regex": safe_search, "$options": "i"}},
         ]
     if min_price is not None:
         query["price"] = query.get("price", {})
@@ -481,18 +488,16 @@ async def get_product(request: Request, product_id: str):
     return product_doc_to_response(product)
 
 
-import re
-
 def extract_base_name(product_name: str) -> str:
     """Extract base product name without size (e.g., '100 ml', '150ml', '50 M')"""
-    # Remove size patterns like "100 ml", "150ml", "50 M", "100 W", etc.
-    # Pattern matches: number + optional space + (ml/M/W/U) at end or before other text
-    cleaned = re.sub(r'\s*\d+\s*(ml|ML|M|W|U)\b', '', product_name)
+    # Remove size patterns - case insensitive
+    # Matches: "50 ml", "50ml", "50 ML", "100 M", "100 W", "50 U", etc.
+    cleaned = re.sub(r'\s*\d+\s*(ml|m|w|u)\b', '', product_name, flags=re.IGNORECASE)
     # Also remove TR (Tester) designation for variant matching
-    cleaned = re.sub(r'\s+TR\b', '', cleaned)
-    # Remove trailing whitespace
-    cleaned = cleaned.strip()
-    return cleaned
+    cleaned = re.sub(r'\s+TR\b', '', cleaned, flags=re.IGNORECASE)
+    # Remove trailing whitespace and extra spaces
+    cleaned = ' '.join(cleaned.split())
+    return cleaned.strip()
 
 
 @router.get("/{product_id}/variants")
@@ -508,7 +513,27 @@ async def get_product_variants(request: Request, product_id: str):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    # Extract base name (without size)
+    # First, check if product has a variant_group_id (manual linking)
+    variant_group_id = product.get("variant_group_id")
+    
+    if variant_group_id:
+        # Use manual variant grouping
+        query = {
+            "is_active": True,
+            "is_visible": True,
+            "variant_group_id": variant_group_id
+        }
+        cursor = db.products.find(query).sort("variant_order", 1)  # Sort by manual order
+        variants = await cursor.to_list(20)
+        
+        if variants:
+            return {
+                "variants": [product_doc_to_response(v) for v in variants],
+                "base_name": variant_group_id,
+                "is_manual_group": True
+            }
+    
+    # Fallback to automatic name-based matching
     base_name = extract_base_name(product.get("name", ""))
     brand = product.get("brand", "")
     
@@ -516,7 +541,6 @@ async def get_product_variants(request: Request, product_id: str):
         return {"variants": [product_doc_to_response(product)], "base_name": base_name}
     
     # Find other products with same brand and similar base name
-    # Use regex to match products that start with the base name
     escaped_base = re.escape(base_name)
     
     query = {
@@ -541,6 +565,210 @@ async def get_product_variants(request: Request, product_id: str):
         filtered_variants = [product_doc_to_response(product)]
     
     return {"variants": filtered_variants, "base_name": base_name}
+
+
+# ============= Variant Group Management =============
+
+class VariantGroupCreate(BaseModel):
+    product_ids: List[str]
+    group_name: Optional[str] = None
+
+
+@router.post("/variants/link")
+async def link_product_variants(request: Request, data: VariantGroupCreate):
+    """Link multiple products as variants of each other (Admin only)"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if len(data.product_ids) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 products required to link as variants")
+    
+    # Generate a unique variant group ID or use provided name
+    variant_group_id = data.group_name or str(uuid.uuid4())[:8]
+    
+    # Update all products with the variant group ID
+    updated_count = 0
+    for idx, pid in enumerate(data.product_ids):
+        try:
+            result = await db.products.update_one(
+                {"_id": ObjectId(pid)},
+                {"$set": {
+                    "variant_group_id": variant_group_id,
+                    "variant_order": idx  # Preserve order
+                }}
+            )
+            if result.modified_count > 0:
+                updated_count += 1
+        except Exception as e:
+            logger.error(f"Failed to update product {pid}: {e}")
+    
+    return {
+        "success": True,
+        "variant_group_id": variant_group_id,
+        "linked_count": updated_count,
+        "message": f"Linked {updated_count} products as variants"
+    }
+
+
+@router.post("/variants/unlink/{product_id}")
+async def unlink_product_variant(request: Request, product_id: str):
+    """Remove a product from its variant group (Admin only)"""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        result = await db.products.update_one(
+            {"_id": ObjectId(product_id)},
+            {"$unset": {"variant_group_id": "", "variant_order": ""}}
+        )
+        
+        if result.modified_count > 0:
+            return {"success": True, "message": "Product unlinked from variant group"}
+        else:
+            return {"success": False, "message": "Product not found or not in a variant group"}
+    except Exception:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+
+@router.get("/variants/group/{variant_group_id}")
+async def get_variant_group(request: Request, variant_group_id: str):
+    """Get all products in a variant group"""
+    db = request.app.state.db
+    
+    cursor = db.products.find(
+        {"variant_group_id": variant_group_id},
+        {"_id": 1, "name": 1, "price": 1, "image": 1, "variant_order": 1}
+    ).sort("variant_order", 1)
+    
+    products = await cursor.to_list(50)
+    
+    return {
+        "variant_group_id": variant_group_id,
+        "products": [
+            {
+                "id": str(p["_id"]),
+                "name": p.get("name"),
+                "price": p.get("price"),
+                "image": p.get("image"),
+                "order": p.get("variant_order", 0)
+            }
+            for p in products
+        ]
+    }
+
+
+@router.get("/variants/all-groups")
+async def get_all_variant_groups(request: Request):
+    """Get ALL variant groups - both manual (variant_group_id) and automatic (by base name).
+    Admin only endpoint for VariantsManager UI."""
+    db = request.app.state.db
+    user = await get_current_user(request, db)
+    
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all visible products
+    cursor = db.products.find(
+        {"is_active": True},
+        {"_id": 1, "name": 1, "brand": 1, "price": 1, "image": 1, "images": 1, "variant_group_id": 1, "variant_order": 1}
+    )
+    all_products = await cursor.to_list(5000)
+    
+    manual_groups = {}  # variant_group_id -> [products]
+    auto_groups = {}     # base_name|brand -> [products]
+    products_in_manual_groups = set()  # Track products already in manual groups
+    
+    # First pass: collect manual groups
+    for p in all_products:
+        if p.get("variant_group_id"):
+            group_id = p["variant_group_id"]
+            if group_id not in manual_groups:
+                manual_groups[group_id] = []
+            manual_groups[group_id].append(p)
+            products_in_manual_groups.add(str(p["_id"]))
+    
+    # Second pass: build automatic groups from products NOT in manual groups
+    for p in all_products:
+        pid = str(p["_id"])
+        if pid in products_in_manual_groups:
+            continue  # Skip products already in manual groups
+        
+        name = p.get("name", "")
+        brand = p.get("brand", "")
+        
+        if not name or not brand:
+            continue
+        
+        base_name = extract_base_name(name)
+        if not base_name:
+            continue
+        
+        # Create unique key for auto-group: base_name + brand
+        group_key = f"{base_name.lower()}|{brand.lower()}"
+        
+        if group_key not in auto_groups:
+            auto_groups[group_key] = {"base_name": base_name, "brand": brand, "products": []}
+        auto_groups[group_key]["products"].append(p)
+    
+    # Format response
+    result_manual = []
+    for group_id, products in manual_groups.items():
+        # Sort by variant_order
+        products.sort(key=lambda x: x.get("variant_order", 0))
+        result_manual.append({
+            "id": group_id,
+            "type": "manual",
+            "products": [
+                {
+                    "id": str(p["_id"]),
+                    "name": p.get("name"),
+                    "price": p.get("price"),
+                    "image": p.get("images", [p.get("image")])[0] if p.get("images") or p.get("image") else "",
+                    "order": p.get("variant_order", 0)
+                }
+                for p in products
+            ]
+        })
+    
+    result_auto = []
+    for group_key, group_data in auto_groups.items():
+        products = group_data["products"]
+        # Only include groups with 2+ products (actual variants)
+        if len(products) >= 2:
+            # Sort by price
+            products.sort(key=lambda x: x.get("price", 0))
+            result_auto.append({
+                "id": f"auto_{group_key}",
+                "type": "auto",
+                "base_name": group_data["base_name"],
+                "brand": group_data["brand"],
+                "products": [
+                    {
+                        "id": str(p["_id"]),
+                        "name": p.get("name"),
+                        "price": p.get("price"),
+                        "image": p.get("images", [p.get("image")])[0] if p.get("images") or p.get("image") else "",
+                    }
+                    for p in products
+                ]
+            })
+    
+    # Sort: manual groups first, then auto groups by product count descending
+    result_manual.sort(key=lambda x: len(x["products"]), reverse=True)
+    result_auto.sort(key=lambda x: len(x["products"]), reverse=True)
+    
+    return {
+        "manual_groups": result_manual,
+        "auto_groups": result_auto,
+        "manual_count": len(result_manual),
+        "auto_count": len(result_auto)
+    }
 
 
 def extract_gender_from_name(product_name: str) -> str:
@@ -600,82 +828,238 @@ def get_product_gender(product: dict) -> str:
 
 
 @router.get("/{product_id}/related")
-async def get_related_products(request: Request, product_id: str, limit: int = 5):
-    """Get related products based on scent profile, gender, and Dubai/non-Dubai separation"""
+async def get_related_products(request: Request, product_id: str, limit: int = 6):
+    """Get related products using combined algorithm:
+    1. Manual admin-picked related_product_ids (highest priority)
+    2. Frequently bought together (from real orders)
+    3. Same brand
+    4. Same category / same gender
+    Deduplicated, filtered to visible/active, capped at `limit`.
+    """
     db = request.app.state.db
-    
+
     try:
         product = await db.products.find_one({"_id": ObjectId(product_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
-    scent_profiles = product.get("scent_profiles", [])
+
+    exclude_id = product["_id"]
+    product_brand = product.get("brand", "")
+    product_category = product.get("category", "perfumes")
+    product_gender = get_product_gender(product)
     collections = product.get("collections", [])
-    category = product.get("category", "perfumes")
     is_dubai = "dubai" in collections
-    product_gender = get_product_gender(product)  # Use new hybrid function
-    
-    query = {
+
+    collected = []  # ordered list of docs
+    seen_ids = {exclude_id}
+
+    def add_docs(docs):
+        for d in docs:
+            if d["_id"] in seen_ids:
+                continue
+            if not d.get("is_active", True) or not d.get("is_visible", True):
+                continue
+            seen_ids.add(d["_id"])
+            collected.append(d)
+            if len(collected) >= limit:
+                return True
+        return False
+
+    # 1. Manual admin picks
+    manual_ids = product.get("related_product_ids", []) or []
+    if manual_ids:
+        object_ids = []
+        for mid in manual_ids:
+            try:
+                object_ids.append(ObjectId(mid))
+            except Exception:
+                continue
+        if object_ids:
+            # Preserve admin ordering
+            manual_docs_map = {}
+            async for d in db.products.find({"_id": {"$in": object_ids}}):
+                manual_docs_map[str(d["_id"])] = d
+            ordered_manual = [manual_docs_map[m] for m in manual_ids if m in manual_docs_map]
+            if add_docs(ordered_manual):
+                return {"products": [product_doc_to_response(p) for p in collected]}
+
+    # 2. Frequently bought together (co-occurrence in completed orders)
+    if len(collected) < limit:
+        try:
+            pipeline = [
+                {"$match": {
+                    "status": {"$in": ["completed", "shipped", "delivered", "paid"]},
+                    "items.product_id": str(exclude_id)
+                }},
+                {"$unwind": "$items"},
+                {"$match": {"items.product_id": {"$ne": str(exclude_id)}}},
+                {"$group": {"_id": "$items.product_id", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+                {"$limit": limit * 3}
+            ]
+            co_data = await db.orders.aggregate(pipeline).to_list(limit * 3)
+            co_ids = []
+            for row in co_data:
+                try:
+                    co_ids.append(ObjectId(row["_id"]))
+                except Exception:
+                    continue
+            if co_ids:
+                co_docs_map = {}
+                async for d in db.products.find({"_id": {"$in": co_ids}}):
+                    co_docs_map[d["_id"]] = d
+                ordered_co = [co_docs_map[oid] for oid in co_ids if oid in co_docs_map]
+                if add_docs(ordered_co):
+                    return {"products": [product_doc_to_response(p) for p in collected]}
+        except Exception as e:
+            logger.warning(f"FBT aggregation failed for {product_id}: {e}")
+
+    # Base query for brand / category fallbacks
+    base_query = {
         "is_active": True,
         "is_visible": True,
-        "_id": {"$ne": product["_id"]},  # Exclude current product
-        "category": category
+        "category": product_category,
     }
-    
-    # Dubai rule: if Dubai product, show only Dubai. If not Dubai, exclude Dubai
     if is_dubai:
-        query["collections"] = "dubai"
+        base_query["collections"] = "dubai"
     else:
-        query["collections"] = {"$ne": "dubai"}
-    
-    # Gender rule: Match product gender
-    # First try to match by gender field, then fallback to name regex
+        base_query["collections"] = {"$ne": "dubai"}
     if product_gender == "men":
-        # Match products with gender=["men"] OR name contains M pattern
-        query["$or"] = [
+        base_query["$or"] = [
             {"gender": "men"},
             {"name": {"$regex": r"\d+\s*M\b", "$options": "i"}}
         ]
     elif product_gender == "women":
-        # Match products with gender=["women"] OR name contains W pattern
-        query["$or"] = [
+        base_query["$or"] = [
             {"gender": "women"},
             {"name": {"$regex": r"\d+\s*W\b", "$options": "i"}}
         ]
-    # For unisex, don't filter by gender - show all
-    
-    # If product has scent profiles, prefer products with matching profiles
-    if scent_profiles:
-        # First try to find products with matching scent profiles
-        query["scent_profiles"] = {"$in": scent_profiles}
-        cursor = db.products.find(query).limit(limit * 2)
-        related = await cursor.to_list(limit * 2)
-        
-        # Sort by number of matching profiles (more matches = more relevant)
-        def count_matches(p):
-            p_profiles = p.get("scent_profiles", [])
-            return len(set(p_profiles) & set(scent_profiles))
-        
-        related.sort(key=count_matches, reverse=True)
-        related = related[:limit]
-        
-        # If not enough results, fill with category products
-        if len(related) < limit:
-            del query["scent_profiles"]
-            existing_ids = [p["_id"] for p in related]
-            query["_id"] = {"$nin": existing_ids + [product["_id"]]}
-            cursor = db.products.find(query).limit(limit - len(related))
-            more = await cursor.to_list(limit - len(related))
-            related.extend(more)
-    else:
-        # No scent profiles, just get products from same category
-        cursor = db.products.find(query).limit(limit)
-        related = await cursor.to_list(limit)
-    
-    return {"products": [product_doc_to_response(p) for p in related]}
+
+    # 3. Same brand
+    if len(collected) < limit and product_brand:
+        brand_query = dict(base_query)
+        brand_query["brand"] = product_brand
+        brand_query["_id"] = {"$nin": list(seen_ids)}
+        cursor = db.products.find(brand_query).limit(limit * 2)
+        brand_docs = await cursor.to_list(limit * 2)
+        if add_docs(brand_docs):
+            return {"products": [product_doc_to_response(p) for p in collected]}
+
+    # 4. Same category/gender (fallback)
+    if len(collected) < limit:
+        fallback_query = dict(base_query)
+        fallback_query["_id"] = {"$nin": list(seen_ids)}
+        cursor = db.products.find(fallback_query).limit(limit * 2)
+        fallback_docs = await cursor.to_list(limit * 2)
+        add_docs(fallback_docs)
+
+    return {"products": [product_doc_to_response(p) for p in collected]}
+
+
+class RelatedBulkRequest(BaseModel):
+    product_ids: List[str]
+    limit: int = 6
+
+
+@router.post("/related-bulk")
+async def get_related_bulk(request: Request, data: RelatedBulkRequest):
+    """Get related products for a set of products (used on Cart page).
+    Combines FBT co-occurrence + same-brand recommendations across all input products.
+    Excludes any product already in the input list.
+    """
+    db = request.app.state.db
+    limit = max(1, min(24, data.limit))
+
+    input_ids_str = [pid for pid in data.product_ids if pid]
+    exclude_oids = set()
+    for pid in input_ids_str:
+        try:
+            exclude_oids.add(ObjectId(pid))
+        except Exception:
+            continue
+
+    if not exclude_oids:
+        return {"products": []}
+
+    # Get input products to know their brands
+    input_products = await db.products.find({"_id": {"$in": list(exclude_oids)}}).to_list(len(exclude_oids))
+    brands = list({p.get("brand", "") for p in input_products if p.get("brand")})
+    categories = list({p.get("category", "perfumes") for p in input_products})
+
+    collected = []
+    seen_ids = set(exclude_oids)
+
+    def add_docs(docs):
+        for d in docs:
+            if d["_id"] in seen_ids:
+                continue
+            if not d.get("is_active", True) or not d.get("is_visible", True):
+                continue
+            seen_ids.add(d["_id"])
+            collected.append(d)
+            if len(collected) >= limit:
+                return True
+        return False
+
+    # 1. Frequently bought together across all input products
+    try:
+        pipeline = [
+            {"$match": {
+                "status": {"$in": ["completed", "shipped", "delivered", "paid"]},
+                "items.product_id": {"$in": input_ids_str}
+            }},
+            {"$unwind": "$items"},
+            {"$match": {"items.product_id": {"$nin": input_ids_str}}},
+            {"$group": {"_id": "$items.product_id", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": limit * 3}
+        ]
+        co_data = await db.orders.aggregate(pipeline).to_list(limit * 3)
+        co_ids = []
+        for row in co_data:
+            try:
+                co_ids.append(ObjectId(row["_id"]))
+            except Exception:
+                continue
+        if co_ids:
+            co_docs_map = {}
+            async for d in db.products.find({"_id": {"$in": co_ids}}):
+                co_docs_map[d["_id"]] = d
+            ordered_co = [co_docs_map[oid] for oid in co_ids if oid in co_docs_map]
+            if add_docs(ordered_co):
+                return {"products": [product_doc_to_response(p) for p in collected]}
+    except Exception as e:
+        logger.warning(f"Cart FBT aggregation failed: {e}")
+
+    # 2. Same brand fallback
+    if len(collected) < limit and brands:
+        brand_query = {
+            "is_active": True,
+            "is_visible": True,
+            "brand": {"$in": brands},
+            "_id": {"$nin": list(seen_ids)},
+        }
+        cursor = db.products.find(brand_query).limit(limit * 2)
+        brand_docs = await cursor.to_list(limit * 2)
+        if add_docs(brand_docs):
+            return {"products": [product_doc_to_response(p) for p in collected]}
+
+    # 3. Same category fallback
+    if len(collected) < limit and categories:
+        cat_query = {
+            "is_active": True,
+            "is_visible": True,
+            "category": {"$in": categories},
+            "_id": {"$nin": list(seen_ids)},
+        }
+        cursor = db.products.find(cat_query).limit(limit * 2)
+        cat_docs = await cursor.to_list(limit * 2)
+        add_docs(cat_docs)
+
+    return {"products": [product_doc_to_response(p) for p in collected]}
 
 
 # Admin-only endpoints

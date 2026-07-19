@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; width: 320px; margin: 0; padding: 14px; color: #1a1a1a; }
+    h1 { font-size: 16px; margin: 0 0 4px; letter-spacing: 0.5px; }
+    .sub { font-size: 11px; color: #777; margin: 0 0 12px; }
+    .preview { width: 100%; border-radius: 8px; margin-bottom: 10px; background: #f3f3f3; }
+    textarea { width: 100%; box-sizing: border-box; height: 96px; font-size: 12px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; resize: none; }
+    .row { display: flex; gap: 8px; margin-top: 10px; }
+    button { flex: 1; border: none; border-radius: 8px; padding: 10px 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #fff; }
+    .fb { background: #1877f2; }
+    .ig { background: #c13584; }
+    .copy { background: #222; }
+    .status { font-size: 11px; color: #2a8a2a; min-height: 14px; margin-top: 8px; }
+    .product { font-size: 12px; color: #444; margin: 2px 0 8px; }
+  </style>
+</head>
+<body>
+  <h1>KOSTIN Quick Share</h1>
+  <p class="sub">Сподели продукт или UGC креатив към Facebook и Instagram</p>
+
+  <img class="preview" id="preview" alt="KOSTIN product" />
+  <div class="product" id="product">Отвори страница на продукт в kostinparfums.com</div>
+
+  <textarea id="caption" spellcheck="false"></textarea>
+
+  <div class="row">
+    <button class="fb" id="fb">Facebook</button>
+    <button class="ig" id="ig">Instagram</button>
+  </div>
+  <div class="row">
+    <button class="copy" id="copy">Копирай текста</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

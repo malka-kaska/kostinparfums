@@ -73,6 +73,32 @@
   flex-shrink: 0;
 }
 
+.footer-social {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: white;
+  transform: translateY(-2px);
+}
+
 .footer-subtitle {
   font-size: 12px;
   font-weight: 600;

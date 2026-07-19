@@ -11,8 +11,8 @@ import './Home.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Category images for Men and Women fragrances
-const GENDER_IMAGES = {
+// Fallback category images if admin hasn't uploaded custom ones
+const DEFAULT_GENDER_IMAGES = {
   men: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&q=80',
   women: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80',
 };
@@ -107,6 +107,19 @@ const Home = () => {
           const bestSellersData = await bestSellersRes.json();
           setBestSellers(bestSellersData);
         }
+
+        // Fetch homepage settings (campaign banner + gender images)
+        const settingsRes = await fetch(`${API_URL}/api/homepage/settings`);
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setCampaignBanner(settingsData.campaign_banner || null);
+          if (settingsData.gender_images) {
+            setGenderImages({
+              men: settingsData.gender_images.men || DEFAULT_GENDER_IMAGES.men,
+              women: settingsData.gender_images.women || DEFAULT_GENDER_IMAGES.women,
+            });
+          }
+        }
       } catch {
         setFeaturedProducts([]);
         setBestSellers([]);
@@ -188,7 +201,7 @@ const Home = () => {
               to="/products?gender=men"
               className="gender-card"
               style={{
-                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${GENDER_IMAGES.men})`,
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${genderImages.men})`,
               }}
             >
               <div className="gender-content">
@@ -200,7 +213,7 @@ const Home = () => {
               to="/products?gender=women"
               className="gender-card"
               style={{
-                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${GENDER_IMAGES.women})`,
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%), url(${genderImages.women})`,
               }}
             >
               <div className="gender-content">

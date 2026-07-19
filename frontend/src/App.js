@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./App.css";
-import { captureUtm } from "./utils/utmTracker";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { BrandBackgroundProvider } from "./context/BrandBackgroundContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
@@ -35,26 +35,14 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import FacebookDomainVerificationMeta from "./components/FacebookDomainVerificationMeta";
 import GlobalPsychologyHooks from "./components/GlobalPsychologyHooks";
 import { Toaster } from "./components/ui/sonner";
-import { initFromStoredConsent } from "./utils/metaPixel";
 
 function App() {
-  // Capture first-touch UTM parameters from the landing URL (attribution).
-  useEffect(() => {
-    captureUtm();
-  }, []);
-
-  // On every page load, check if the user has already given marketing consent
-  // and initialize Meta Pixel only when they have (GDPR requirement).
-  useEffect(() => {
-    console.log('[App][initFromStoredConsent] calling initFromStoredConsent');
-    initFromStoredConsent();
-  }, []);
   return (
     <div className="App">
-      <FacebookDomainVerificationMeta />
       <BrowserRouter>
         <ThemeProvider>
         <LanguageProvider>
+        <BrandBackgroundProvider>
         <AuthProvider>
         <ScrollToTop />
         <GlobalPsychologyHooks />
@@ -91,6 +79,7 @@ function App() {
         <CookieBanner />
         <Toaster position="top-center" richColors closeButton />
         </AuthProvider>
+        </BrandBackgroundProvider>
         </LanguageProvider>
         </ThemeProvider>
       </BrowserRouter>

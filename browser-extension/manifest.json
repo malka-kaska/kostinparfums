@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "KOSTIN Quick Share",
+  "version": "1.0.0",
+  "description": "Бързо споделяне на продукти и UGC креативи от KOSTIN Parfums (kostinparfums.com) към Facebook и Instagram на български език.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "KOSTIN Quick Share",
+    "default_icon": {
+      "48": "assets/icon-48.png",
+      "128": "assets/icon-128.png"
+    }
+  },
+  "icons": {
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "clipboardWrite",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://kostinparfums.com/*",
+    "https://www.facebook.com/*",
+    "https://www.instagram.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://kostinparfums.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

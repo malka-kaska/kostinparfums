@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X, Grid2X2, LayoutList, ChevronDown, ChevronUp } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
@@ -50,6 +50,8 @@ const Products = () => {
     scent: true,
   });
   const { t } = useLanguage();
+  const [visibleCount, setVisibleCount] = useState(12);
+  const sentinelRef = useRef(null);
 
   const toggleFilter = (filterName) => {
     setExpandedFilters(prev => ({
@@ -172,9 +174,11 @@ const Products = () => {
           const data = await res.json();
           setProducts(data.products);
           setTotalProducts(data.total);
+          setVisibleCount(12);
         } else {
           setProducts([]);
           setTotalProducts(0);
+          setVisibleCount(12);
         }
       } catch (err) {
         console.error('Failed to fetch products:', err);
@@ -188,6 +192,24 @@ const Products = () => {
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, selectedBrands, selectedGender, selectedScentProfiles, sortBy, searchQuery, searchParams]);
+
+  // Infinite Scroll Observer Setup
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry.isIntersecting && products.length > visibleCount) {
+        setVisibleCount((prev) => Math.min(prev + 12, products.length));
+      }
+    }, { rootMargin: '150px' });
+
+    observer.observe(sentinel);
+    return () => {
+      if (sentinel) observer.unobserve(sentinel);
+    };
+  }, [products.length, visibleCount]);
 
   const categoryNames = {
     perfumes: t('perfumes'),
@@ -423,11 +445,18 @@ const Products = () => {
             </div>
 
             {products.length > 0 ? (
-              <div className={`grid-product-showcase ${mobileGridCols === 2 ? 'mobile-two-cols' : ''}`} data-testid="products-grid">
-                {products.map(product => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className={`grid-product-showcase ${mobileGridCols === 2 ? 'mobile-two-cols' : ''}`} data-testid="products-grid">
+                  {products.slice(0, visibleCount).map(product => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                {products.length > visibleCount && (
+                  <div ref={sentinelRef} className="infinite-scroll-sentinel" style={{ padding: '40px 20px', textAlign: 'center', color: '#e2a25d', fontSize: '0.9rem', fontWeight: 'bold', letterSpacing: '0.05em' }}>
+                    <span>✨ Loading more luxury scents...</span>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="no-products" data-testid="no-products">
                 <p className="body-large">

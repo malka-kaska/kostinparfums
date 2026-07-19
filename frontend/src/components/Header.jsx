@@ -187,6 +187,9 @@ const Header = () => {
                 {lang === 'bg' && col.name_bg ? col.name_bg : col.name}
               </Link>
             ))}
+            <Link to="/summer" className="nav-link nav-link-summer" onClick={() => setMobileMenuOpen(false)}>
+              ☀️ {lang === 'bg' ? 'Летен Scent Hub' : 'Summer Scent Hub'}
+            </Link>
           </nav>
           
           {/* Smart Search Bar */}

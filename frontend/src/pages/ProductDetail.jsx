@@ -29,6 +29,19 @@ const ProductDetail = () => {
   const { addToCart } = useAuth();
   const viewedRef = useRef(null); // guards GA4 view_item against StrictMode double-invoke
 
+  // Urgency & Scarcity states
+  const [timeLeft, setTimeLeft] = useState(10123);
+  const [loveVotes, setLoveVotes] = useState(() => Math.floor(Math.random() * 80) + 120);
+  const [hasLoved, setHasLoved] = useState(false);
+
+  // Tick-down timer hook
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 10123));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
@@ -278,6 +291,35 @@ const ProductDetail = () => {
               </div>
             </div>
 
+            {/* HOOK 6: SCARCITY & URGENCY ENGINES */}
+            {product.stock > 0 && (
+              <div className="scarcity-urgency-wrapper mt-4">
+                <div className="scarcity-countdown-box">
+                  <span className="scarcity-label">🔥 {lang === 'bg' ? 'Офертата Изтича След:' : 'Summer Offer Expires In:'}</span>
+                  <div className="scarcity-timer">
+                    <span className="timer-part">{String(Math.floor(timeLeft / 3600)).padStart(2, '0')}h</span>
+                    <span className="timer-separator">:</span>
+                    <span className="timer-part">{String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0')}m</span>
+                    <span className="timer-separator">:</span>
+                    <span className="timer-part">{String(timeLeft % 60).padStart(2, '0')}s</span>
+                  </div>
+                </div>
+
+                <div className="scarcity-stock-progress">
+                  <div className="stock-progress-labels">
+                    <span>⚡ {lang === 'bg' ? 'Разпродадено Лятно Количество:' : 'Allocations Claimed:'}</span>
+                    <strong>94%</strong>
+                  </div>
+                  <div className="stock-progress-bar-container">
+                    <div className="stock-progress-bar-fill" style={{ width: '94%' }}></div>
+                  </div>
+                  <span className="stock-pressure-alert">
+                    ⚠️ {lang === 'bg' ? 'Остават много малко налични бройки в склада ни.' : 'High sillage demand. Stock is nearly exhausted.'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="product-actions mt-4">
               <div className="quantity-selector" data-testid="quantity-selector">
                 <button 
@@ -310,8 +352,31 @@ const ProductDetail = () => {
                 {t('addToCart')}
               </button>
 
-              <button className="wishlist-button" aria-label="Add to wishlist" data-testid="wishlist-button" onClick={() => pixelAddToWishlist(product)}>
-                <Heart size={20} />
+              <button 
+                className={`wishlist-button ${hasLoved ? 'loved-active-state' : ''}`} 
+                aria-label="Add to wishlist" 
+                data-testid="wishlist-button" 
+                onClick={() => {
+                  if (!hasLoved) {
+                    setHasLoved(true);
+                    setLoveVotes(prev => prev + 1);
+                    pixelAddToWishlist(product);
+                    toast.success(
+                      lang === 'bg'
+                        ? `Добавено в Любими! Вие и още ${loveVotes} души обожават този аромат!`
+                        : `Saved! You and ${loveVotes} others love this luxury scent!`,
+                      { icon: '💖' }
+                    );
+                  } else {
+                    setHasLoved(false);
+                    setLoveVotes(prev => prev - 1);
+                    toast.info(lang === 'bg' ? 'Премахнато от Любими.' : 'Removed from saved.');
+                  }
+                }}
+                style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'auto', padding: '10px 14px' }}
+              >
+                <Heart size={20} fill={hasLoved ? '#e74c3c' : 'none'} stroke={hasLoved ? '#e74c3c' : 'currentColor'} />
+                <span className="love-votes-bubble-badge" style={{ fontSize: '0.65rem', fontWeight: 'bold', marginTop: '2px', display: 'block', color: hasLoved ? '#e74c3c' : 'var(--text-secondary)' }}>{loveVotes}</span>
               </button>
             </div>
 

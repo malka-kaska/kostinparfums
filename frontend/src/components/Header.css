@@ -232,6 +232,26 @@
   background: var(--accent-gold);
 }
 
+.nav-link-summer {
+  color: #f97316 !important; /* Golden Orange sunset */
+  font-weight: 600 !important;
+  text-shadow: 0 0 8px rgba(249, 115, 22, 0.2);
+  transition: all 0.3s ease;
+}
+
+.nav-link-summer:after {
+  background: #f97316 !important;
+}
+
+.nav-link-summer:hover {
+  color: #ff9e7d !important;
+  text-shadow: 0 0 12px rgba(249, 115, 22, 0.5);
+}
+
+.nav-link-summer:hover:after {
+  background: #ff9e7d !important;
+}
+
 /* Mobile Menu Toggle */
 .mobile-menu-toggle {
   display: none;

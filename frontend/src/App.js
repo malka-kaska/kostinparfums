@@ -29,9 +29,11 @@ import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOrder from "./pages/VerifyOrder";
 import DubaiPerfumes from "./pages/DubaiPerfumes";
 import GuestCancelOrder from "./pages/GuestCancelOrder";
+import SummerCampaign from "./pages/SummerCampaign";
 import CookieBanner from "./components/CookieBanner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import FacebookDomainVerificationMeta from "./components/FacebookDomainVerificationMeta";
+import GlobalPsychologyHooks from "./components/GlobalPsychologyHooks";
 import { Toaster } from "./components/ui/sonner";
 import { initFromStoredConsent } from "./utils/metaPixel";
 
@@ -55,6 +57,7 @@ function App() {
         <LanguageProvider>
         <AuthProvider>
         <ScrollToTop />
+        <GlobalPsychologyHooks />
         <Header />
         <ErrorBoundary>
         <Routes>
@@ -79,6 +82,7 @@ function App() {
           <Route path="/verify-order" element={<VerifyOrder />} />
           <Route path="/dubai-perfumes" element={<DubaiPerfumes />} />
           <Route path="/cancel-order" element={<GuestCancelOrder />} />
+          <Route path="/summer" element={<SummerCampaign />} />
           {/* Redirect /collection/dubai to /dubai-perfumes */}
           <Route path="/collection/dubai" element={<Navigate to="/dubai-perfumes" replace />} />
         </Routes>

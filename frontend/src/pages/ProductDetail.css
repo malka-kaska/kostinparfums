@@ -497,3 +497,118 @@
     height: 60px;
   }
 }
+
+/* Scarcity and Urgency Widget */
+.scarcity-urgency-wrapper {
+  background: rgba(226, 162, 93, 0.04);
+  border: 1px solid rgba(226, 162, 93, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scarcity-countdown-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scarcity-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #e2a25d;
+  letter-spacing: 0.5px;
+}
+
+.scarcity-timer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timer-part {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: #fff;
+  min-width: 32px;
+  text-align: center;
+}
+
+.timer-separator {
+  color: #e2a25d;
+  font-weight: 800;
+  animation: timer-pulse 1s infinite;
+}
+
+.scarcity-stock-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stock-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.stock-progress-labels strong {
+  color: #e2a25d;
+  font-weight: 800;
+}
+
+.stock-progress-bar-container {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stock-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #e2a25d, #e74c3c);
+  border-radius: 3px;
+  animation: shimmer-progress 2s infinite linear;
+  background-size: 200% 100%;
+}
+
+.stock-pressure-alert {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Micro animations */
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes shimmer-progress {
+  0% { background-position: 0% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
+/* Loved button active state scale up */
+.wishlist-button.loved-active-state {
+  border-color: rgba(231, 76, 60, 0.3);
+  background: rgba(231, 76, 60, 0.05);
+}
+
+.wishlist-button:active {
+  transform: scale(0.9);
+}
+

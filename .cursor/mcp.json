@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"]
+    },
+    "n8n-mcp": {
+      "type": "http",
+      "url": "https://api.n8n-mcp.com/mcp",
+      "headers": {
+        "Authorization": "Bearer <YOUR_N8N_MCP_ACCESS_TOKEN>"
+      }
+    }
+  }
+}
